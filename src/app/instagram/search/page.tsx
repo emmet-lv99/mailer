@@ -4,40 +4,26 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { instagramService } from "@/services/instagram/api";
+import { useInstagramStore } from "@/services/instagram/store"; // Import Store
 import { InstagramUser } from "@/services/instagram/types";
 import { Search } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export default function InstagramSearchPage() {
-  const [keyword, setKeyword] = useState("");
+  // Use Global Store
+  const { 
+    keyword, setKeyword, 
+    results, setResults, 
+    selectedUsernames, toggleSelection, setSelectedUsers 
+  } = useInstagramStore();
+
   const [limit, setLimit] = useState(30);
-  const [results, setResults] = useState<InstagramUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(results.length > 0); // Init based on store
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  // Stats
-  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<any[]>([]);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-
-  const handleAnalyze = async () => {
-      if (selectedUsers.size === 0) return;
-      setIsAnalyzing(true);
-      try {
-          // Filter selected user objects
-          const targets = results.filter(u => selectedUsers.has(u.username));
-          const response = await instagramService.analyze(targets);
-          setAnalysisResults(response.results);
-          toast.success(`${response.results.length}명 분석 완료!`);
-      } catch (error: any) {
-          toast.error(error.message);
-      } finally {
-          setIsAnalyzing(false);
-      }
-  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,15 +80,8 @@ export default function InstagramSearchPage() {
       setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
   };
 
-  const toggleSelection = (username: string) => {
-    const next = new Set(selectedUsers);
-    if (next.has(username)) next.delete(username);
-    else next.add(username);
-    setSelectedUsers(next);
-  };
-
   const toggleSelectAll = () => {
-    if (selectedUsers.size === results.filter(u => !u.is_registered).length && selectedUsers.size > 0) {
+    if (selectedUsernames.size === results.filter(u => !u.is_registered).length && selectedUsernames.size > 0) {
         setSelectedUsers(new Set());
     } else {
         const newSet = new Set<string>();
@@ -171,72 +150,15 @@ export default function InstagramSearchPage() {
               검색 결과 <span className="text-primary">{results.length}</span>명
             </h2>
             <div className="flex gap-2">
-                <Button size="sm" disabled={selectedUsers.size === 0 || isAnalyzing} onClick={handleAnalyze}>
-                    {isAnalyzing ? "분석 중..." : `${selectedUsers.size}명 AI 분석 시작`}
-                </Button>
+                <Link href="/instagram/analyze">
+                  <Button size="sm" disabled={selectedUsernames.size === 0}>
+                    {selectedUsernames.size}명 AI 정밀 분석하러 가기 &rarr;
+                  </Button>
+                </Link>
             </div>
           </div>
-
-          {/* Analysis View */}
-          {analysisResults.length > 0 && (
-              <div className="mb-8 border-b pb-8 animate-in slide-in-from-top-4 duration-500">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      ✨ AI 분석 결과 <span className="text-sm font-normal text-muted-foreground">({analysisResults.length}명)</span>
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {analysisResults.map((result, idx) => {
-                          if (!result.success) {
-                             return (
-                                <Card key={idx} className="p-5 border-l-4 border-l-red-500 shadow-sm bg-red-50/50">
-                                  <div className="font-bold text-red-700 flex items-center gap-2 mb-2">
-                                      @{result.username}
-                                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
-                                          분석 실패
-                                      </span>
-                                  </div>
-                                  <div className="text-sm text-red-600/80">
-                                      {result.error || "알 수 없는 오류가 발생했습니다."}
-                                  </div>
-                              </Card>
-                             );
-                          }
-                          const { analysis } = result;
-                          return (
-                              <Card key={idx} className="p-5 border-l-4 border-l-primary shadow-sm bg-gradient-to-r from-background to-muted/20">
-                                  <div className="flex justify-between items-start mb-3">
-                                      <div>
-                                          <div className="text-lg font-bold flex items-center gap-2">
-                                              @{result.username}
-                                              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${analysis.is_target ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                                                  {analysis.is_target ? '적합' : '보류'}
-                                              </span>
-                                          </div>
-                                          <div className="text-sm text-muted-foreground font-medium">{analysis.category}</div>
-                                      </div>
-                                      <div className="text-right">
-                                          <div className="text-sm text-muted-foreground">독창성 점수</div>
-                                          <div className="text-2xl font-bold text-primary">{analysis.originality_score}/10</div>
-                                      </div>
-                                  </div>
-                                  
-                                  <div className="mb-4 text-sm leading-relaxed text-gray-700 bg-white/50 p-3 rounded-md border">
-                                      {analysis.summary}
-                                  </div>
-
-                                  <div className="flex flex-wrap gap-2">
-                                      {analysis.mood_keywords?.map((keyword: string, k: number) => (
-                                          <span key={k} className="px-2 py-1 bg-white border rounded text-xs text-muted-foreground shadow-sm">
-                                              #{keyword}
-                                          </span>
-                                      ))}
-                                  </div>
-                              </Card>
-                          );
-                      })}
-                  </div>
-              </div>
-          )}
-
+          {/* Analysis View Removed */}
+          
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg bg-card mb-4">
               <div className="flex items-center gap-4">
@@ -245,13 +167,13 @@ export default function InstagramSearchPage() {
                         type="checkbox" 
                         id="selectAll"
                         className="accent-primary h-4 w-4"
-                        checked={sortedResults.length > 0 && selectedUsers.size === sortedResults.filter(u => !u.is_registered).length}
+                        checked={sortedResults.length > 0 && selectedUsernames.size === sortedResults.filter(u => !u.is_registered).length}
                         onChange={toggleSelectAll}
                       />
                       <label htmlFor="selectAll" className="text-sm font-medium cursor-pointer">전체 선택</label>
                  </div>
                  <div className="text-sm text-muted-foreground">
-                     총 <span className="font-bold text-foreground">{results.length}</span>명 중 <span className="text-primary font-bold">{selectedUsers.size}</span>명 선택됨
+                     총 <span className="font-bold text-foreground">{results.length}</span>명 중 <span className="text-primary font-bold">{selectedUsernames.size}</span>명 선택됨
                  </div>
               </div>
 
@@ -264,7 +186,7 @@ export default function InstagramSearchPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sortedResults.map((user) => {
-                  const isSelected = selectedUsers.has(user.username);
+                  const isSelected = selectedUsernames.has(user.username);
                   const isDisabled = user.is_registered;
                   
                   const latestDate = getLatestPostDate(user);

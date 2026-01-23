@@ -60,7 +60,7 @@ export async function POST(req: Request) {
                     const detailInput = {
                         directUrls: directUrls,
                         resultsType: "details",
-                        resultsLimit: 5, // Per URL usually, or total? Safety check.
+                        resultsLimit: 10, // Increased post limit
                         searchLimit: 1,
                     };
                     
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 
             const latestPosts = item.latestPosts || [];
             
-            const recent_posts = latestPosts.slice(0, 5).map((post: any) => ({
+            const recent_posts = latestPosts.slice(0, 10).map((post: any) => ({
                 caption: post.caption || "",
                 imageUrl: post.displayUrl || post.thumbnailUrl || "",
                 likes: post.likesCount || 0,
@@ -146,7 +146,7 @@ export async function POST(req: Request) {
             followers_count: Math.floor(Math.random() * 50000) + 1000,
             biography: `API 호출 전면 실패로 생성된 가상 데이터입니다. (${i+1})`,
             profile_pic_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${keyword}${i}`,
-            recent_posts: Array.from({ length: 5 }).map((_, j) => ({
+            recent_posts: Array.from({ length: 10 }).map((_, j) => ({
                 caption: `Mock Post ${j+1}`,
                 imageUrl: `https://placehold.co/300x300?text=Mock${j+1}`,
                 likes: Math.floor(Math.random() * 100),

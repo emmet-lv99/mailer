@@ -1,0 +1,49 @@
+
+import { create } from 'zustand';
+import { InstagramUser } from './types';
+
+interface InstagramState {
+  keyword: string;
+  results: InstagramUser[];
+  selectedUsernames: Set<string>;
+  analysisResults: any[];
+  
+  setKeyword: (q: string) => void;
+  setResults: (users: InstagramUser[]) => void;
+  toggleSelection: (username: string) => void;
+  resetSelection: () => void;
+  setSelectedUsers: (users: Set<string>) => void;
+  setAnalysisResults: (results: any[]) => void;
+  clearAnalysisResults: () => void;
+  removeAnalysisResult: (username: string) => void;
+  updateUserStatus: (username: string, status: 'todo' | 'ignored' | 'sent' | 'replied') => void;
+}
+
+export const useInstagramStore = create<InstagramState>((set) => ({
+  keyword: "",
+  results: [],
+  selectedUsernames: new Set(),
+  analysisResults: [],
+
+  setKeyword: (q) => set({ keyword: q }),
+  setResults: (users) => set({ results: users }),
+  
+  toggleSelection: (username) => set((state) => {
+    const next = new Set(state.selectedUsernames);
+    if (next.has(username)) next.delete(username);
+    else next.add(username);
+    return { selectedUsernames: next };
+  }),
+
+  resetSelection: () => set({ selectedUsernames: new Set() }),
+  setSelectedUsers: (users) => set({ selectedUsernames: users }),
+  
+  setAnalysisResults: (results) => set({ analysisResults: results }),
+  clearAnalysisResults: () => set({ analysisResults: [] }),
+  removeAnalysisResult: (username) => set((state) => ({
+      analysisResults: state.analysisResults.filter(r => r.username !== username)
+  })),
+  updateUserStatus: (username, status) => set((state) => ({
+      results: state.results.map(u => u.username === username ? { ...u, db_status: status, is_registered: true } : u)
+  })),
+}));
