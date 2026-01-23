@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
 
 import { Toaster } from "@/components/ui/sonner";
 
+import { Providers } from "@/components/providers";
+
 export const metadata: Metadata = {
   title: "Anmok Mailer",
   description: "AI Cold Email Generator for YouTubers",
@@ -29,8 +31,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Toaster />
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

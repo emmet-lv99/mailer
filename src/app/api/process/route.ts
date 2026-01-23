@@ -234,9 +234,14 @@ export async function POST(req: Request) {
           }
 
           if (generated && generated.subject && generated.body) {
+            // Extract email if exists (supports common CSV headers)
+            const email = channel.email || channel.Email || channel.이메일 || "";
+
             send("result", { 
-                channelName, 
+                channelName,
+                channelId: channel.channelId || "", 
                 subscribers,
+                email, // Pass email to frontend
                 subject: generated.subject,
                 body: generated.body 
             });
