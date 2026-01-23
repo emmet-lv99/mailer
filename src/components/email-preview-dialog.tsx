@@ -55,7 +55,7 @@ export function EmailPreviewDialog({ open, onOpenChange, defaultSubject, default
         footerHtml = generateHtmlFromBlocks(tmpl.blocks);
       }
     }
-    setPreviewHtml(wrapEmailHtml(body, footerHtml));
+    setPreviewHtml(wrapEmailHtml(body, "", footerHtml));
   }, [body, selectedTemplateId, templates]);
 
   const fetchTemplates = async () => {

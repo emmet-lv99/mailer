@@ -19,35 +19,51 @@ export async function POST(req: Request) {
 
     const bodyData = await req.json();
     console.log("[Gmail API] Request body received:", { ...bodyData, body: "..." }); // Log metadata only
-    const { subject, body, templateId, recipientEmail } = bodyData;
+    const { subject, body, headerTemplateId, footerTemplateId, recipientEmail } = bodyData;
 
     if (!subject || !body) {
       console.error("[Gmail API] Missing subject or body");
       return NextResponse.json({ error: "Missing subject or body" }, { status: 400 });
     }
 
-    // 2. 템플릿 가져오기 (templateId가 있을 경우)
+    // 2. 템플릿 가져오기 (각각 상단/하단)
+    let headerHtml = "";
     let footerHtml = "";
-    if (templateId) {
-      console.log(`[Gmail API] Fetching template ${templateId}...`);
+    
+    // 상단 템플릿
+    if (headerTemplateId) {
+      console.log(`[Gmail API] Fetching header template ${headerTemplateId}...`);
       const { data: template, error } = await supabase
         .from('email_templates')
         .select('*')
-        .eq('id', templateId)
+        .eq('id', headerTemplateId)
         .single();
       
       if (error) {
-        console.error("[Gmail API] Template fetch error:", error);
+        console.error("[Gmail API] Header template fetch error:", error);
       } else if (template && template.blocks) {
-        console.log("[Gmail API] Template found, generating HTML...");
-        footerHtml = generateHtmlFromBlocks(template.blocks);
+        headerHtml = generateHtmlFromBlocks(template.blocks);
       }
-    } else {
-        console.log("[Gmail API] No templateId provided, skipping template.");
     }
 
-    // 3. 전체 이메일 HTML 조립
-    const fullContent = wrapEmailHtml(body, footerHtml);
+    // 하단 템플릿
+    if (footerTemplateId) {
+      console.log(`[Gmail API] Fetching footer template ${footerTemplateId}...`);
+      const { data: template, error } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('id', footerTemplateId)
+        .single();
+      
+      if (error) {
+        console.error("[Gmail API] Footer template fetch error:", error);
+      } else if (template && template.blocks) {
+        footerHtml = generateHtmlFromBlocks(template.blocks);
+      }
+    }
+
+    // 3. 전체 이메일 HTML 조립 (상단 + 본문 + 하단)
+    const fullContent = wrapEmailHtml(body, headerHtml, footerHtml);
 
     // 4. MIME 메시지 생성
     // 받는 사람(recipientEmail)이 없으면 드래프트만 생성 (To: 필드 없음)

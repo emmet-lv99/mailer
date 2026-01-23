@@ -20,6 +20,7 @@ interface Block {
   text?: string;    // LINK용 (버튼명)
   url?: string;     // LINK, IMAGE용 (주소)
   linkUrl?: string; // IMAGE용 (클릭 시 이동할 링크)
+  buttonStyle?: 'button' | 'text'; // LINK용 (버튼 스타일)
 }
 
 interface Template {
@@ -27,6 +28,7 @@ interface Template {
   title: string;
   blocks: Block[];
   is_default: boolean;
+  position: 'top' | 'bottom';
 }
 
 export function TemplateManager() {
@@ -37,6 +39,7 @@ export function TemplateManager() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [position, setPosition] = useState<'top' | 'bottom'>('bottom');
 
   // 초기 로드
   useEffect(() => {
@@ -63,12 +66,14 @@ export function TemplateManager() {
     setEditingId(null);
     setTitle("");
     setBlocks([]);
+    setPosition('bottom');
   };
 
   const handleSelectTemplate = (t: Template) => {
     setEditingId(t.id);
     setTitle(t.title);
     setBlocks(t.blocks || []);
+    setPosition(t.position || 'bottom');
   };
 
   // 저장 로직
@@ -82,7 +87,7 @@ export function TemplateManager() {
       const payload = {
         title,
         blocks,
-        // is_default 로직은 나중에 추가 (필요 시)
+        position,
       };
 
       let error;
@@ -216,6 +221,35 @@ export function TemplateManager() {
                 </div>
             </div>
 
+            {/* 위치 선택 */}
+            <div className="flex-none flex items-center gap-4 p-3 border rounded-md bg-muted/20">
+              <Label className="text-sm font-medium">삽입 위치</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="position" 
+                    value="top" 
+                    checked={position === 'top'} 
+                    onChange={() => setPosition('top')}
+                    className="accent-primary"
+                  />
+                  <span className="text-sm">상단 (본문 위)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="position" 
+                    value="bottom" 
+                    checked={position === 'bottom'} 
+                    onChange={() => setPosition('bottom')}
+                    className="accent-primary"
+                  />
+                  <span className="text-sm">하단 (본문 아래)</span>
+                </label>
+              </div>
+            </div>
+
             <div className="flex-1 overflow-y-auto border rounded-md p-4 bg-muted/10 space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>블록 구성 ({blocks.length}개)</Label>
@@ -260,6 +294,29 @@ export function TemplateManager() {
                                     <Label className="text-xs text-muted-foreground">이동 URL</Label>
                                     <Input placeholder="https://..." value={block.url || ''} onChange={e => updateBlock(block.id, 'url', e.target.value)} />
                                   </div>
+                                </div>
+                                <div className="flex items-center gap-4 pt-2">
+                                  <Label className="text-xs text-muted-foreground">스타일</Label>
+                                  <label className="flex items-center gap-1 cursor-pointer">
+                                    <input 
+                                      type="radio" 
+                                      name={`buttonStyle-${block.id}`}
+                                      checked={(block.buttonStyle || 'button') === 'button'} 
+                                      onChange={() => updateBlock(block.id, 'buttonStyle', 'button')}
+                                      className="accent-primary"
+                                    />
+                                    <span className="text-xs">일반 버튼</span>
+                                  </label>
+                                  <label className="flex items-center gap-1 cursor-pointer">
+                                    <input 
+                                      type="radio" 
+                                      name={`buttonStyle-${block.id}`}
+                                      checked={block.buttonStyle === 'text'} 
+                                      onChange={() => updateBlock(block.id, 'buttonStyle', 'text')}
+                                      className="accent-primary"
+                                    />
+                                    <span className="text-xs">텍스트 링크</span>
+                                  </label>
                                 </div>
                             </div>
                         )}

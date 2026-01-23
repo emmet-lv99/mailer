@@ -153,7 +153,7 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
   };
 
   // Helper for actual saving logic
-  const executeSaveDrafts = async (templateId: number | null) => {
+  const executeSaveDrafts = async (selection: { headerTemplateId: number | null; footerTemplateId: number | null } | null) => {
     if (results.length === 0) {
       toast.error("저장할 결과가 없습니다.");
       return;
@@ -174,7 +174,8 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
             body: JSON.stringify({
               subject: result.subject,
               body: result.body,
-              templateId: templateId,
+              headerTemplateId: selection?.headerTemplateId || null,
+              footerTemplateId: selection?.footerTemplateId || null,
               recipientEmail: result.email || "", 
             }),
           });
@@ -201,9 +202,9 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
   };
 
   // 1. Template Save (Batch)
-  const handleTemplateSaveDrafts = (templateId: number | null) => {
+  const handleTemplateSaveDrafts = (selection: { headerTemplateId: number | null; footerTemplateId: number | null }) => {
     setIsSelectOpen(false);
-    executeSaveDrafts(templateId);
+    executeSaveDrafts(selection);
   };
 
   // 2. Raw Save (Batch)
