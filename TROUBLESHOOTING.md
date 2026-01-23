@@ -1,171 +1,76 @@
-# 안목고수 메일러 트러블슈팅 가이드
+# 🛠️ 트러블슈팅 보고서: 인스타그램 이미지 차단(CORP) 해결
 
-이 문서는 개발 및 운영 중 발생했던 주요 이슈와 해결 방법을 정리합니다.
+## 1. 문제 상황 (Issue)
+인스타그램 검색 기능 구현 중, 검색된 프로필 이미지 및 게시물 썸네일이 브라우저에서 로딩되지 않고 "엑스박스"로 표시되는 현상이 발생했습니다.
 
----
-
-## 🔐 인증 관련
-
-### 1. Gmail Draft 저장 시 500 에러 (Unauthorized)
-
-**증상**: "Gmail 저장" 버튼 클릭 시 500 에러 발생
-
-**원인**: Google Access Token 만료 또는 세션 문제
-
-**해결**:
-1. 로그아웃 후 다시 로그인 (토큰 갱신)
-2. `src/types/next-auth.d.ts` 파일에서 타입 정의 확인
-3. 개발자 콘솔에서 `session.accessToken` 존재 여부 확인
-
-**관련 코드**: `/api/auth/[...nextauth]/route.ts`, `/api/gmail/draft/route.ts`
+**에러 메시지 (Console):**
+```
+GET https://scontent-xyz.cdninstagram.com/... net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin 200 (OK)
+```
 
 ---
 
-### 2. Google OAuth 리디렉션 에러
+## 2. 원인 분석 (Root Cause)
 
-**증상**: 배포 환경에서 Google 로그인 실패
+이 에러는 일반적인 **CORS(Cross-Origin Resource Sharing)** 문제가 아니라, 브라우저의 **CORP(Cross-Origin-Resource-Policy)** 보안 정책에 의해 차단된 것입니다.
 
-**원인**: 승인된 리디렉션 URI 미등록
+*   **일반 CORS 에러**: 서버가 `Access-Control-Allow-Origin` 헤더를 안 줄 때 발생.
+*   **이번 에러 (CORP)**: 인스타그램(Meta) CDN 서버가 응답 헤더에 명시적으로 다음을 포함하고 있습니다:
+    ```http
+    Cross-Origin-Resource-Policy: same-origin
+    ```
+    > **의미:** "이 이미지 리소스는 나와 **동일한 출처(Domain)**, 즉 `instagram.com` 또는 `facebook.com`에서만 로딩할 수 있다. 다른 사이트(`localhost:3000` 등)에서는 `<img src="...">`로도 가져가지 말라."
 
-**해결**:
-1. [Google Cloud Console](https://console.cloud.google.com/) → OAuth 2.0 클라이언트 설정
-2. 승인된 리디렉션 URI에 추가:
-   - 로컬: `http://localhost:3000/api/auth/callback/google`
-   - 배포: `https://your-domain.vercel.app/api/auth/callback/google`
-3. 배포 환경변수 설정:
-   - `NEXTAUTH_URL=https://your-domain.vercel.app`
-   - `NEXTAUTH_SECRET=랜덤_문자열`
+이는 핫링크(Hotlinking)를 방지하고 사용자의 리소스가 무단으로 다른 사이트에 임베딩되는 것을 막기 위한 Meta의 강력한 보안 조치입니다.
 
 ---
 
-## 🤖 AI 생성 관련
+## 3. 시도했던 해결책들 (Attempts)
 
-### 3. "Generation returned empty content" 에러
-
-**증상**: 이메일 생성 시 빈 콘텐츠 반환
-
-**원인**: AI가 subject/body가 비어있는 JSON 반환
-
-**해결**:
-- 재시도 로직 추가 (최대 3회)
-- 빈 콘텐츠 감지 시 자동 재시도
-
-**관련 코드**: `/api/process/route.ts` (236번 줄 부근)
+### 시도 1: `referrerPolicy="no-referrer"` 추가 (실패)
+*   **아이디어**: 브라우저가 요청을 보낼 때 `Referer` 헤더(요청한 사이트 주소)를 숨기면, 서버가 어디서 왔는지 모르니까 허용해주지 않을까?
+*   **결과**: **실패**.
+*   **이유**: `referrerPolicy`는 요청 헤더(`Referer`)를 제어하는 것이지, 응답 헤더(`Cross-Origin-Resource-Policy`)를 무시하게 만들 수는 없습니다. 브라우저는 서버가 보낸 "금지(same-origin)" 딱지를 보고 스스로 차단해버립니다.
 
 ---
 
-### 4. "Bad control character in string literal in JSON" 에러
+## 4. 최종 해결책 (Solution)
 
-**증상**: JSON 파싱 실패
+### ✅ 백엔드 프록시(Image Proxy) 구축
 
-**원인**: AI 응답에 유효하지 않은 제어 문자 포함
+브라우저가 아닌 **서버(Next.js API Routes)**는 브라우저 보안 정책(CORP)의 제약을 받지 않는다는 점을 이용했습니다.
 
-**해결**:
+**아키텍처 변경:**
+*   **전(Before)**: `Browser` ➡️ `Instagram CDN` (🚫 CORP 차단)
+*   **후(After)**: `Browser` ➡️ `My Server (Proxy)` ➡️ `Instagram CDN` (✅ 성공)
+
+### 구현 상세
+
+**1. Proxy API (`src/app/api/image-proxy/route.ts`)**
+백엔드에서 `fetch`로 이미지를 대신 받아온 뒤, 보안 헤더를 떼고 브라우저에게 전달합니다. 이때 인스타그램 서버를 속이기 위해 헤더를 위장합니다.
 ```typescript
-// 제어 문자 제거
-text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+const response = await fetch(url, {
+  headers: {
+    // 마치 크롬 브라우저에서 인스타그램 홈페이지를 보고 있는 것처럼 위장
+    "User-Agent": "Mozilla/5.0 ... Chrome/120...",
+    "Referer": "https://www.instagram.com/",
+  },
+});
+```
 
-// JSON 블록 추출
-const jsonMatch = text.match(/\{[\s\S]*\}/);
-if (jsonMatch) {
-    text = jsonMatch[0];
-}
+**2. Frontend (`page.tsx`)**
+이미지 URL을 프록시 주소로 감싸서 렌더링합니다.
+```typescript
+// 원본: https://scontent...
+// 변경: /api/image-proxy?url=https://scontent...
+<img src={`/api/image-proxy?url=${url}`} ... />
 ```
 
 ---
 
-## 🗄️ 데이터베이스 관련
+## 5. 결론 (Conclusion)
 
-### 5. Supabase 컬럼 누락 에러
+이 방식은 서버 대역폭을 일부 사용하지만, 서드파티(Instagram)의 강력한 보안 정책을 우회하여 서비스를 안정적으로 제공할 수 있는 **유일하고 확실한 방법**입니다.
 
-**증상**: `Could not find the 'position' column of 'email_templates' in the schema cache`
-
-**원인**: 코드에서 사용하는 컬럼이 DB에 없음
-
-**해결**:
-Supabase SQL Editor에서 실행:
-```sql
-ALTER TABLE email_templates ADD COLUMN position TEXT DEFAULT 'bottom';
-```
-
----
-
-## 🎨 UI 관련
-
-### 6. 모달 너비가 적용되지 않음
-
-**증상**: `max-w-[80vw]` 클래스가 무시됨
-
-**원인**: Radix UI Dialog의 기본 스타일이 오버라이드됨
-
-**해결**:
-```tsx
-<DialogContent className="sm:max-w-[80vw] w-[80vw] max-w-none">
-```
-- `max-w-none`으로 기본 제한 해제
-
----
-
-### 7. 새로고침해도 UI 변경이 반영 안됨
-
-**증상**: 코드 수정 후 브라우저에 반영 안됨
-
-**원인**: 개발 서버 문제 또는 브라우저 캐시
-
-**해결**:
-1. 개발 서버 재시작:
-   ```bash
-   # 포트 3000 프로세스 종료 후 재시작
-   lsof -ti:3000 | xargs kill -9; yarn dev
-   ```
-2. 강력 새로고침: `Cmd + Shift + R` (Mac)
-
----
-
-## 📋 CSV 관련
-
-### 8. CSV 업로드 시 한글 깨짐
-
-**증상**: 한글 채널명이 깨져서 표시됨
-
-**원인**: CSV 파일 인코딩 문제 (EUC-KR vs UTF-8)
-
-**해결**:
-- CSV 파일을 **UTF-8** 인코딩으로 저장
-- Excel: 저장 시 "CSV UTF-8 (쉼표로 분리) (*.csv)" 선택
-
----
-
-## 🔧 환경 설정 관련
-
-### 9. YouTube API 키 인식 안됨
-
-**증상**: 채널 정보 수집 실패
-
-**원인**: 환경변수 이름 충돌 또는 미설정
-
-**해결**:
-`.env.local` 파일 확인:
-```env
-ANMOK_YOUTUBE_API_KEY=your_youtube_api_key
-ANMOK_GEMINI_API_KEY=your_gemini_api_key
-```
-- `ANMOK_` 접두사 사용으로 환경변수 충돌 방지
-
-### 10. YouTube API 요청 차단 (Blocked)
-
-**증상**: `Requests to this API youtube method youtube.api.v3.V3DataSearchService.List are blocked` 에러 발생
-
-**원인**: Google Cloud Project에서 **YouTube Data API v3** 서비스가 활성화되지 않음
-
-**해결**:
-1. [Google Cloud Console](https://console.cloud.google.com/apis/library/youtube.googleapis.com) 접속
-2. 프로젝트 선택 (상단 드롭다운)
-3. **"사용(ENABLE)"** 버튼 클릭하여 API 활성화
-4. 잠시 대기 후 다시 시도
-
----
-
-## 📞 지원
-
-문제가 지속되면 콘솔 로그를 확인하거나 개발자에게 문의하세요.
+*   **안정성**: 클라이언트 환경(브라우저 버전 등)에 구애받지 않음.
+*   **확장성**: 추후 이미지 리사이징이나 캐싱 기능을 프록시에 추가하여 성능을 최적화할 수 있음.

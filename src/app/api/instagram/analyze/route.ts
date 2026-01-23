@@ -2,6 +2,7 @@
 import { geminiVisionModel } from "@/lib/gemini";
 import { NextResponse } from "next/server";
 
+// Force Rebuild
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -42,15 +43,25 @@ export async function POST(req: Request) {
         for (const post of user.recent_posts.slice(0, 3)) {
             if (post.imageUrl) {
                 try {
-                    // Fetch image and convert to base64
-                    const imageResp = await fetch(post.imageUrl);
-                    const imageBuffer = await imageResp.arrayBuffer();
-                    imageParts.push({
-                        inlineData: {
-                            data: Buffer.from(imageBuffer).toString("base64"),
-                            mimeType: "image/jpeg",
-                        },
+                    // Fetch image with headers to mimic browser and avoid 403
+                    const imageResp = await fetch(post.imageUrl, {
+                        headers: {
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                            "Referer": "https://www.instagram.com/"
+                        }
                     });
+
+                    if (imageResp.ok) {
+                        const imageBuffer = await imageResp.arrayBuffer();
+                        imageParts.push({
+                            inlineData: {
+                                data: Buffer.from(imageBuffer).toString("base64"),
+                                mimeType: "image/jpeg",
+                            },
+                        });
+                    } else {
+                        console.warn(`Failed to fetch image: ${imageResp.status} ${imageResp.statusText}`);
+                    }
                 } catch (e) {
                     console.error(`Failed to fetch image for ${user.username}`, e);
                 }
@@ -63,8 +74,12 @@ export async function POST(req: Request) {
             const response = await result.response;
             const text = response.text();
             
-            // Clean markdown json
-            const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+            // Robust JSON extraction
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error("No JSON found in response");
+            }
+            const jsonStr = jsonMatch[0];
             const analysis = JSON.parse(jsonStr);
 
             return {
@@ -73,12 +88,12 @@ export async function POST(req: Request) {
                 success: true
             };
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Analysis failed for ${user.username}`, error);
             return {
                 username: user.username,
                 success: false,
-                error: "Analysis failed"
+                error: error.message || "Unknown error"
             };
         }
       })

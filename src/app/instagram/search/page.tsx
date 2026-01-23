@@ -11,15 +11,17 @@ import { toast } from "sonner";
 
 export default function InstagramSearchPage() {
   const [keyword, setKeyword] = useState("");
-  const [limit, setLimit] = useState(30); // Default to 30
+  const [limit, setLimit] = useState(30);
   const [results, setResults] = useState<InstagramUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Stats
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<any[]>([]);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const handleAnalyze = async () => {
       if (selectedUsers.size === 0) return;
@@ -54,6 +56,14 @@ export default function InstagramSearchPage() {
     }
   };
 
+  // Helper function to extract date
+  const getLatestPostDate = (user: InstagramUser) => {
+      if (!user.recent_posts || user.recent_posts.length === 0) return null;
+      const sorted = [...user.recent_posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      return new Date(sorted[0].timestamp);
+  };
+
+  // Calculate stats
   const getAverageUploadCycle = (posts: any[]) => {
       if (!posts || posts.length < 2) return null;
       const sorted = [...posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -65,14 +75,6 @@ export default function InstagramSearchPage() {
       }
       const avgMs = totalDiff / (sorted.length - 1);
       return Math.round(avgMs / (1000 * 60 * 60 * 24)); // Days
-  };
-
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-
-  const getLatestPostDate = (user: InstagramUser) => {
-      if (!user.recent_posts || user.recent_posts.length === 0) return null;
-      const sorted = [...user.recent_posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      return new Date(sorted[0].timestamp);
   };
 
   const isUserActive = (latestDate: Date | null) => {
@@ -109,6 +111,13 @@ export default function InstagramSearchPage() {
         });
         setSelectedUsers(newSet);
     }
+  };
+  
+  const getProxiedUrl = (url: string | null | undefined) => {
+      if (!url) return "";
+      // If it's already a base64 or local image, return as is
+      if (url.startsWith("data:") || url.startsWith("/")) return url;
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
   };
 
   return (
@@ -168,145 +177,235 @@ export default function InstagramSearchPage() {
             </div>
           </div>
 
-          {/* Analysis View (Optional - kept simple for now) */}
+          {/* Analysis View */}
           {analysisResults.length > 0 && (
-              <div className="mb-8 border-b pb-8">
-                  <h3 className="text-xl font-bold mb-4">✨ AI 분석 결과</h3>
-                   {/* ... (Analysis Results Cards - Keeping existing logic for analysis cards) ... */}
-                   {/* For brevity, I'm omitting the full analysis card code here as user focused on Search Result Table */}
-                   {/* But wait, if I replace the whole return, I need to include this or it gets lost. */}
-                   {/* Since user said "UI improvement", assume they want the main list as table. Analysis view is separate. */}
-                   {/* I'll implement the table below. */}
+              <div className="mb-8 border-b pb-8 animate-in slide-in-from-top-4 duration-500">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      ✨ AI 분석 결과 <span className="text-sm font-normal text-muted-foreground">({analysisResults.length}명)</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {analysisResults.map((result, idx) => {
+                          if (!result.success) {
+                             return (
+                                <Card key={idx} className="p-5 border-l-4 border-l-red-500 shadow-sm bg-red-50/50">
+                                  <div className="font-bold text-red-700 flex items-center gap-2 mb-2">
+                                      @{result.username}
+                                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
+                                          분석 실패
+                                      </span>
+                                  </div>
+                                  <div className="text-sm text-red-600/80">
+                                      {result.error || "알 수 없는 오류가 발생했습니다."}
+                                  </div>
+                              </Card>
+                             );
+                          }
+                          const { analysis } = result;
+                          return (
+                              <Card key={idx} className="p-5 border-l-4 border-l-primary shadow-sm bg-gradient-to-r from-background to-muted/20">
+                                  <div className="flex justify-between items-start mb-3">
+                                      <div>
+                                          <div className="text-lg font-bold flex items-center gap-2">
+                                              @{result.username}
+                                              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${analysis.is_target ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                                  {analysis.is_target ? '적합' : '보류'}
+                                              </span>
+                                          </div>
+                                          <div className="text-sm text-muted-foreground font-medium">{analysis.category}</div>
+                                      </div>
+                                      <div className="text-right">
+                                          <div className="text-sm text-muted-foreground">독창성 점수</div>
+                                          <div className="text-2xl font-bold text-primary">{analysis.originality_score}/10</div>
+                                      </div>
+                                  </div>
+                                  
+                                  <div className="mb-4 text-sm leading-relaxed text-gray-700 bg-white/50 p-3 rounded-md border">
+                                      {analysis.summary}
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-2">
+                                      {analysis.mood_keywords?.map((keyword: string, k: number) => (
+                                          <span key={k} className="px-2 py-1 bg-white border rounded text-xs text-muted-foreground shadow-sm">
+                                              #{keyword}
+                                          </span>
+                                      ))}
+                                  </div>
+                              </Card>
+                          );
+                      })}
+                  </div>
               </div>
           )}
 
-          <div className="border rounded-md bg-card">
-            <table className="w-full caption-bottom text-sm text-left">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[50px]">
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg bg-card mb-4">
+              <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-2">
                       <input 
                         type="checkbox" 
+                        id="selectAll"
                         className="accent-primary h-4 w-4"
                         checked={sortedResults.length > 0 && selectedUsers.size === sortedResults.filter(u => !u.is_registered).length}
                         onChange={toggleSelectAll}
                       />
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">프로필</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">상태</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer hover:text-foreground" onClick={toggleSort}>
-                      최근 게시물 {sortOrder === 'desc' ? '▼' : '▲'}
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">평균 주기</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">팔로워</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[300px]">최근 게시물 (5개)</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-right">링크</th>
-                </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {sortedResults.map((user) => {
+                      <label htmlFor="selectAll" className="text-sm font-medium cursor-pointer">전체 선택</label>
+                 </div>
+                 <div className="text-sm text-muted-foreground">
+                     총 <span className="font-bold text-foreground">{results.length}</span>명 중 <span className="text-primary font-bold">{selectedUsers.size}</span>명 선택됨
+                 </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                 <Button variant="outline" size="sm" onClick={toggleSort}>
+                     최근 게시물순 {sortOrder === 'desc' ? '▼' : '▲'}
+                 </Button>
+              </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {sortedResults.map((user) => {
                   const isSelected = selectedUsers.has(user.username);
                   const isDisabled = user.is_registered;
                   
                   const latestDate = getLatestPostDate(user);
                   const isActive = isUserActive(latestDate);
+                  const avgCycle = getAverageUploadCycle(user.recent_posts);
 
                   return (
-                    <tr 
+                    <div 
                         key={user.username} 
-                        className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${isSelected ? "bg-muted/50" : ""} ${isDisabled ? "opacity-60 bg-gray-50/50" : ""}`}
+                        className={`relative group border rounded-xl overflow-hidden bg-card transition-all hover:shadow-md ${isSelected ? "ring-2 ring-primary bg-primary/5" : ""} ${isDisabled ? "opacity-60 bg-muted/50" : ""}`}
                         onClick={() => !isDisabled && toggleSelection(user.username)}
                     >
-                      <td className="p-4 align-middle" onClick={(e) => e.stopPropagation()}>
-                         <input 
-                            type="checkbox" 
-                            className="accent-primary h-4 w-4"
-                            checked={isSelected}
-                            disabled={isDisabled}
-                            onChange={() => toggleSelection(user.username)}
-                         />
-                      </td>
-                      <td className="p-4 align-middle">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0 border">
-                                {user.profile_pic_url ? (
-                                    <img src={user.profile_pic_url} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                    <span className="text-lg">👤</span>
-                                )}
-                            </div>
-                            <div>
-                                <div className="font-medium flex items-center gap-2">
-                                    {user.full_name || user.username}
-                                    {isActive && <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" title="최근 1달 내 활동"></span>}
-                                </div>
-                                <div className="text-xs text-muted-foreground">@{user.username}</div>
-                            </div>
+                      {/* Selection Overlay (Active on hover or selected) */}
+                      {!isDisabled && (
+                          <div className={`absolute top-3 left-3 z-10`}>
+                             <input 
+                                type="checkbox" 
+                                className="accent-primary h-5 w-5 shadow-sm"
+                                checked={isSelected}
+                                onChange={(e) => { e.stopPropagation(); toggleSelection(user.username); }}
+                             />
                           </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                          {isDisabled ? (
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                      )}
+
+                      {/* Header Section */}
+                      <div className="p-4 pb-2">
+                          <div className="flex items-start justify-between mb-3 pl-7"> 
+                             {/* Badge */}
+                             {isDisabled ? (
+                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                                   user.db_status === 'todo' ? 'bg-blue-100 text-blue-700' : 
                                   user.db_status === 'ignored' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-700'
                               }`}>
                                   {user.db_status === 'todo' ? '관리중' : user.db_status === 'ignored' ? '제외됨' : '등록됨'}
-                              </span>
-                          ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                      </td>
-                      <td className="p-4 align-middle">
-                          <div className="flex flex-col gap-1">
-                              <span className="text-sm font-medium">
-                                  {latestDate ? latestDate.toLocaleDateString() : '-'}
-                              </span>
+                               </span>
+                             ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground font-medium">검색됨</span>
+                             )}
+                             <a 
+                                href={`https://instagram.com/${user.username}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-muted-foreground hover:text-primary transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                             >
+                                 <Search className="w-4 h-4" />
+                             </a>
                           </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                          {(() => {
-                              const avg = getAverageUploadCycle(user.recent_posts);
-                              return avg !== null ? <span className="text-sm font-medium">{avg}일</span> : <span className="text-xs text-muted-foreground">-</span>;
-                          })()}
-                      </td>
-                      <td className="p-4 align-middle font-medium">
-                         {user.followers_count === 0 ? '?' : user.followers_count.toLocaleString()}
-                      </td>
-                      <td className="p-4 align-middle">
-                          <div className="flex gap-1 overflow-x-auto max-w-[200px] py-1">
-                              {user.recent_posts.slice(0, 5).map((post, idx) => (
-                                  <div key={idx} className="w-8 h-8 shrink-0 rounded bg-muted overflow-hidden border relative group/img">
-                                      {post.imageUrl ? (
-                                          <img src={post.imageUrl} alt="" className="w-full h-full object-cover" />
-                                      ) : (
-                                          <div className="w-full h-full flex items-center justify-center text-[8px]">No</div>
-                                      )}
-                                  </div>
-                              ))}
+
+                          <div className="flex flex-col items-center text-center gap-2">
+                            <div className="relative">
+                                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
+                                    {user.profile_pic_url ? (
+                                        <img src={getProxiedUrl(user.profile_pic_url)} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-2xl">👤</span>
+                                    )}
+                                </div>
+                                {isActive && (
+                                    <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-sm" title="최근 1달 내 활동"></span>
+                                )}
+                            </div>
+                            <div>
+                                <div className="font-bold text-sm truncate max-w-[180px]">{user.full_name || user.username}</div>
+                                <div className="text-xs text-muted-foreground truncate max-w-[180px]">@{user.username}</div>
+                            </div>
                           </div>
-                      </td>
-                      <td className="p-4 align-middle text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            asChild
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                              <a href={`https://instagram.com/${user.username}`} target="_blank" rel="noopener noreferrer">
-                                  이동
-                              </a>
-                          </Button>
-                      </td>
-                    </tr>
+                      </div>
+
+                      {/* Stats Section */}
+                      <div className="grid grid-cols-2 divide-x border-y bg-muted/20">
+                          <div className="p-2 text-center">
+                              <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">팔로워</div>
+                              <div className="text-sm font-medium">{user.followers_count === 0 ? '?' : user.followers_count.toLocaleString()}</div>
+                          </div>
+                          <div className="p-2 text-center">
+                              <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">평균 주기</div>
+                              <div className="text-sm font-medium">{avgCycle ? `${avgCycle}일` : '-'}</div>
+                          </div>
+                      </div>
+
+                      {/* Recent Posts Gallery */}
+                      <div className="p-3 bg-muted/10">
+                          <div className="text-[10px] text-muted-foreground mb-2 flex justify-between items-center">
+                              <span>최근 게시물</span>
+                              <span>{latestDate ? latestDate.toLocaleDateString() : '-'}</span>
+                          </div>
+                          <div className="grid grid-cols-5 gap-1">
+                              {/* Always show 5 slots placeholder if empty */}
+                              {Array.from({ length: 5 }).map((_, idx) => {
+                                  const post = user.recent_posts[idx];
+                                  return (
+                                      <div 
+                                        key={idx} 
+                                        className="aspect-square rounded-md bg-muted overflow-hidden border relative cursor-pointer"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (post?.imageUrl) setSelectedImage(post.imageUrl);
+                                        }}
+                                      >
+                                          {post?.imageUrl ? (
+                                              <img src={getProxiedUrl(post.imageUrl)} alt="" className="w-full h-full object-cover transition-transform hover:scale-110" />
+                                          ) : (
+                                              <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground/30">•</div>
+                                          )}
+                                      </div>
+                                  );
+                              })}
+                          </div>
+                      </div>
+                    </div>
                   );
-                })}
-              </tbody>
-            </table>
+            })}
           </div>
           
           {results.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                   검색 결과가 없습니다.
+              </div>
+          )}
+
+          {/* Lightbox Overlay */}
+          {selectedImage && (
+              <div 
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+                  onClick={() => setSelectedImage(null)}
+              >
+                  <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
+                      <img 
+                          src={getProxiedUrl(selectedImage)} 
+                          alt="Enlarged view" 
+                          className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
+                          onClick={(e) => e.stopPropagation()} 
+                      />
+                      <button 
+                          className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black/50 rounded-full p-2"
+                          onClick={() => setSelectedImage(null)}
+                      >
+                          <Search className="w-6 h-6 rotate-45" /> {/* Using Search icon rotated as X closely enough, or use X icon if imported */}
+                      </button>
+                  </div>
               </div>
           )}
         </div>

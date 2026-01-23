@@ -54,12 +54,17 @@ export async function POST(req: Request) {
                 console.log(`[Step 2] Fetching details for users: ${targetUsernames.join(", ")}`);
                 
                 try {
+                    // Method A: directUrls (Most reliable for profile scraping)
+                    const directUrls = targetUsernames.map(u => `https://www.instagram.com/${u}/`);
+                    
                     const detailInput = {
-                        usernames: targetUsernames,
+                        directUrls: directUrls,
                         resultsType: "details",
+                        resultsLimit: 5, // Per URL usually, or total? Safety check.
                         searchLimit: 1,
-                        resultsLimit: targetUsernames.length,
                     };
+                    
+                    console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links`);
                     const detailRun = await client.actor("apify/instagram-scraper").call(detailInput);
                     const detailDataset = await client.dataset(detailRun.defaultDatasetId).listItems();
                     detailItems = detailDataset.items;
