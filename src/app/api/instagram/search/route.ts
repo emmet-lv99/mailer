@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     // For this specific task, let's assume we are searching for profiles related to a hashtag
     // using a Hashtag Scraper is more appropriate for discovery.
     // Actor: apify/instagram-hashtag-scraper
-    const ACTOR_ID = "reus~instagram-hashtag-scraper"; // Example robust hashtag scraper or similar
+    const ACTOR_ID = "apify/instagram-hashtag-scraper";
 
     // Since we want to find "Users", hashtag scraper usually gives Posts.
     // We would need to extract unique users from those posts.
