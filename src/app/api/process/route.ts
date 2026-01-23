@@ -209,27 +209,57 @@ export async function POST(req: Request) {
                 .replace(/\[구독자수\]/g, subscribers);
           }
           
-          // Retry logic
+          // Retry logic with improved error handling
           let retries = 0;
           let generated = null;
+          const maxRetries = 3;
           
-          while (retries < 3) {
+          while (retries < maxRetries) {
              try {
                  const result = await model.generateContent({
                      contents: [{ role: "user", parts: [{ text: finalPrompt + "\n\nOutput JSON only: { \"subject\": \"...\", \"body\": \"...\" }" }] }],
                      generationConfig: { responseMimeType: "application/json" }
                  });
-                 const text = result.response.text();
+                 
+                 let text = result.response.text();
+                 
+                 // 제어 문자 제거 (JSON 파싱 에러 방지)
+                 // 개행(\n), 탭(\t)은 유지하되 다른 제어 문자는 제거
+                 text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+                 
+                 // JSON 블록 추출 (AI가 ```json ... ``` 형태로 반환할 경우 대응)
+                 const jsonMatch = text.match(/\{[\s\S]*\}/);
+                 if (jsonMatch) {
+                     text = jsonMatch[0];
+                 }
+                 
                  generated = JSON.parse(text);
-                 break;
+                 
+                 // 빈 콘텐츠 체크 - 실패 시 재시도
+                 if (!generated.subject || !generated.body) {
+                     console.warn(`[AI] Empty content received for ${channelName}, retrying...`);
+                     retries++;
+                     await new Promise(r => setTimeout(r, 2000));
+                     continue;
+                 }
+                 
+                 break; // 성공!
+                 
              } catch (err: any) {
+                 console.error(`[AI] Error for ${channelName}:`, err.message);
+                 
                  if (err.message?.includes("429") || err.message?.includes("Quota")) {
                      send("log", { message: "⏳ 쿼터 초과! 5초 대기 후 재시도..." });
                      await new Promise(r => setTimeout(r, 5000));
-                     retries++;
+                 } else if (err.message?.includes("JSON") || err.message?.includes("parse")) {
+                     // JSON 파싱 에러 - 재시도
+                     send("log", { message: `⚠️ JSON 파싱 에러, 재시도 중... (${retries + 1}/${maxRetries})` });
+                     await new Promise(r => setTimeout(r, 2000));
                  } else {
-                     throw err;
+                     throw err; // 다른 에러는 즉시 실패 처리
                  }
+                 
+                 retries++;
              }
           }
 
