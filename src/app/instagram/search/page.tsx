@@ -329,7 +329,15 @@ export default function InstagramSearchPage() {
                             </div>
                             <div>
                                 <div className="font-bold text-sm truncate max-w-[180px]">{user.full_name || user.username}</div>
-                                <div className="text-xs text-muted-foreground truncate max-w-[180px]">@{user.username}</div>
+                                <a 
+                                    href={`https://instagram.com/${user.username}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer" 
+                                    className="text-xs text-muted-foreground truncate max-w-[180px] hover:text-primary hover:underline cursor-pointer block"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    @{user.username}
+                                </a>
                             </div>
                           </div>
                       </div>
