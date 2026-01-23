@@ -12,6 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { GlobalNav } from "@/components/global-nav";
 import { Toaster } from "@/components/ui/sonner";
 
 import { Providers } from "@/components/providers";
@@ -32,10 +33,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          {children}
+          <GlobalNav />
+          <main className="min-h-[calc(100vh-56px)]">
+            {children}
+          </main>
           <Toaster />
         </Providers>
       </body>
     </html>
   );
 }
+

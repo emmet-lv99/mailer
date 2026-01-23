@@ -152,6 +152,18 @@ ANMOK_GEMINI_API_KEY=your_gemini_api_key
 ```
 - `ANMOK_` 접두사 사용으로 환경변수 충돌 방지
 
+### 10. YouTube API 요청 차단 (Blocked)
+
+**증상**: `Requests to this API youtube method youtube.api.v3.V3DataSearchService.List are blocked` 에러 발생
+
+**원인**: Google Cloud Project에서 **YouTube Data API v3** 서비스가 활성화되지 않음
+
+**해결**:
+1. [Google Cloud Console](https://console.cloud.google.com/apis/library/youtube.googleapis.com) 접속
+2. 프로젝트 선택 (상단 드롭다운)
+3. **"사용(ENABLE)"** 버튼 클릭하여 API 활성화
+4. 잠시 대기 후 다시 시도
+
 ---
 
 ## 📞 지원
