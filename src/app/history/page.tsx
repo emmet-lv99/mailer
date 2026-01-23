@@ -29,6 +29,12 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showRepliedOnly, setShowRepliedOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  // Reset selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [showRepliedOnly, searchQuery]);
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -84,6 +90,67 @@ export default function HistoryPage() {
     }
   };
 
+  const toggleStatus = async (id: number, currentStatus: string) => {
+    const newStatus = currentStatus === 'draft' ? 'sent' : 'draft';
+    
+    // Optimistic Update
+    setHistory(prev => prev.map(item => 
+      item.id === id ? { ...item, status: newStatus } : item
+    ));
+
+    try {
+      const res = await fetch(`/api/history/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`상태가 ${newStatus.toUpperCase()}로 변경되었습니다.`);
+    } catch (error) {
+      toast.error("상태 변경 실패");
+      fetchHistory(); // Revert
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredHistory.length && filteredHistory.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredHistory.map(item => item.id)));
+    }
+  };
+
+  const handleBulkUpdate = async (status: string) => {
+    if (selectedIds.size === 0) return;
+    
+    const ids = Array.from(selectedIds);
+    // Optimistic Update
+    setHistory(prev => prev.map(item => 
+      selectedIds.has(item.id) ? { ...item, status } : item
+    ));
+    setSelectedIds(new Set()); // Reset selection
+
+    try {
+      const res = await fetch("/api/history/bulk-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, status }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`${ids.length}건의 상태가 변경되었습니다.`);
+    } catch (error) {
+      toast.error("일괄 업데이트 실패");
+      fetchHistory(); // Revert
+    }
+  };
+
   const filteredHistory = history.filter(item => 
     item.channel_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     item.email?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -99,10 +166,21 @@ export default function HistoryPage() {
               발송된 메일의 현황을 파악하고 답변 여부를 관리합니다.
             </p>
           </div>
-          <Button variant="outline" onClick={fetchHistory} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            새로고침
-          </Button>
+          <div className="flex gap-2">
+            {selectedIds.size > 0 && (
+               <Button 
+                  onClick={() => handleBulkUpdate('sent')} 
+                  variant="default"
+                  className="animate-in fade-in"
+               >
+                 선택한 {selectedIds.size}건 발송완료(SENT) 처리
+               </Button>
+            )}
+            <Button variant="outline" onClick={fetchHistory} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              새로고침
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -131,6 +209,12 @@ export default function HistoryPage() {
             <table className="w-full text-sm text-left">
               <thead className="bg-muted/50 text-muted-foreground font-medium border-b">
                 <tr>
+                  <th className="px-4 py-3 w-[50px] text-center">
+                    <Checkbox 
+                        checked={selectedIds.size === filteredHistory.length && filteredHistory.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                    />
+                  </th>
                   <th className="px-4 py-3 w-[50px] text-center">No</th>
                   <th className="px-4 py-3">채널명</th>
                   <th className="px-4 py-3">이메일 / 제목</th>
@@ -143,20 +227,26 @@ export default function HistoryPage() {
               <tbody className="divide-y">
                 {loading && history.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                    <td colSpan={8} className="text-center py-12 text-muted-foreground">
                        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                        데이터를 불러오는 중...
                     </td>
                   </tr>
                 ) : filteredHistory.length === 0 ? (
                    <tr>
-                    <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                    <td colSpan={8} className="text-center py-12 text-muted-foreground">
                        데이터가 없습니다.
                     </td>
                   </tr>
                 ) : (
                   filteredHistory.map((item, idx) => (
-                    <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={item.id} className={`hover:bg-muted/30 transition-colors ${selectedIds.has(item.id) ? "bg-muted/50" : ""}`}>
+                      <td className="px-4 py-3 text-center">
+                          <Checkbox 
+                             checked={selectedIds.has(item.id)}
+                             onCheckedChange={() => toggleSelect(item.id)}
+                          />
+                      </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">{history.length - idx}</td>
                       <td className="px-4 py-3 font-medium">
                         {item.channel_name}
@@ -174,7 +264,11 @@ export default function HistoryPage() {
                         {new Date(item.sent_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
-                         <Badge variant={item.status === 'sent' ? 'default' : 'secondary'}>
+                         <Badge 
+                            variant={item.status === 'sent' ? 'default' : 'secondary'}
+                            className="cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => toggleStatus(item.id, item.status)}
+                         >
                             {item.status.toUpperCase()}
                          </Badge>
                       </td>

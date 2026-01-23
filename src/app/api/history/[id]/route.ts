@@ -10,11 +10,12 @@ export async function PATCH(
     const params = await props.params;
     const id = params.id;
     const body = await req.json();
-    const { has_replied, note } = body;
+    const { has_replied, note, status } = body;
 
     const updates: any = {};
     if (typeof has_replied !== "undefined") updates.has_replied = has_replied;
     if (typeof note !== "undefined") updates.note = note;
+    if (typeof status !== "undefined") updates.status = status;
 
     const { error } = await supabase
       .from("sent_logs")
