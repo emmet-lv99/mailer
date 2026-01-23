@@ -4,6 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { historyService } from "@/services/history/api";
 import { CheckCircle, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -22,21 +23,9 @@ export function HistoryImporter() {
     if (!file) return;
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
+    
     try {
-      const res = await fetch("/api/history/import", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Import failed");
-      }
-
+      const data = await historyService.importHistory(file);
       toast.success(`${data.count}건의 발송 이력을 성공적으로 가져왔습니다!`);
       setFile(null);
     } catch (error: any) {

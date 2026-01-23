@@ -12,10 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { GlobalNav } from "@/components/global-nav";
+import { GlobalNav } from "@/components/common/global-nav";
 import { Toaster } from "@/components/ui/sonner";
 
-import { Providers } from "@/components/providers";
+import { Providers } from "@/components/common/providers";
 
 export const metadata: Metadata = {
   title: "Anmok Mailer",

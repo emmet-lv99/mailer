@@ -24,7 +24,7 @@ interface PromptListProps {
 }
 
 export function PromptList({ selectedId, onSelect }: PromptListProps) {
-  const { data: prompts, error, mutate } = useSWR<Prompt[]>("/api/prompts", fetcher);
+  const { data: prompts, error, mutate } = useSWR<Prompt[]>("/api/youtube/prompts", fetcher);
 
   if (error) return <div className="text-red-500 text-sm">로딩 에러</div>;
   if (!prompts) return <div className="text-muted-foreground text-sm">로딩 중...</div>;

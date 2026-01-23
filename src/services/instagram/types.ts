@@ -1,0 +1,25 @@
+
+export type InstagramUser = {
+  username: string;
+  full_name: string;
+  followers_count: number; // 0 if not fetched yet
+  biography: string;
+  profile_pic_url: string;
+  recent_posts: {
+    caption: string;
+    imageUrl: string;
+    likes: number;
+    comments: number;
+    timestamp: string;
+  }[];
+  is_registered: boolean;
+  db_status: 'todo' | 'ignored' | 'sent' | 'replied' | null;
+};
+
+export type SearchResponse = {
+  results: InstagramUser[];
+  meta: {
+    keyword: string;
+    count: number;
+  };
+};

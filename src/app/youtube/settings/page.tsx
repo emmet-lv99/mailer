@@ -1,7 +1,7 @@
-import { HistoryImporter } from "@/components/settings/history-importer";
-import { PromptManager } from "@/components/settings/prompt-manager";
-import { TemplateManager } from "@/components/settings/template-manager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HistoryImporter } from "@/components/youtube/settings/history-importer";
+import { PromptManager } from "@/components/youtube/settings/prompt-manager";
+import { TemplateManager } from "@/components/youtube/settings/template-manager";
 
 export default function SettingsPage() {
   return (

@@ -3,7 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { YouTubeChannel } from "@/types/youtube";
+import { historyService } from "@/services/history/api";
+import { youtubeService } from "@/services/youtube/api";
+import { YouTubeChannel } from "@/services/youtube/types";
 import { CheckSquare, Download, Loader2, Search, Square, Youtube } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -22,12 +24,7 @@ export default function ExplorerPage() {
     if (candidates.length === 0) return;
     try {
       const ids = candidates.map(c => c.id);
-      const res = await fetch("/api/history/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channelIds: ids }),
-      });
-      const data = await res.json();
+      const data = await historyService.checkSentHistory(ids);
       if (data.sentChannelIds) {
         setSentChannelIds(prev => {
           const next = new Set(prev);
@@ -48,21 +45,12 @@ export default function ExplorerPage() {
 
     setLoading(true);
     try {
-      const params = new URLSearchParams({
+      const data = await youtubeService.search({
         q: query,
-        minSubs: minSubs || "0",
-        maxSubs: maxSubs || "",
+        minSubs,
+        maxSubs,
+        pageToken
       });
-      if (pageToken) params.append("pageToken", pageToken);
-
-      const res = await fetch(`/api/youtube/search?${params.toString()}`);
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "검색 중 오류가 발생했습니다.");
-      }
-
-      const data = await res.json();
       
       if (pageToken) {
         setChannels(prev => {
@@ -134,8 +122,8 @@ export default function ExplorerPage() {
       "Email", 
       "Subscribers", 
       "Channel ID", 
-      "Channel URL",
-      "Description",
+      "Channel URL", 
+      "Description", 
       "Video Count"
     ];
 

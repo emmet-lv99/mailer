@@ -1,7 +1,7 @@
 "use client";
 
-import { PromptEditor } from "@/components/settings/prompt-editor";
-import { Prompt, PromptList } from "@/components/settings/prompt-list";
+import { PromptEditor } from "@/components/youtube/settings/prompt-editor";
+import { Prompt, PromptList } from "@/components/youtube/settings/prompt-list";
 import { useState } from "react";
 
 export  function PromptManager() {

@@ -1,11 +1,13 @@
 "use client";
 
-import { EmailPreviewDialog } from "@/components/email-preview-dialog";
-import { TemplateSelectDialog } from "@/components/template-select-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { EmailPreviewDialog } from "@/components/youtube/email-preview-dialog";
+import { TemplateSelectDialog } from "@/components/youtube/template-select-dialog";
+import { mailerService } from "@/services/youtube/mailer";
+import { processorService } from "@/services/youtube/processor";
 import { AlertTriangle, ArrowLeft, CheckCircle, Download, Edit, LayoutTemplate, List, Loader2, Mail, RefreshCw } from "lucide-react";
 import Papa from "papaparse";
 import { useEffect, useRef, useState } from "react";
@@ -62,18 +64,7 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
       try {
         addLog("작업을 시작합니다...", "info");
         
-        const response = await fetch("/api/process", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ promptContent, channels }),
-          signal: abortController.signal,
-        });
-
-        if (!response.ok || !response.body) {
-          throw new Error(response.statusText || "서버 연결 실패");
-        }
-
-        const reader = response.body.getReader();
+        const reader = await processorService.start({ promptContent, channels });
         const decoder = new TextDecoder();
 
         while (active) {
@@ -168,10 +159,7 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
     try {
       for (const result of results) {
         try {
-          const res = await fetch("/api/gmail/draft", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+          await mailerService.saveDraft({
               subject: result.subject,
               body: result.body,
               headerTemplateId: selection?.headerTemplateId || null,
@@ -179,11 +167,9 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
               recipientEmail: result.email || "",
               channelId: result.channelId,
               channelName: result.channelName, 
-            }),
           });
 
-          if (res.ok) successCount++;
-          else failCount++;
+          successCount++;
         } catch (e) {
           failCount++;
         }
@@ -224,22 +210,14 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
   const handleSaveSingleConfig = async (subject: string, body: string, templateId: number | null) => {
     const loadingToast = toast.loading("저장 중...");
     try {
-        const res = await fetch("/api/gmail/draft", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        await mailerService.saveDraft({
               subject,
               body,
               templateId,
               recipientEmail: selectedResult.email || "", 
-            }),
         });
 
-        if (res.ok) {
-            toast.success("Gmail 초안 저장 성공!");
-        } else {
-            throw new Error("저장 실패");
-        }
+        toast.success("Gmail 초안 저장 성공!");
     } catch (e: any) {
         toast.error(`저장 중 오류가 발생했습니다: ${e.message}`);
     } finally {

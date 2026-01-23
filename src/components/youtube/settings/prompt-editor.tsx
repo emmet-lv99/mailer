@@ -12,6 +12,7 @@ import { useSWRConfig } from "swr";
 // The user installed: button, input, card, progress, textarea, dialog, sonner.
 // Checkbox is missing. I'll use standard input type="checkbox" for now with styling.
 
+import { promptService } from "@/services/youtube/prompts";
 import { Prompt } from "./prompt-list";
 
 interface PromptEditorProps {
@@ -55,19 +56,15 @@ export function PromptEditor({ prompt, onSaved, onDeleted }: PromptEditorProps) 
 
     setLoading(true);
     try {
-      const url = prompt ? `/api/prompts/${prompt.id}` : "/api/prompts";
-      const method = prompt ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) throw new Error("Failed to save");
-
-      toast.success(prompt ? "프롬프트가 수정되었습니다." : "새 프롬프트가 생성되었습니다.");
-      mutate("/api/prompts"); // Refresh list
+      if (prompt) {
+          await promptService.update(prompt.id, formData);
+          toast.success("프롬프트가 수정되었습니다.");
+      } else {
+          await promptService.create(formData);
+          toast.success("새 프롬프트가 생성되었습니다.");
+      }
+      
+      mutate("/api/youtube/prompts"); // Refresh list
       onSaved();
     } catch (error) {
       console.error(error);
@@ -82,14 +79,10 @@ export function PromptEditor({ prompt, onSaved, onDeleted }: PromptEditorProps) 
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/prompts/${prompt.id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) throw new Error("Failed to delete");
+      await promptService.delete(prompt.id);
 
       toast.success("프롬프트가 삭제되었습니다.");
-      mutate("/api/prompts");
+      mutate("/api/youtube/prompts");
       onDeleted();
     } catch (error) {
       console.error(error);

@@ -11,18 +11,8 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-interface HistoryItem {
-  id: number;
-  channel_id: string;
-  channel_name: string;
-  email: string;
-  subject: string;
-  status: string;
-  sent_at: string;
-  has_replied: boolean;
-  note: string | null;
-  source: string;
-}
+import { historyService } from "@/services/history/api";
+import { HistoryItem } from "@/services/history/types";
 
 export default function HistoryPage() {
   const [loading, setLoading] = useState(false);
@@ -39,13 +29,7 @@ export default function HistoryPage() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (showRepliedOnly) params.append("hasReplied", "true");
-      
-      const res = await fetch(`/api/history?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch history");
-      
-      const data = await res.json();
+      const data = await historyService.fetchHistory(showRepliedOnly);
       setHistory(data.history || []);
     } catch (error) {
       toast.error("이력을 불러오는데 실패했습니다.");
@@ -65,12 +49,7 @@ export default function HistoryPage() {
     ));
 
     try {
-      const res = await fetch(`/api/history/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ has_replied: !current }),
-      });
-      if (!res.ok) throw new Error();
+      await historyService.toggleReplied(id, !current);
     } catch (error) {
       toast.error("업데이트 실패");
       fetchHistory(); // Revert
@@ -79,11 +58,7 @@ export default function HistoryPage() {
 
   const handleNoteBlur = async (id: number, note: string) => {
     try {
-      await fetch(`/api/history/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note }),
-      });
+      await historyService.updateNote(id, note);
       toast.success("비고 저장됨");
     } catch (error) {
       toast.error("비고 저장 실패");
@@ -99,12 +74,7 @@ export default function HistoryPage() {
     ));
 
     try {
-      const res = await fetch(`/api/history/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error();
+      await historyService.updateStatus(id, newStatus);
       toast.success(`상태가 ${newStatus.toUpperCase()}로 변경되었습니다.`);
     } catch (error) {
       toast.error("상태 변경 실패");
@@ -138,12 +108,7 @@ export default function HistoryPage() {
     setSelectedIds(new Set()); // Reset selection
 
     try {
-      const res = await fetch("/api/history/bulk-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, status }),
-      });
-      if (!res.ok) throw new Error();
+      await historyService.bulkUpdateStatus({ ids, status });
       toast.success(`${ids.length}건의 상태가 변경되었습니다.`);
     } catch (error) {
       toast.error("일괄 업데이트 실패");
