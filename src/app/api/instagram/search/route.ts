@@ -5,13 +5,6 @@ import { NextResponse } from "next/server";
 
 // Actor ID for Instagram Scraper (apify/instagram-scraper is a good choice, but requires login sometimes)
 // Alternative: apify/instagram-hashtag-scraper for hashtag search
-// Let's assume we use a hashtag scraper for "discovery" or profile scraper for "details"
-// For now, let's try 'apify/instagram-scraper' for profile search if input looks like a username,
-// or 'apify/instagram-hashtag-scraper' if it looks like a hashtag.
-
-// NOTE: We will mock the response structure based on standard Apify output for now,
-// as running actual Actor costs money and takes time. 
-// However, the code below is setup to run the actual actor.
 
 export async function POST(req: Request) {
   try {
@@ -22,133 +15,144 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Keyword is required" }, { status: 400 });
     }
 
-    // 1. Check if token exists
-    if (!process.env.APIFY_API_TOKEN) {
-         console.warn("APIFY_API_TOKEN is missing. Using MOCK data.");
-         
-         // --- MOCK DATA GENERATION ---
-         const mockResults = Array.from({ length: limit }).map((_, i) => ({
-            username: `mock_${keyword}_${i + 1}`,
-            full_name: `Mock User ${i + 1} (${keyword})`,
-            followers_count: Math.floor(Math.random() * 90000) + 5000, // 5k ~ 95k
-            biography: `This is a mock biography for ${keyword} #${i + 1}`,
-            profile_pic_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
-            recent_posts: [
-                { caption: `Recent post about #${keyword} 1`, imageUrl: "https://placehold.co/300x300?text=Post1", likes: Math.floor(Math.random() * 500), comments: Math.floor(Math.random() * 50), timestamp: new Date().toISOString() },
-                { caption: `Recent post about #${keyword} 2`, imageUrl: "https://placehold.co/300x300?text=Post2", likes: Math.floor(Math.random() * 500), comments: Math.floor(Math.random() * 50), timestamp: new Date(Date.now() - 86400000).toISOString() }
-            ],
-            status: 'todo'
-         }));
-         
-         // Mock DB Check
-         const usernames = mockResults.map(r => r.username);
-         const { data: existingUsers } = await supabase
-            .from("instagram_targets")
-            .select("username, status")
-            .in("username", usernames);
+    const results: any[] = [];
+    let discoveryItems: any[] = [];
+    let detailItems: any[] = [];
+    let targetUsernames: string[] = [];
 
-         const existingMap = new Map(existingUsers?.map(u => [u.username, u.status]));
-
-         const finalResults = mockResults.map(user => ({
-            ...user,
-            db_status: existingMap.get(user.username) || null,
-            is_registered: existingMap.has(user.username),
-            is_target_range: user.followers_count >= 5000 && user.followers_count <= 100000
-         }));
-
-         return NextResponse.json({ 
-            results: finalResults,
-            meta: { keyword: keyword, count: finalResults.length, mock: true }
-         });
+    // --- REAL EXECUTION (Only if token exists) ---
+    if (process.env.APIFY_API_TOKEN) {
+        try {
+            // Step 1: Discover Users via Hashtag
+            const isHashtag = keyword.startsWith("#");
+            const query = isHashtag ? keyword.slice(1) : keyword;
+            
+            console.log(`[Step 1] Discovering users for hashtag: ${query}`);
+            const discoveryInput = {
+                hashtags: [query],
+                resultsLimit: limit * 2, // Fetch more posts to ensure we get enough unique users
+            };
+            
+            // Use hashtag scraper for discovery
+            const discoveryRun = await client.actor("apify/instagram-hashtag-scraper").call(discoveryInput);
+            const discoveryDataset = await client.dataset(discoveryRun.defaultDatasetId).listItems();
+            discoveryItems = discoveryDataset.items;
+            
+            // Extract unique usernames
+            const uniqueUsernames = new Set<string>();
+            for (const item of (discoveryItems as any[])) {
+                if (item.ownerUsername && uniqueUsernames.size < limit) {
+                     uniqueUsernames.add(item.ownerUsername);
+                }
+            }
+            
+            targetUsernames = Array.from(uniqueUsernames);
+            console.log(`[Step 1] Found ${targetUsernames.length} unique users.`);
+            
+            if (targetUsernames.length > 0) {
+                // Step 2: Fetch Details for these Users (Profile Scraper)
+                console.log(`[Step 2] Fetching details for users: ${targetUsernames.join(", ")}`);
+                
+                try {
+                    const detailInput = {
+                        usernames: targetUsernames,
+                        resultsType: "details",
+                        searchLimit: 1,
+                        resultsLimit: targetUsernames.length,
+                    };
+                    const detailRun = await client.actor("apify/instagram-scraper").call(detailInput);
+                    const detailDataset = await client.dataset(detailRun.defaultDatasetId).listItems();
+                    detailItems = detailDataset.items;
+                    console.log(`[Step 2] Fetched ${detailItems.length} detailed profiles.`);
+                } catch (e) {
+                    console.error("[Step 2] Profile scrape failed, using fallback:", e);
+                }
+            }
+        } catch (e) {
+            console.error("Apify execution failed:", e);
+        }
+    } else {
+        console.warn("APIFY_API_TOKEN is missing. Skipping real execution.");
     }
+    
+    // --- RESULT PROCESSING (CASCADE STRATEGY) ---
+    
+    // Attempt 1: Process detailed items (Step 2)
+    if (detailItems.length > 0) {
+        for (const item of (detailItems as any[])) {
+            const username = item.username;
+            if (!username) continue; // Skip invalid items
 
-    // 2. Decide Actor based on input (Basic heuristic)
-    const isHashtag = keyword.startsWith("#");
-    const query = isHashtag ? keyword.slice(1) : keyword;
-    
-    // For this specific task, let's assume we are searching for profiles related to a hashtag
-    // using a Hashtag Scraper is more appropriate for discovery.
-    // Actor: apify/instagram-hashtag-scraper
-    const ACTOR_ID = "apify/instagram-hashtag-scraper";
-
-    // Since we want to find "Users", hashtag scraper usually gives Posts.
-    // We would need to extract unique users from those posts.
-    
-    // Simplify for now: Request implies "Search", maybe we use a Search Actor or mimic search.
-    // Let's use a standard search input for the scraper if available.
-    
-    // ACTUALLY, usually users want to search by Hashtag to find influencers.
-    // Let's run the Hashtag Scraper.
-    
-    const runInput = {
-        hashtags: [query],
-        resultsLimit: limit,
-    };
-
-    // Start execution
-    console.log(`Starting Apify execution for: ${query}`);
-    
-
-    // --- REAL EXECUTION ---
-    // Using apify/instagram-hashtag-scraper structure based on user sample
-    const run = await client.actor(ACTOR_ID).call(runInput);
-    const { items } = await client.dataset(run.defaultDatasetId).listItems();
-    
-    // --- PROCESSING LOGIC based on provided JSON structure ---
-    const uniqueUsersMap = new Map();
-    
-    // Type definition for the scraper result item (partial)
-    type ScraperItem = {
-        id: string;
-        code?: string; // shortCode
-        shortCode?: string;
-        caption: string;
-        displayUrl: string;
-        videoUrl?: string; // If video
-        ownerId: string;
-        ownerUsername: string;
-        ownerFullName: string;
-        commentsCount: number;
-        likesCount: number;
-        timestamp: string;
-        // Hashtag scraper usually doesn't provide follower count directly in post object
-        // We might need to assume 0 or fetch separately if needed.
-        // For efficiency, we will store 0 or null and fetch details later in "Analysis" phase.
-    };
-
-    // The user provided JSON shows items are posts.
-    for (const item of (items as unknown as ScraperItem[])) {
-        const username = item.ownerUsername;
-        if (!username) continue;
-
-        if (!uniqueUsersMap.has(username)) {
-            uniqueUsersMap.set(username, {
+            const latestPosts = item.latestPosts || [];
+            
+            const recent_posts = latestPosts.slice(0, 5).map((post: any) => ({
+                caption: post.caption || "",
+                imageUrl: post.displayUrl || post.thumbnailUrl || "",
+                likes: post.likesCount || 0,
+                comments: post.commentsCount || 0,
+                timestamp: post.timestamp || new Date().toISOString()
+            }));
+            
+            results.push({
                 username: username,
-                full_name: item.ownerFullName || "",
-                followers_count: 0, // Not available in hashtag search results usually
-                biography: "", // Not available
-                profile_pic_url: "", // Not available directly in post object usually, sometimes in owner object if detailed
-                recent_posts: [],
+                full_name: item.fullName || "",
+                followers_count: item.followersCount || 0,
+                biography: item.biography || "",
+                profile_pic_url: item.profilePicUrl || "",
+                recent_posts: recent_posts,
                 status: 'todo'
             });
         }
+    }
+
+    // Attempt 2: Fallback to Discovery items (Step 1) if Details failed to produce results
+    if (results.length === 0 && targetUsernames.length > 0) {
+        console.warn("[Processing] No valid users from Details. Fallback to Discovery data.");
         
-        const user = uniqueUsersMap.get(username);
-        // Add up to 3 recent posts found
-        if (user.recent_posts.length < 3) {
-            user.recent_posts.push({
-                caption: item.caption,
-                imageUrl: item.displayUrl,
-                likes: item.likesCount === -1 ? 0 : item.likesCount, // -1 often means hidden
-                comments: item.commentsCount,
-                timestamp: item.timestamp
-            });
+        // Match discovery items to unique usernames
+        for (const username of targetUsernames) {
+             const representative = (discoveryItems as any[]).find(i => i.ownerUsername === username);
+             if (representative) {
+                 results.push({
+                     username: username,
+                     full_name: representative.ownerFullName || "",
+                     followers_count: 0, // Not available
+                     biography: "상세 정보 로딩 실패 (Step 2 Error)", // Indicate incomplete data
+                     profile_pic_url: "", // Not available
+                     recent_posts: [{
+                         caption: representative.caption || "",
+                         imageUrl: representative.displayUrl || "",
+                         likes: representative.likesCount || 0,
+                         comments: representative.commentsCount || 0,
+                         timestamp: representative.timestamp || new Date().toISOString()
+                     }],
+                     status: 'todo'
+                 });
+             }
         }
     }
 
-    const results = Array.from(uniqueUsersMap.values());
+    // Attempt 3: Final Fallback to Mock Data if ALL scraping failed or no token
+    if (results.length === 0) {
+        console.warn("[Processing] No results from Discovery either. Generating MOCK data.");
+        const mockData = Array.from({ length: limit }).map((_, i) => ({
+            username: `simulated_${keyword}_${i + 1}`,
+            full_name: `Simulation User ${i + 1}`,
+            followers_count: Math.floor(Math.random() * 50000) + 1000,
+            biography: `API 호출 전면 실패로 생성된 가상 데이터입니다. (${i+1})`,
+            profile_pic_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${keyword}${i}`,
+            recent_posts: Array.from({ length: 5 }).map((_, j) => ({
+                caption: `Mock Post ${j+1}`,
+                imageUrl: `https://placehold.co/300x300?text=Mock${j+1}`,
+                likes: Math.floor(Math.random() * 100),
+                comments: Math.floor(Math.random() * 10),
+                timestamp: new Date(Date.now() - (86400000 * Math.floor(Math.random() * 10))).toISOString()
+            })),
+            status: 'todo'
+        }));
+        results.push(...mockData);
+    }
     // -----------------------------------------------------------
-
 
     // 4. Check against DB (Validation)
     // Find registered users
@@ -172,13 +176,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
         results: finalResults,
         meta: {
-            keyword: query,
-            count: finalResults.length
+            keyword: keyword,
+            count: finalResults.length,
+            mock: results[0]?.username?.startsWith('simulated_') // Flag if mock data was used
         }
     });
 
   } catch (error: any) {
-    console.error("Apify Error:", error);
+    console.error("Route Handler Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
