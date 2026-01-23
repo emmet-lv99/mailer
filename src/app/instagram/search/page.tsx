@@ -346,7 +346,7 @@ export default function InstagramSearchPage() {
                       <div className="grid grid-cols-2 divide-x border-y bg-muted/20">
                           <div className="p-2 text-center">
                               <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">팔로워</div>
-                              <div className="text-sm font-medium">{user.followers_count === 0 ? '?' : user.followers_count.toLocaleString()}</div>
+                              <div className="text-sm font-medium">{user.followers_count === -1 ? '?' : user.followers_count.toLocaleString()}</div>
                           </div>
                           <div className="p-2 text-center">
                               <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">평균 주기</div>

@@ -121,7 +121,7 @@ export async function POST(req: Request) {
                  results.push({
                      username: username,
                      full_name: representative.ownerFullName || "",
-                     followers_count: 0, // Not available
+                     followers_count: -1, // -1 indicates Unknown (not scraped)
                      biography: "상세 정보 로딩 실패 (Step 2 Error)", // Indicate incomplete data
                      profile_pic_url: "", // Not available
                      recent_posts: [{
