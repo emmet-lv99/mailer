@@ -16,6 +16,29 @@ export default function ExplorerPage() {
   const [channels, setChannels] = useState<YouTubeChannel[]>([]);
   const [selectedChannelIds, setSelectedChannelIds] = useState<Set<string>>(new Set());
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [sentChannelIds, setSentChannelIds] = useState<Set<string>>(new Set());
+
+  const checkSentHistory = async (candidates: YouTubeChannel[]) => {
+    if (candidates.length === 0) return;
+    try {
+      const ids = candidates.map(c => c.id);
+      const res = await fetch("/api/history/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelIds: ids }),
+      });
+      const data = await res.json();
+      if (data.sentChannelIds) {
+        setSentChannelIds(prev => {
+          const next = new Set(prev);
+          data.sentChannelIds.forEach((id: string) => next.add(id));
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error("History Check Failed:", error);
+    }
+  };
 
   const searchChannels = async (pageToken?: string) => {
     if (!query.trim()) {
@@ -45,10 +68,12 @@ export default function ExplorerPage() {
         setChannels(prev => {
           const existingIds = new Set(prev.map(c => c.id));
           const newChannels = data.channels.filter((c: YouTubeChannel) => !existingIds.has(c.id));
+          checkSentHistory(newChannels); // Check history for new items
           return [...prev, ...newChannels];
         });
       } else {
         setChannels(data.channels);
+        checkSentHistory(data.channels); // Check history for all items
       }
       setNextPageToken(data.nextPageToken || null);
     } catch (error: any) {
@@ -61,6 +86,7 @@ export default function ExplorerPage() {
 
   const handleSearch = () => {
     setChannels([]);
+    setSentChannelIds(new Set()); // Reset history
     setNextPageToken(null);
     searchChannels();
   };
@@ -88,6 +114,12 @@ export default function ExplorerPage() {
     }
   };
 
+  const [emails, setEmails] = useState<Record<string, string>>({});
+
+  const handleEmailChange = (channelId: string, email: string) => {
+    setEmails(prev => ({ ...prev, [channelId]: email }));
+  };
+
   const downloadCsv = () => {
     if (selectedChannelIds.size === 0) {
       toast.error("선택된 채널이 없습니다.");
@@ -96,13 +128,25 @@ export default function ExplorerPage() {
 
     const selectedChannels = channels.filter(c => selectedChannelIds.has(c.id));
     
-    // CSV Header: Channel Name, Subscriber Count, Channel ID, Channel URL
-    const headers = ["Channel Name", "Subscribers", "Channel ID", "Channel URL"];
+    // Updated CSV Headers for Rich Data
+    const headers = [
+      "Channel Name", 
+      "Email", 
+      "Subscribers", 
+      "Channel ID", 
+      "Channel URL",
+      "Description",
+      "Video Count"
+    ];
+
     const rows = selectedChannels.map(c => [
-      c.title.replace(/,/g, ""), // Remove commas to prevent CSV issues
+      `"${(c.title || "").replace(/"/g, '""')}"`, // Escape quotes
+      emails[c.id] || "",
       c.statistics?.subscriberCount || "0",
       c.id,
-      `https://www.youtube.com/channel/${c.id}`
+      `https://www.youtube.com/channel/${c.id}`,
+      `"${(c.description || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`, // Escape quotes & newlines
+      c.statistics?.videoCount || "0"
     ]);
 
     const csvContent = [
@@ -114,7 +158,7 @@ export default function ExplorerPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `youtube_channels_${new Date().getTime()}.csv`);
+    link.setAttribute("download", `youtube_channels_rich_${new Date().getTime()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -212,6 +256,7 @@ export default function ExplorerPage() {
                     </div>
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">채널</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[200px]">이메일</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">구독자</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">동영상</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">개설일</th>
@@ -224,13 +269,18 @@ export default function ExplorerPage() {
                   return (
                     <tr 
                       key={channel.id} 
-                      className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${isSelected ? "bg-muted/50" : ""}`}
-                      onClick={() => toggleSelect(channel.id)}
+                      className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${isSelected ? "bg-muted/50" : ""} ${sentChannelIds.has(channel.id) ? "opacity-60 bg-gray-50/50" : ""}`}
+                      onClick={() => {
+                         if (!sentChannelIds.has(channel.id)) toggleSelect(channel.id);
+                         else toast.warning("이미 이메일을 발송한 채널입니다.");
+                      }}
                     >
                       <td className="p-4 align-middle">
-                        <div className="cursor-pointer">
+                        <div className={`cursor-pointer ${sentChannelIds.has(channel.id) ? "cursor-not-allowed opacity-50" : ""}`}>
                           {isSelected ? (
                             <CheckSquare className="h-4 w-4 text-primary" />
+                          ) : sentChannelIds.has(channel.id) ? (
+                             <Square className="h-4 w-4 text-gray-300" />
                           ) : (
                             <Square className="h-4 w-4 text-muted-foreground" />
                           )}
@@ -244,10 +294,25 @@ export default function ExplorerPage() {
                             className="h-10 w-10 rounded-full object-cover border"
                           />
                           <div className="flex flex-col">
-                            <span className="font-medium line-clamp-1">{channel.title}</span>
+                            <span className="font-medium line-clamp-1 flex items-center gap-2">
+                              {channel.title}
+                              {sentChannelIds.has(channel.id) && (
+                                <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded border border-yellow-200">
+                                  발송됨
+                                </span>
+                              )}
+                            </span>
                             <span className="text-xs text-muted-foreground line-clamp-1">{channel.description || "설명 없음"}</span>
                           </div>
                         </div>
+                      </td>
+                      <td className="p-4 align-middle" onClick={(e) => e.stopPropagation()}>
+                        <Input 
+                          placeholder="이메일 입력" 
+                          value={emails[channel.id] || ""}
+                          onChange={(e) => handleEmailChange(channel.id, e.target.value)}
+                          className="h-8 text-xs"
+                        />
                       </td>
                       <td className="p-4 align-middle font-medium">
                         {formatNumber(channel.statistics?.subscriberCount)}

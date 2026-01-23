@@ -104,6 +104,32 @@ export async function POST(req: Request) {
 
     console.log("[Gmail API] Success! Draft ID:", res.data.id);
 
+    // 6. 발송 이력 저장 (sent_logs)
+    if (res.data.id && session.user?.email) {
+       const channelId = bodyData.channelId;
+       const channelName = bodyData.channelName;
+       
+       if (channelId) {
+          console.log(`[Gmail API] Logging sent history for channel ${channelId}...`);
+          const { error: logError } = await supabase
+            .from('sent_logs')
+            .insert({
+              channel_id: channelId,
+              channel_name: channelName || '',
+              email: recipientEmail || '',
+              subject: subject,
+              status: 'draft',
+              draft_id: res.data.id,
+              source: 'system'
+            });
+            
+          if (logError) {
+             console.error("[Gmail API] Failed to log sent history:", logError);
+             // Note: We don't fail the request if logging fails, but we should know about it.
+          }
+       }
+    }
+
     return NextResponse.json({ 
       success: true, 
       draftId: res.data.id, 

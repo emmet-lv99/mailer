@@ -1,3 +1,4 @@
+import { HistoryImporter } from "@/components/settings/history-importer";
 import { PromptManager } from "@/components/settings/prompt-manager";
 import { TemplateManager } from "@/components/settings/template-manager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +16,7 @@ export default function SettingsPage() {
         <TabsList className="mb-4">
           <TabsTrigger value="prompt">프롬프트 설정</TabsTrigger>
           <TabsTrigger value="template">템플릿 설정</TabsTrigger>
+          <TabsTrigger value="history">발송 이력 가져오기</TabsTrigger>
         </TabsList>
 
         {/* 탭 내용 1: 프롬프트 */}
@@ -25,6 +27,11 @@ export default function SettingsPage() {
         {/* 탭 내용 2: 템플릿 */}
         <TabsContent value="template">
           <TemplateManager />
+        </TabsContent>
+
+        {/* 탭 내용 3: 이력 관리 */}
+        <TabsContent value="history">
+          <HistoryImporter />
         </TabsContent>
       </Tabs>
     </div>

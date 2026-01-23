@@ -1,7 +1,7 @@
 "use client";
 
 import { UserAuth } from "@/components/user-auth";
-import { Home, Search, Settings } from "lucide-react";
+import { History, Home, Search, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +11,7 @@ export function GlobalNav() {
   const navItems = [
     { href: "/", label: "홈", icon: Home },
     { href: "/explorer", label: "채널 탐색", icon: Search },
+    { href: "/history", label: "이력 관리", icon: History },
     { href: "/settings", label: "설정", icon: Settings },
   ];
 

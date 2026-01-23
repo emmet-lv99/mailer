@@ -176,7 +176,9 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
               body: result.body,
               headerTemplateId: selection?.headerTemplateId || null,
               footerTemplateId: selection?.footerTemplateId || null,
-              recipientEmail: result.email || "", 
+              recipientEmail: result.email || "",
+              channelId: result.channelId,
+              channelName: result.channelName, 
             }),
           });
 
