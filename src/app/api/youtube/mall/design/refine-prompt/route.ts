@@ -334,7 +334,8 @@ Vibe: Professional Korean e-commerce, clean, trustworthy, and high-fidelity.`;
       'product-hero': 'Main product details at the top',
       'sticky-tabs': 'Sticky navigation bar',
       'detail-body': 'Main long-form product description',
-      'text-bar': 'Minimalist announcement line'
+      'text-bar': 'Minimalist announcement line',
+      'image-strap': 'Full-width immersive image banner'
     };
     return descriptions[type] || 'Standard e-commerce section';
   }

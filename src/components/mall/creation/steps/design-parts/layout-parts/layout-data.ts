@@ -24,7 +24,7 @@ export const radiuses = [
   
   export const subBannerLayouts = [
     { name: "Text Ticker", value: "text-ticker", desc: "Animated scrolling text line" },
-    { name: "Image Strap", value: "image-strap", desc: "Full-width decorative image" },
+    { name: "Full Screen", value: "image-strap", desc: "Full-width decorative image" },
     { name: "Promotion Bar", value: "promotion-bar", desc: "Simple notification area" },
     { name: "Grid 2-Banner", value: "grid-2-banner", desc: "Two side-by-side promo banners" },
     { name: "Coupon Banner", value: "coupon-banner", desc: "Special offer/coupon focus" },
