@@ -203,8 +203,8 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                            <SelectValue />
                          </SelectTrigger>
                          <SelectContent className="rounded-xl">
-                           <SelectItem value="hero">Hero Banner (메인)</SelectItem>
-                           <SelectItem value="sub">Sub Banner (서브)</SelectItem>
+                           <SelectItem value="hero">Hero Banner</SelectItem>
+                           <SelectItem value="sub">Sub Banner</SelectItem>
                          </SelectContent>
                        </Select>
                     </div>
