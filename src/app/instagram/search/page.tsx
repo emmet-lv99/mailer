@@ -1,17 +1,17 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { instagramService } from "@/services/instagram/api";
-import { useInstagramStore } from "@/services/instagram/store"; // Import Store
-import { InstagramUser } from "@/services/instagram/types";
+import { useInstagramStore } from "@/services/instagram/store";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { getLatestPostDate, getProxiedUrl } from "@/services/instagram/utils";
 import { useSearchParams } from "next/navigation";
+import { InstagramUserCard } from "./components/InstagramUserCard";
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -56,67 +56,6 @@ function SearchPageContent() {
     }
   };
 
-  // ... (rest of helper functions same as before) 
-  // (Assuming context here, I will just copy them or keep them if outside this block, but they were inside component.
-  // Since I am replacing the COMPONENT BODY or Structure, I should be careful.
-  // The user file has helpers inside the component.
-  // I will just replace the TOP part and render logic.)
-  
-  // Helper function to extract date
-  const getLatestPostDate = (user: InstagramUser) => {
-      if (!user.recent_posts || user.recent_posts.length === 0) return null;
-      const sorted = [...user.recent_posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      return new Date(sorted[0].timestamp);
-  };
-  
-  // ... (getAverageUploadCycle, isUserActive, sortedResults, toggleSort, toggleSelectAll, getProxiedUrl)
-  
-  const getAverageUploadCycle = (posts: any[]) => {
-      if (!posts || posts.length < 2) return null;
-      const sorted = [...posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      
-      let totalDiff = 0;
-      for (let i = 0; i < sorted.length - 1; i++) {
-          const diff = new Date(sorted[i].timestamp).getTime() - new Date(sorted[i+1].timestamp).getTime();
-          totalDiff += diff;
-      }
-      const avgMs = totalDiff / (sorted.length - 1);
-      return Math.round(avgMs / (1000 * 60 * 60 * 24));
-  };
-
-  const getCommunicationStats = (user: InstagramUser) => {
-    let totalFetchedComments = 0;
-    let myReplies = 0;
-    
-    user.recent_posts.forEach(post => {
-        if (post.latest_comments) {
-            totalFetchedComments += post.latest_comments.length;
-            post.latest_comments.forEach(c => {
-                 if (c.ownerUsername === user.username) {
-                     myReplies++;
-                 }
-            });
-        }
-    });
-
-    if (totalFetchedComments === 0) return null;
-
-    const fanComments = totalFetchedComments - myReplies;
-    const replyRate = fanComments > 0 ? Math.round((myReplies / fanComments) * 100) : 0;
-    
-    return {
-        replyRate,
-        sampleSize: totalFetchedComments
-    };
-  };
-
-  const isUserActive = (latestDate: Date | null) => {
-      if (!latestDate) return false;
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      return latestDate >= oneMonthAgo;
-  };
-
   const sortedResults = [...results].sort((a, b) => {
       const dateA = getLatestPostDate(a)?.getTime() || 0;
       const dateB = getLatestPostDate(b)?.getTime() || 0;
@@ -139,12 +78,6 @@ function SearchPageContent() {
     }
   };
   
-  const getProxiedUrl = (url: string | null | undefined) => {
-      if (!url) return "";
-      if (url.startsWith("data:") || url.startsWith("/")) return url;
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
-  };
-
   return (
     <div className="container mx-auto p-6 max-h-screen flex flex-col gap-6">
       {/* Header */}
@@ -239,136 +172,16 @@ function SearchPageContent() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {sortedResults.map((user) => {
-                  const isSelected = selectedUsernames.has(user.username);
-                  const isDisabled = user.is_registered;
-                  
-                  const latestDate = getLatestPostDate(user);
-                  const isActive = isUserActive(latestDate);
-                  const avgCycle = getAverageUploadCycle(user.recent_posts);
-                  const commStats = getCommunicationStats(user);
-
-                  return (
-                    <div 
-                        key={user.username} 
-                        className={`relative group border rounded-xl overflow-hidden bg-card transition-all hover:shadow-md ${isSelected ? "ring-2 ring-primary bg-primary/5" : ""} ${isDisabled ? "opacity-60 bg-muted/50" : ""}`}
-                        onClick={() => !isDisabled && toggleSelection(user.username)}
-                    >
-                      {/* Selection Overlay (Active on hover or selected) */}
-                      {!isDisabled && (
-                          <div className={`absolute top-3 left-3 z-10`}>
-                             <input 
-                                type="checkbox" 
-                                className="accent-primary h-5 w-5 shadow-sm"
-                                checked={isSelected}
-                                onChange={(e) => { e.stopPropagation(); toggleSelection(user.username); }}
-                             />
-                          </div>
-                      )}
-
-                      {/* Header Section */}
-                      <div className="p-4 pb-2">
-                          <div className="flex items-start justify-between mb-3 pl-7"> 
-                             {/* Badge */}
-                             {isDisabled ? (
-                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                  user.db_status === 'todo' ? 'bg-blue-100 text-blue-700' : 
-                                  user.db_status === 'ignored' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-700'
-                              }`}>
-                                  {user.db_status === 'todo' ? '관리중' : user.db_status === 'ignored' ? '제외됨' : '등록됨'}
-                               </span>
-                             ) : (
-                                <span className="px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground font-medium">검색됨</span>
-                             )}
-                             <a 
-                                href={`https://instagram.com/${user.username}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-muted-foreground hover:text-primary transition-colors"
-                                onClick={(e) => e.stopPropagation()}
-                             >
-                                 <Search className="w-4 h-4" />
-                             </a>
-                          </div>
-
-                          <div className="flex flex-col items-center text-center gap-2">
-                            <div className="relative">
-                                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
-                                    {user.profile_pic_url ? (
-                                        <img src={getProxiedUrl(user.profile_pic_url)} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <span className="text-2xl">👤</span>
-                                    )}
-                                </div>
-                                {isActive && (
-                                    <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-sm" title="최근 1달 내 활동"></span>
-                                )}
-                            </div>
-                            <div>
-                                <div className="font-bold text-sm truncate max-w-[180px]">{user.full_name || user.username}</div>
-                                <a 
-                                    href={`https://instagram.com/${user.username}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer" 
-                                    className="text-xs text-muted-foreground truncate max-w-[180px] hover:text-primary hover:underline cursor-pointer block"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    @{user.username}
-                                </a>
-                            </div>
-                          </div>
-                      </div>
-
-                      {/* Stats Section */}
-                      <div className="grid grid-cols-3 divide-x border-y bg-muted/20">
-                          <div className="p-2 text-center">
-                              <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">팔로워</div>
-                              <div className="text-sm font-medium">{user.followers_count === -1 ? '?' : user.followers_count.toLocaleString()}</div>
-                          </div>
-                          <div className="p-2 text-center">
-                              <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">평균 주기</div>
-                              <div className="text-sm font-medium">{avgCycle ? `${avgCycle}일` : '-'}</div>
-                          </div>
-                          <div className="p-2 text-center">
-                              <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">소통 지수</div>
-                               <div className={`text-sm font-bold ${commStats ? (commStats.replyRate >= 30 ? 'text-green-600' : commStats.replyRate >= 10 ? 'text-blue-600' : 'text-muted-foreground') : 'text-muted-foreground'}`}>
-                                  {commStats ? `${commStats.replyRate}%` : '-'}
-                              </div>
-                          </div>
-                      </div>
-
-                      {/* Recent Posts Gallery */}
-                      <div className="p-3 bg-muted/10">
-                          <div className="text-[10px] text-muted-foreground mb-2 flex justify-between items-center">
-                              <span>최근 게시물</span>
-                              <span>{latestDate ? latestDate.toLocaleDateString() : '-'}</span>
-                          </div>
-                          <div className="grid grid-cols-5 gap-1">
-                              {/* Always show 5 slots placeholder if empty */}
-                              {Array.from({ length: 5 }).map((_, idx) => {
-                                  const post = user.recent_posts[idx];
-                                  return (
-                                      <div 
-                                        key={idx} 
-                                        className="aspect-square rounded-md bg-muted overflow-hidden border relative cursor-pointer"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (post?.imageUrl) setSelectedImage(post.imageUrl);
-                                        }}
-                                      >
-                                          {post?.imageUrl ? (
-                                              <img src={getProxiedUrl(post.imageUrl)} alt="" className="w-full h-full object-cover transition-transform hover:scale-110" />
-                                          ) : (
-                                              <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground/30">•</div>
-                                          )}
-                                      </div>
-                                  );
-                              })}
-                          </div>
-                      </div>
-                    </div>
-                  );
-            })}
+            {sortedResults.map((user) => (
+                <InstagramUserCard 
+                    key={user.username}
+                    user={user}
+                    isSelected={selectedUsernames.has(user.username)}
+                    isDisabled={user.is_registered}
+                    onToggleSelection={toggleSelection}
+                    onImageSelect={setSelectedImage}
+                />
+            ))}
           </div>
           
           {results.length === 0 && (
@@ -394,7 +207,7 @@ function SearchPageContent() {
                           className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black/50 rounded-full p-2"
                           onClick={() => setSelectedImage(null)}
                       >
-                          <Search className="w-6 h-6 rotate-45" /> {/* Using Search icon rotated as X closely enough, or use X icon if imported */}
+                          <Search className="w-6 h-6 rotate-45" /> 
                       </button>
                   </div>
               </div>
