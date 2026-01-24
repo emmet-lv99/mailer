@@ -33,7 +33,14 @@ export async function POST(request: Request) {
       Generate a JSON object matching the 'DesignSpec' structure below. 
       Focus on finding the *common pattern* across the provided images.
       - **LANGUAGE**: All values (descriptions, colors, component details) MUST be in **KOREAN (한국어)**.
-      - **EXCEPTIONS**: The "concept.keywords" field MUST be in **ENGLISH (ALL CAPS)** for technical matching (e.g., ["MINIMAL", "NEON", "VINTAGE"]).
+      - **EXCEPTIONS**: The "concept.keywords" field MUST be in **ENGLISH (ALL CAPS)**.
+      - **VOCABULARY**: Prioritize selecting from these specific technical styles if applicable:
+        [MINIMAL, BRUTALIST, SCANDINAVIAN, JAPANESE, CORPORATE, SWISS, FUTURISTIC,
+         NEON, CYBERPUNK, VAPORWAVE, GAMING, SYNTHWAVE,
+         VINTAGE, RETRO, FILM, ANALOG, ARTDECO, MIDCENTURY,
+         ORGANIC, NATURAL, BOTANICAL, TROPICAL, FARM,
+         LUXE, PREMIUM, GOLD, MARBLE, EDITORIAL,
+         PLAYFUL, KAWAII, CARTOON, STREETWEAR, MEMPHIS, DOODLE]
       - **KEYS**: Use camelCase keys.
       
       Structure:

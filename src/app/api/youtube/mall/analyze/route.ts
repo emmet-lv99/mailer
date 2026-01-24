@@ -105,7 +105,14 @@ export async function POST(request: Request) {
       [Task]
       Generate a JSON object matching the following structure ONLY. 
       - **LANGUAGE**: Descriptions, reasons, and user-facing values MUST be in **KOREAN (한국어)**.
-      - **EXCEPTIONS**: The "design.concept.keywords" field MUST be in **ENGLISH (ALL CAPS)** for technical system matching (e.g., ["BRUTALIST", "VINTAGE", "COZY"]).
+      - **EXCEPTIONS**: The "design.concept.keywords" field MUST be in **ENGLISH (ALL CAPS)**.
+      - **VOCABULARY**: Prioritize selecting from these specific technical styles if applicable:
+        [MINIMAL, BRUTALIST, SCANDINAVIAN, JAPANESE, CORPORATE, SWISS, FUTURISTIC,
+         NEON, CYBERPUNK, VAPORWAVE, GAMING, SYNTHWAVE,
+         VINTAGE, RETRO, FILM, ANALOG, ARTDECO, MIDCENTURY,
+         ORGANIC, NATURAL, BOTANICAL, TROPICAL, FARM,
+         LUXE, PREMIUM, GOLD, MARBLE, EDITORIAL,
+         PLAYFUL, KAWAII, CARTOON, STREETWEAR, MEMPHIS, DOODLE]
       - **FORMAT**: Pure JSON, no markdown. 
       - **KEYS**: Use camelCase for keys exactly as shown below.
       
