@@ -1,5 +1,6 @@
 import genAI, { geminiVisionModel } from "@/lib/gemini";
 import { getChannelDetails, getChannelIdFromUrl, getRecentVideos, getVideoComments } from "@/lib/youtube";
+import { STANDARD_DESIGN_KEYWORDS } from "@/services/mall/design-keywords";
 import { MallProjectAnalysis } from "@/services/mall/types";
 import { NextResponse } from "next/server";
 
@@ -156,10 +157,16 @@ export async function POST(request: Request) {
       - **Emotional / Warm / Daily** -> ORGANIC, NATURAL, WARM, COZY, PASTEL.
       - **Youthful / Trend-sensitive** -> POP, SPORTY, GRUNGE, CHIC, Y2K.
 
+      [Standard Design Keyword Dictionary]
+      Use ONLY these 22 keywords for "design.concept.keywords":
+      - VISUAL STYLE: ${Object.entries(STANDARD_DESIGN_KEYWORDS.VISUAL_STYLE).map(([k, v]) => `${k} (${v})`).join(", ")}
+      - MOOD/TONE: ${Object.entries(STANDARD_DESIGN_KEYWORDS.MOOD_TONE).map(([k, v]) => `${k} (${v})`).join(", ")}
+      - COMPLEXITY: ${Object.entries(STANDARD_DESIGN_KEYWORDS.COMPLEXITY).map(([k, v]) => `${k} (${v})`).join(", ")}
+
       [Task Guidelines]
       Generate a JSON object matching the following structure ONLY.
       - **LANGUAGE**: "target.ageRange" and "mood.imagery" MUST be in **KOREAN (한국어)**.
-      - **KEYWORDS**: "design.concept.keywords" MUST be in **ENGLISH (ALL CAPS)**.
+      - **KEYWORDS**: "design.concept.keywords" MUST be selected ONLY from the [Standard Design Keyword Dictionary] above. Select 3-5 keys.
       - **VOCABULARY**: Select 3-5 keywords from the list in [Design Heuristics].
 
       [IMPORTANT] LOGICAL CONSISTENCY RULES:
