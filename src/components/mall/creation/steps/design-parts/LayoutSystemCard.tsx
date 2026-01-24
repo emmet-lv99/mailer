@@ -73,30 +73,41 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             </div>
          </div>
          
-         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1">
+         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1 relative">
            {type === 'main' && (
-             <div className="space-y-3">
-               {/* Hero Section */}
-               <div className={cn(
-                 "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300",
-                 activeMainCategory === 'hero' ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 h-36" : "h-32 opacity-60"
-               )} style={{ borderRadius: layout.borderRadius }} />
+             <div className="space-y-3 min-h-[200px] flex flex-col justify-center">
+               {(!layout.main || layout.main === 'none') && (!layout.mainSub || layout.mainSub === 'none') && (
+                  <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2">
+                    <Layout className="w-8 h-8" />
+                    <span className="text-xs font-medium">Select a block to add</span>
+                  </div>
+               )}
 
-               {/* Sub Banner Section */}
-               {layout.mainSub !== 'none' && (
+               {/* Hero Section - Conditional Render */}
+               {layout.main && layout.main !== 'none' && (
+                  <div className={cn(
+                    "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+                    activeMainCategory === 'hero' ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 h-36" : "h-32 opacity-80"
+                  )} style={{ borderRadius: layout.borderRadius }} />
+               )}
+
+               {/* Sub Banner Section - Conditional Render */}
+               {layout.mainSub && layout.mainSub !== 'none' && (
                  <div className={cn(
-                    "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300",
-                    activeMainCategory === 'sub' ? "ring-2 ring-orange-500 ring-offset-2 ring-offset-slate-900 h-12" : "h-10 opacity-60"
+                    "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+                    activeMainCategory === 'sub' ? "ring-2 ring-orange-500 ring-offset-2 ring-offset-slate-900 h-12" : "h-10 opacity-80"
                  )} style={{ borderRadius: layout.borderRadius }}>
                     <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
                  </div>
                )}
 
-               <div className="grid grid-cols-3 gap-3">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="h-20 bg-white/5 border border-white/10 rounded-lg" style={{ borderRadius: layout.borderRadius }} />
-                  ))}
-               </div>
+               {(layout.main && layout.main !== 'none') && (
+                 <div className="grid grid-cols-3 gap-3 animate-in fade-in delay-100 duration-500">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="h-20 bg-white/5 border border-white/10 rounded-lg" style={{ borderRadius: layout.borderRadius }} />
+                    ))}
+                 </div>
+               )}
              </div>
            )}
 
