@@ -1,3 +1,4 @@
+import { generateProductListPrompt } from "@/services/mall/layout-specs";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -239,7 +240,7 @@ class PromptGenerator {
       this.generateHeader(pageType),
       this.generateLayoutSection(layoutBlocks),
       this.generateDesignStyleSection(designSpec),
-      this.generateProductCardSection(designSpec),
+      this.generateProductCardSection(designSpec, layoutBlocks),
       this.generateColorSection(designSpec, brandInfo),
       this.generateTypographySection(designSpec),
       this.generateSpacingSection(designSpec),
@@ -271,7 +272,7 @@ ${blockDescriptions}
 
 BLOCK TYPE GUIDES:
 - 'carousel-center': Centered slider with side peek effect
-- 'grid-4/5': High-density product grid
+- 'grid-4/5/3/2': Product presentation grids (See Product Card Section)
 - 'hero-grid': Large hero banner + immediate product grid
 - 'product-hero': Detail page top section (Gallery + Info)`;
   }
@@ -283,7 +284,14 @@ Visual Tone: Saturation ${spec.colors.saturation}, Tone ${spec.colors.tone}
 Treatment: Shadow ${spec.components.shadowIntensity}, Border ${spec.components.borderStyle}`;
   }
 
-  private generateProductCardSection(spec: DesignSpec): string {
+  private generateProductCardSection(spec: DesignSpec, layoutBlocks: any[]): string {
+    const gridBlock = layoutBlocks.find(b => b.category === 'product-list' && ['grid-5', 'grid-4', 'grid-3', 'grid-2'].includes(b.type));
+    
+    if (gridBlock) {
+      return `PRODUCT CARD & GRID SPECIFICATIONS:
+${generateProductListPrompt(gridBlock.type as any, spec.keywords)}`;
+    }
+
     return `PRODUCT CARD DESIGN:
 - Image: WHITE background MANDATORY, 1:1 square ratio
 - Layout: Brand Name (12px), Product Name (14px), Price (16px Bold)
