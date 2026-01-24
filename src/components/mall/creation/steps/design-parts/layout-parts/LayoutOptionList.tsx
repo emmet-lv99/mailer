@@ -19,41 +19,48 @@ interface LayoutOptionListProps {
 
 export function LayoutOptionList({ items, selectedVal, existingBlocks, onSelect, mode }: LayoutOptionListProps) {
     return (
-        <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1 bg-white/50 rounded-xl p-1">
+        <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1 p-1">
             {items.map((item) => {
                 const count = mode === 'add' 
                     ? (existingBlocks || []).filter(b => b.type === item.value).length 
                     : 0;
                 
                 const isSelected = mode === 'select' && selectedVal === item.value;
+                const isActive = count > 0 || isSelected;
 
                 return (
                     <button
                         key={item.value}
                         onClick={() => onSelect(item.value)}
                         className={cn(
-                            "group relative flex flex-col items-start p-4 text-left rounded-xl border-2 transition-all duration-200 hover:shadow-md shrink-0",
-                            (count > 0 || isSelected)
-                                ? "border-indigo-600 bg-indigo-50/50"
-                                : "border-gray-100 hover:border-indigo-200 bg-white"
+                            "relative flex items-center justify-between w-full p-4 text-left rounded-2xl border-2 transition-all duration-200 shrink-0",
+                            isActive
+                                ? "border-indigo-500 bg-indigo-50/30 shadow-sm"
+                                : "border-gray-100 hover:border-indigo-200 bg-white hover:bg-gray-50"
                         )}
                     >
-                        {mode === 'add' && count > 0 && (
-                            <div className="absolute top-3 right-3 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                {count}
-                            </div>
-                        )}
-                        
-                        <div className="flex justify-between w-full mb-1">
-                            <span className={cn("text-xs font-bold", (count > 0 || isSelected) ? "text-indigo-700" : "text-gray-900")}>
+                        <div className="flex flex-col gap-1 pr-8">
+                            <span className={cn("text-sm font-bold", isActive ? "text-indigo-700" : "text-gray-900")}>
                                 {item.name}
                             </span>
-                            {mode === 'select' && isSelected && <Check className="w-3.5 h-3.5 text-indigo-600" strokeWidth={3} />}
+                            <span className="text-[11px] text-gray-500 font-medium leading-tight">
+                                {item.desc}
+                            </span>
                         </div>
-                        
-                        <span className="text-[10px] text-gray-500 leading-tight">
-                            {item.desc}
-                        </span>
+
+                        {/* Right Actions: Count or Check */}
+                        <div className="flex-shrink-0">
+                            {mode === 'add' && count > 0 && (
+                                <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shadow-sm">
+                                    {count}
+                                </div>
+                            )}
+                            {mode === 'select' && isSelected && (
+                                <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm">
+                                    <Check className="w-4 h-4" strokeWidth={3} />
+                                </div>
+                            )}
+                        </div>
                     </button>
                 );
             })}
