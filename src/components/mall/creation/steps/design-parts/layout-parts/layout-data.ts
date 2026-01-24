@@ -19,8 +19,6 @@ export const radiuses = [
   export const mainLayouts = [
     { name: "Hero Grid (Standard)", value: "hero-grid", desc: "Classic banner with product grid" },
     { name: "Full Screen Scroll", value: "full-scroll", desc: "Immersive storytelling experience" },
-    { name: "Sticky Story", value: "sticky-story", desc: "Fixed content with scrolling images" },
-    { name: "Minimal Archive", value: "minimal-archive", desc: "Clean, gallery-focused layout" },
     { name: "Wide Slider", value: "wide-slider", desc: "Full-width carousel slider" },
   ];
   
