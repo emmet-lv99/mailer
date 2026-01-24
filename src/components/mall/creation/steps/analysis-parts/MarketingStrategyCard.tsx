@@ -219,7 +219,7 @@ export function MarketingStrategyCard({
 
         {/* Product Categories Section */}
         <div>
-          <h4 className="font-semibold mb-2 text-sm">판매 예정 상품 (Product Categories)</h4>
+          <h4 className="font-semibold mb-2 text-sm">판매 추천 카테고리 (Recommended Product Categories)</h4>
           <div className="bg-slate-50 p-4 rounded-lg border">
             {isEditing ? (
                <div className="grid grid-cols-2 gap-2">

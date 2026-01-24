@@ -5,14 +5,14 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { channelUrl, competitorUrls, productCategories, targetAge, brandKeywords, referenceUrl } = await request.json(); // [Updated] Read Inputs
+    const { channelUrl, competitorUrls, targetAge, brandKeywords, referenceUrl } = await request.json(); // [Updated] Read Inputs
 
     if (!channelUrl) {
       return NextResponse.json({ error: "Channel URL is required" }, { status: 400 });
     }
 
     console.log("Analyzing URL:", channelUrl); 
-    console.log("User Input:", { productCategories, targetAge });
+    console.log("User Input:", { targetAge });
 
     // 1. Fetch YouTube Data
     let channelId;
@@ -91,7 +91,6 @@ export async function POST(request: Request) {
       - Channel URL: ${channelUrl}
       - Reference URL: ${referenceUrl || "None"}
       - Brand Keywords: ${brandKeywords || "None"} (Consider these if provided)
-      - Product Categories: ${productCategories?.join(", ") || "General"}
       Description: ${analysisContext.description}
       Keywords: ${analysisContext.keywords}
       
@@ -113,15 +112,19 @@ export async function POST(request: Request) {
       Structure:
       {
         "channelName": string,
-        // 1. Marketing (Simplified)
+        // 1. Marketing
         "marketing": {
           "target": { 
-             "ageRange": "18-24" | "25-34" | "35-44" | "45+", // Infer from comments/content
-             "gender": "ALL",
-             "interests": ["General Interest"] 
+             "ageRange": "20-30", // [CRITICAL] Infer range (e.g. "10-20", "20-30", "30-40")
+             "gender": "FEMALE", // [CRITICAL] 'MALE', 'FEMALE', 'ALL'
+             "interests": [] 
           },
-          "persona": { "name": "Standard Persona", "oneLiner": "Standard Customer", "needs": [], "painPoints": [] },
-          "product": { "categories": [], "priceRange": "mid", "keyFeatures": [] },
+          "persona": { "name": "Name", "oneLiner": "Description", "needs": [], "painPoints": [] },
+          "product": { 
+             "categories": string[], // [CRITICAL] Recommend 1-3 best categories from: ['HEALTH_FOOD', 'COSMETICS', 'FASHION', 'ELECTRONICS', 'FOOD', 'LIVING', 'PET', 'GENERAL']
+             "priceRange": "medium", 
+             "keyFeatures": [] 
+          },
           "strategy": { 
             "usp": "Standard Strategy", 
             "mood": "Standard Mood",
@@ -176,10 +179,8 @@ export async function POST(request: Request) {
     const analysisData: MallProjectAnalysis = JSON.parse(cleanedJson);
 
     // [New] Override with User Inputs
-    if (productCategories && productCategories.length > 0) {
-       console.log("Overriding Categories with:", productCategories);
-       analysisData.marketing.product.categories = productCategories;
-    }
+    // [New] Override with User Inputs
+    // productCategories removed
     // targetAge Removed. AI infers it.
     if (brandKeywords) {
        console.log("Overriding Keywords with:", brandKeywords);

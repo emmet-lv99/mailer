@@ -9,27 +9,14 @@ import { useState } from "react";
 interface ChannelInputCardProps {
   channelUrl: string;
   referenceUrl: string;
-  selectedCategories: string[];
-  onChannelDataChange: (url: string, refUrl: string, categories: string[]) => void;
+  onChannelDataChange: (url: string, refUrl: string) => void;
   onAnalyze: () => void;
   isLoading: boolean;
 }
 
-const CATEGORIES = [
-  { id: 'HEALTH_FOOD', label: '건강식품' },
-  { id: 'COSMETICS', label: '화장품/뷰티' },
-  { id: 'FASHION', label: '패션/의류' },
-  { id: 'ELECTRONICS', label: '전자제품/디지털' },
-  { id: 'FOOD', label: '식품/음료' },
-  { id: 'LIVING', label: '리빙/홈데코' },
-  { id: 'PET', label: '반려동물' },
-  { id: 'GENERAL', label: '종합/기타' },
-];
-
 export function ChannelInputCard({
   channelUrl,
   referenceUrl,
-  selectedCategories,
   onChannelDataChange,
   onAnalyze,
   isLoading
@@ -38,20 +25,8 @@ export function ChannelInputCard({
   const [localRefUrl, setLocalRefUrl] = useState(referenceUrl);
 
   const handleChange = (newUrl: string, newRef: string) => {
-    onChannelDataChange(newUrl, newRef, selectedCategories);
+    onChannelDataChange(newUrl, newRef);
   };
-
-  const handleCategoryToggle = (id: string) => {
-    let newCategories;
-    if (selectedCategories.includes(id)) {
-      newCategories = selectedCategories.filter(c => c !== id);
-    } else {
-      newCategories = [...selectedCategories, id];
-    }
-    // Update parent
-    onChannelDataChange(localUrl, localRefUrl, newCategories);
-  };
-  
 
   return (
     <Card>
@@ -92,38 +67,11 @@ export function ChannelInputCard({
           </div>
         </div>
 
-        {/* 2. Category Selection (Multi-select) */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">판매 예정 상품 카테고리 <span className="text-red-500">*</span> <span className="text-xs font-normal text-slate-500">(중복 선택 가능)</span></Label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {CATEGORIES.map((cat) => {
-              const isSelected = selectedCategories.includes(cat.id);
-              return (
-                <div 
-                  key={cat.id}
-                  onClick={() => handleCategoryToggle(cat.id)}
-                  className={`
-                    cursor-pointer rounded-lg border p-4 text-center transition-all hover:bg-slate-50 relative
-                    ${isSelected 
-                      ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 text-blue-700 font-bold' 
-                      : 'border-slate-200 text-slate-600'}
-                  `}
-                >
-                  {cat.label}
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         <Button 
           className="w-full h-12 text-lg" 
           size="lg" 
           onClick={onAnalyze} 
-          disabled={!localUrl || selectedCategories.length === 0 || isLoading}
+          disabled={!localUrl || isLoading}
         >
           {isLoading ? "AI 분석 중... (약 10초)" : "분석 시작하기"}
         </Button>

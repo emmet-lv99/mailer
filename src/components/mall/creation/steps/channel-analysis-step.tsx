@@ -35,11 +35,9 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
   const [existingProjects, setExistingProjects] = useState<any[]>([]);
 
   // New State for Selectors
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  // selectedAges and brandKeywords removed from Input phase.
+  // selectedCategories removed from Input phase.
   const [selectedAges, setSelectedAges] = useState<string[]>([]); 
   const [referenceUrl, setReferenceUrl] = useState<string>("");
-  // const [brandKeywords, setBrandKeywords] = useState<string>(""); // Removed state
 
   const startAnalysis = async () => {
     setIsLoading(true);
@@ -50,10 +48,8 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
         // Pass all new inputs to backend
         body: JSON.stringify({ 
            channelUrl, 
-           productCategories: selectedCategories, 
-           // targetAge removed
+           // productCategories removed
            referenceUrl,
-           // brandKeywords removed
         }),
       });
 
@@ -76,10 +72,7 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
        toast.error("URL을 입력해주세요.");
        return;
     }
-    if (selectedCategories.length === 0) {
-       toast.error("상품 카테고리를 하나 이상 선택해주세요.");
-       return;
-    }
+    // Category check removed
     
     // Normalize URL
     const normalizedUrl = channelUrl.trim().replace(/\/$/, "");
@@ -99,6 +92,9 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
     await startAnalysis();
   };
 
+  // ... (updateMarketing/updateDesign methods omitted for brevity as they assume they are unchanged or accessible) 
+  // Wait, I need to match the StartLine/EndLine correctly.
+  
   const updateMarketing = (field: string, value: any) => {
     if (!analysisResult) return;
     updateAnalysisResult({
@@ -147,12 +143,9 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
       <ChannelInputCard
         channelUrl={channelUrl}
         referenceUrl={referenceUrl}
-        selectedCategories={selectedCategories}
-        onChannelDataChange={(url, refUrl, cats) => {
+        onChannelDataChange={(url, refUrl) => {
            setChannelData(url, []);
            setReferenceUrl(refUrl);
-           // setBrandKeywords removed
-           setSelectedCategories(cats);
         }}
         onAnalyze={handleAnalyzeWithCheck}
         isLoading={isLoading}
