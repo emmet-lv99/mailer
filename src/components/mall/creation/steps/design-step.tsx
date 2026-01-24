@@ -72,6 +72,7 @@ export function DesignStep({ onBack }: DesignStepProps) {
       else if (currentStepId === 'DETAIL_MOBILE') referenceImage = selectedDesigns['DETAIL_PC'];
       else if (currentStepId === 'LIST_MOBILE') referenceImage = selectedDesigns['LIST_PC'];
 
+      const isMobile = currentStepId.includes('MOBILE');
       const response = await fetch("/api/youtube/mall/design/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -79,9 +80,9 @@ export function DesignStep({ onBack }: DesignStepProps) {
           prompt: refinedPrompt, 
           pageType: currentStepId,
           referenceImage,
-          aspect_ratio: "9:16",
+          aspect_ratio: isMobile ? "9:16" : "16:9",
           number_of_images: 3,
-          archetype: archetypeKey // [LOG] Pass for tracking
+          archetype: archetypeKey 
         }),
       });
 

@@ -44,7 +44,18 @@ export async function POST(request: Request) {
     const moodKey = matchMood(keywords);
     const archetype = DESIGN_ARCHETYPES[moodKey] || DEFAULT_ARCHETYPE;
 
-    // 2. Build Expert Prompt with Full Brand DNA Synthesis
+    // 2. Extract specific layout blocks for the prompt
+    const shapeLayout = analysisResult?.design?.foundation?.shapeLayout;
+    let rawBlocks = [];
+    if (pageType?.includes('MAIN')) rawBlocks = shapeLayout?.mainBlocks || [];
+    else if (pageType?.includes('LIST')) rawBlocks = Array.isArray(shapeLayout?.list) ? shapeLayout.list : [];
+    else if (pageType?.includes('DETAIL')) rawBlocks = Array.isArray(shapeLayout?.detail) ? shapeLayout.detail : [];
+
+    const layoutBlocksDesc = rawBlocks.length > 0 
+      ? rawBlocks.map((b: any, i: number) => `${i+1}. ${b.category.toUpperCase()}: ${b.type}`).join('\n')
+      : "Standard layout (Header -> Hero -> Product Grid -> Footer)";
+
+    // 3. Build Expert Prompt with Full Brand DNA Synthesis
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const systemPrompt = `You are an expert in generating Korean e-commerce website designs.
@@ -57,7 +68,7 @@ This is the layout used by 90% of Korean online malls (Nutrio, Kgm-mall, Sebasi,
 MUST BE:
 ✓ Direct flat 2D interface screenshot (NOT device mockup)
 ✓ Content fills 100% to all four edges
-✓ 16:9 horizontal aspect ratio (PC desktop)
+✓ ${pageType?.includes('MOBILE') ? '9:16 vertical aspect ratio (Mobile)' : '16:9 horizontal aspect ratio (PC desktop)'}
 ✓ Looks like pressing F11 fullscreen on actual website
 
 NEVER INCLUDE:
@@ -67,64 +78,24 @@ NEVER INCLUDE:
 ✗ 3D perspective, floating screen
 ✗ Letterbox bars, vignette, outer shadows
 
-━━━ LAYOUT STRUCTURE (Top to Bottom) ━━━
+━━━ LAYOUT STRUCTURE (Follow strictly!) ━━━
 
-1. HEADER / GNB (80px height):
-   - Background: White (#FFFFFF) or Dark (#1A1A1A)
-   - Box shadow: 0 2px 4px rgba(0,0,0,0.08)
-   - Layout:
-     * Left: Logo (120-150px width)
-     * Center: 8-10 menu items (35px spacing)
-       Example: "브랜드" "모든제품" "특가" "리뷰" "이벤트" "매거진" "고객센터"
-     * Right: Search icon, User icon, Cart icon (24px)
-   - Font: 15px, #333, Medium
+The page MUST follow this specific block sequence:
+${layoutBlocksDesc}
 
-2. HERO SLIDER (450px height):
-   - Full-width banner slider
-   - 3-5 slides with dots indicator at bottom
-   - Left/Right arrow buttons (subtle)
-   - Content per slide:
-     * Background: Brand color or image
-     * Left side: Large text (40px bold)
-       Example: "초가입 25%원", "겨울 간식 특가"
-     * Right side: Product or model image
-     * CTA button: Brand color
-   - Aspect: Promotional/Event emphasis
+VISUAL DEFINITIONS FOR BLOCK TYPES:
+- 'carousel-center': A banner slider where the the current slide is centered with a large image, and the edge of the previous and next slides are slightly visible on the left and right (peek effect).
+- 'grid-5' / 'grid-4': A product grid with exactly 5 or 4 columns.
+- 'magazine-3': Hero section with a modular 3-column editorial grid.
+- 'wide-slider': A full-bleed, edge-to-edge sliding banner.
+- 'hero-grid': A high-impact hero banner followed immediately by a product grid.
+- 'product-hero': The top of a product detail page with a large gallery on the left and product info/buy buttons on the right.
+- 'sticky-tabs': A navigation bar with text anchors (e.g., Description, Reviews, Q&A).
+- 'full-scroll': Immersive section where content fills the viewport.
 
-3. SECTION 1: "베스트 상품" / "Short!" (First product section):
-   - Section header:
-     * Title: "베스트 상품" or "Short!" (24px bold, #000)
-     * Subtitle: "브랜드의 베스트 상품을 소개합니다" (14px, #666)
-     * Right: "더보기 →" link (brand color)
-   - Product grid: 5 columns, horizontal scroll or static
-   - 5-7 products visible
-
-4. SECTION 2: "전체상품" / "타임세일":
-   - Similar header structure
-   - Product grid: 4-5 columns
-   - More products (15-20 visible)
-   - Some with SALE badges
-
-5. (Optional) CURATION SECTION:
-   - Title: "Curation" or "새로운 취향"
-   - 3-4 large cards with:
-     * Background image
-     * Overlay text
-     * Category/theme based
-
-6. SECTION 3: "신제품" / "Best Item":
-   - Similar structure
-   - Product grid continues
-   - Fresh/new emphasis
-
-7. (Optional) MIDDLE BANNER:
-   - Full-width promotional banner
-   - Simple image or gradient background
-
-8. FOOTER (starts to appear at bottom):
-   - Background: #F8F8F8 (light) or #2C2C2C (dark)
-   - CS info, Company info, Links
-   - PG logos at bottom
+CORE COMPONENTS:
+1. HEADER: 80px (PC) or 60px (Mobile). Logo, Search, Cart.
+2. FOOTER: Company info, CS center, Social links at the bottom.
 
 ━━━ PRODUCT CARD DESIGN (Critical!) ━━━
 
@@ -281,7 +252,8 @@ Professional approachable design.
 
 RETURN ONLY THE FINAL PROMPT STRING.
 No preamble, explanation, or commentary.
-Just the detailed Imagen 4 prompt.`;
+Keep the output concise (ideally under 1000 characters) for best image generation performance.
+Just the detailed Imagen prompt.`;
 
     const userContext = `
     Page Type: ${pageType}

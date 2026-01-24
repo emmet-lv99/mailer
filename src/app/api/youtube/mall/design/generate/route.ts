@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     console.log(`[Imagen] Generating design for ${pageType} with prompt length: ${prompt.length}. Reference image? ${!!referenceImage}`);
 
     // Standard Gemini API endpoint for Imagen
-    const modelName = "imagen-4.0-generate-001"; // Verified in capability check
+    const modelName = "imagen-3.0-generate-001"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${API_KEY}`;
 
     // Prepare instances. If referenceImage exists, we can use it as a style/structural reference.
@@ -60,6 +60,7 @@ export async function POST(request: Request) {
     }
     
     if (!data.predictions || data.predictions.length === 0) {
+      console.log("[Imagen] Empty predictions. Full response:", JSON.stringify(data, null, 2));
       throw new Error("No images generated");
     }
 
