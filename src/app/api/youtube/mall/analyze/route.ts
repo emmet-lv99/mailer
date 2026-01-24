@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         // 2. Design (Focused on 3 Key Fields)
         "design": {
           "concept": { 
-             "keywords": string[], // [CRITICAL] 3-5 English Keywords (e.g. MINIMAL, PLAYFUL)
+             "keywords": string[], // [CRITICAL] Derive 3-5 Brand/Design Keywords from the channel's identity (e.g. MINIMAL, PLAYFUL, RETRO)
              "description": string 
           },
           "foundation": {
