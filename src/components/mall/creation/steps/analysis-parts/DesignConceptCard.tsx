@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, X } from "lucide-react";
+import { useState } from "react";
+import { KeywordSelectionDialog } from "./KeywordSelectionDialog";
 
 interface DesignConceptCardProps {
   analysisResult: any;
@@ -19,10 +21,18 @@ export function DesignConceptCard({
   isEditing,
   updateDesign
 }: DesignConceptCardProps) {
+  const [isKeywordDialogOpen, setIsKeywordDialogOpen] = useState(false);
+
   if (!analysisResult) return null;
 
   return (
     <Card className={isEditing ? "ring-2 ring-indigo-500/20" : ""}>
+      <KeywordSelectionDialog 
+        open={isKeywordDialogOpen}
+        onOpenChange={setIsKeywordDialogOpen}
+        selectedKeywords={analysisResult.design?.concept?.keywords || []}
+        onKeywordsChange={(keywords) => updateDesign("concept", { ...analysisResult.design?.concept, keywords })}
+      />
       <CardHeader className="bg-indigo-50/50 flex flex-row items-center justify-between space-y-0 py-3 px-6">
         <CardTitle className="text-indigo-700 text-sm font-bold uppercase tracking-wider">디자인 컨셉 (Design Concept)</CardTitle>
         {isEditing && <span className="text-[10px] text-indigo-500 font-medium">수정 모드</span>}
@@ -70,19 +80,7 @@ export function DesignConceptCard({
                       variant="outline" 
                       size="sm" 
                       className="h-8 rounded-full border-dashed border-indigo-200 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 flex gap-1 px-3"
-                      onClick={() => {
-                        const newKeyword = prompt("추가할 디자인 키워드를 입력하세요 (ENGLISH)");
-                        if (newKeyword) {
-                          const currentKeywords = analysisResult.design?.concept?.keywords || [];
-                          const keywordToAdd = newKeyword.trim().toUpperCase();
-                          if (keywordToAdd && !currentKeywords.includes(keywordToAdd)) {
-                            updateDesign("concept", { 
-                              ...analysisResult.design.concept, 
-                              keywords: [...currentKeywords, keywordToAdd] 
-                            });
-                          }
-                        }
-                      }}
+                      onClick={() => setIsKeywordDialogOpen(true)}
                     >
                       <Plus className="w-3 h-3" /> 추가
                     </Button>
