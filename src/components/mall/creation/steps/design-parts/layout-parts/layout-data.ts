@@ -20,6 +20,7 @@ export const radiuses = [
     { name: "Hero Grid (Standard)", value: "hero-grid", desc: "Classic banner with product grid" },
     { name: "Full Screen Scroll", value: "full-scroll", desc: "Immersive storytelling experience" },
     { name: "Wide Slider", value: "wide-slider", desc: "Full-width carousel slider" },
+    { name: "Carousel (Center)", value: "carousel-center", desc: "Swipeable banner with peek effect" },
   ];
   
   export const subBannerLayouts = [

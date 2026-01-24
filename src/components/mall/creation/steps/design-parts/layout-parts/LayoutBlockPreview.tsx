@@ -56,11 +56,14 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
 
     if (block.category === 'hero') {
         const isSlider = block.type === 'wide-slider';
+        const isCarousel = block.type === 'carousel-center';
+        
         return (
             <div className={cn(
                 baseClasses,
                 "flex items-center justify-center border border-indigo-500/30",
-                "h-32 bg-indigo-500/20 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                "h-32 bg-indigo-500/20 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 hover:ring-offset-slate-900",
+                isCarousel && "overflow-hidden" // Ensure side peek items don't overflow the rounded container
             )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
                 {isSlider ? (
                      <div className="flex w-full h-full p-2 gap-2 overflow-hidden">
@@ -69,6 +72,27 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                         </div>
                         <div className="w-4 bg-indigo-400/10 rounded-r-lg" />
                      </div>
+                ) : isCarousel ? (
+                    <div className="flex w-full h-full items-center justify-center gap-4 px-4 relative">
+                        {/* Left peek */}
+                        <div className="w-4 h-5/6 bg-indigo-500/10 rounded-l-lg absolute -left-2" />
+                        
+                        {/* Main Center */}
+                        <div className="w-3/4 h-5/6 bg-indigo-500/30 rounded-lg shadow-lg flex flex-col items-center justify-center gap-2 border border-indigo-400/20">
+                            <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">Center Banner</span>
+                            <div className="w-1/2 h-1 bg-indigo-400/30 rounded-full" />
+                        </div>
+                        
+                        {/* Right peek */}
+                        <div className="w-4 h-5/6 bg-indigo-500/10 rounded-r-lg absolute -right-2" />
+                        
+                        {/* Dots */}
+                        <div className="absolute bottom-1 flex gap-1">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400" />
+                            <div className="w-1 h-1 rounded-full bg-indigo-400/30" />
+                            <div className="w-1 h-1 rounded-full bg-indigo-400/30" />
+                        </div>
+                    </div>
                 ) : (
                     <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest pointer-events-none">
                         {getName(mainLayouts, block.type)}
