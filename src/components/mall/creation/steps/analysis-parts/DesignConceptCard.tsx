@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 interface DesignConceptCardProps {
@@ -38,6 +39,27 @@ export function DesignConceptCard({
           ) : (
             <p className="text-sm text-gray-700 leading-relaxed mb-3">{analysisResult.design?.concept?.description}</p>
           )}
+
+           {/* Brand Keywords (Moved from Input) */}
+           <div className="mt-4">
+               <Label className="text-[10px] text-gray-500 uppercase">Brand Keywords (콤마로 구분)</Label>
+               {isEditing ? (
+                 <Input 
+                   value={analysisResult.design?.concept?.keywords?.join(", ") || ""} 
+                   onChange={(e) => updateDesign("concept", { ...analysisResult.design?.concept, keywords: e.target.value.split(",").map((s: string) => s.trim()) })}
+                   className="mt-1"
+                   placeholder="AI가 제안한 키워드를 수정하거나 추가하세요."
+                 />
+               ) : (
+                 <div className="flex flex-wrap gap-2 mt-2">
+                   {analysisResult.design?.concept?.keywords?.map((keyword: any, i: number) => (
+                     <span key={i} className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">
+                       #{keyword}
+                     </span>
+                   ))}
+                 </div>
+               )}
+           </div>
         </div>
 
         {/* Color Palette */}

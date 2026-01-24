@@ -36,11 +36,10 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
 
   // New State for Selectors
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  // selectedAges removed from Input phase, but we might want to store it AFTER analysis to allow editing.
-  // For now, let's keep it in state but not pass it to Input Card.
+  // selectedAges and brandKeywords removed from Input phase.
   const [selectedAges, setSelectedAges] = useState<string[]>([]); 
   const [referenceUrl, setReferenceUrl] = useState<string>("");
-  const [brandKeywords, setBrandKeywords] = useState<string>("");
+  // const [brandKeywords, setBrandKeywords] = useState<string>(""); // Removed state
 
   const startAnalysis = async () => {
     setIsLoading(true);
@@ -52,9 +51,9 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
         body: JSON.stringify({ 
            channelUrl, 
            productCategories: selectedCategories, 
-           // targetAge removed from request - let AI infer it
+           // targetAge removed
            referenceUrl,
-           brandKeywords
+           // brandKeywords removed
         }),
       });
 
@@ -62,14 +61,6 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
 
       const data: MallProjectAnalysis = await response.json();
       setAnalysisResult(data);
-      
-      // [New] If AI inferred age, update local state
-      if (data.marketing.target.ageRange) {
-         // The AI usually returns a string "20-30대" or comma separated. 
-         // We might want to parse it if we want to sync with the checkbox UI immediately.
-         // For now, let's just leave it in the result object, 
-         // and the MarketingStrategyCard will serve as the editor.
-      }
       
       toast.success("채널 분석이 완료되었습니다!");
     } catch (error) {
@@ -89,8 +80,7 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
        toast.error("상품 카테고리를 하나 이상 선택해주세요.");
        return;
     }
-    // Age check removed
-
+    
     // Normalize URL
     const normalizedUrl = channelUrl.trim().replace(/\/$/, "");
 
@@ -157,12 +147,11 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
       <ChannelInputCard
         channelUrl={channelUrl}
         referenceUrl={referenceUrl}
-        brandKeywords={brandKeywords}
         selectedCategories={selectedCategories}
-        onChannelDataChange={(url, refUrl, keywords, cats) => {
+        onChannelDataChange={(url, refUrl, cats) => {
            setChannelData(url, []);
            setReferenceUrl(refUrl);
-           setBrandKeywords(keywords);
+           // setBrandKeywords removed
            setSelectedCategories(cats);
         }}
         onAnalyze={handleAnalyzeWithCheck}

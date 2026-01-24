@@ -128,10 +128,10 @@ export async function POST(request: Request) {
           }
           // "structure" removed
         },
-        // 2. Design (Simplified)
+        // 2. Design (Focused on 3 Key Fields)
         "design": {
           "concept": { 
-             // "keywords" removed
+             "keywords": string[], // [CRITICAL] 3-5 English Keywords (e.g. MINIMAL, PLAYFUL)
              "description": string 
           },
           "foundation": {

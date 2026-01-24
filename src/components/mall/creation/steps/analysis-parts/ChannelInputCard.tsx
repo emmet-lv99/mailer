@@ -9,9 +9,8 @@ import { useState } from "react";
 interface ChannelInputCardProps {
   channelUrl: string;
   referenceUrl: string;
-  brandKeywords: string;
   selectedCategories: string[];
-  onChannelDataChange: (url: string, refUrl: string, keywords: string, categories: string[]) => void;
+  onChannelDataChange: (url: string, refUrl: string, categories: string[]) => void;
   onAnalyze: () => void;
   isLoading: boolean;
 }
@@ -30,7 +29,6 @@ const CATEGORIES = [
 export function ChannelInputCard({
   channelUrl,
   referenceUrl,
-  brandKeywords,
   selectedCategories,
   onChannelDataChange,
   onAnalyze,
@@ -38,10 +36,9 @@ export function ChannelInputCard({
 }: ChannelInputCardProps) {
   const [localUrl, setLocalUrl] = useState(channelUrl);
   const [localRefUrl, setLocalRefUrl] = useState(referenceUrl);
-  const [localKeywords, setLocalKeywords] = useState(brandKeywords);
 
-  const handleChange = (newUrl: string, newRef: string, newKeys: string) => {
-    onChannelDataChange(newUrl, newRef, newKeys, selectedCategories);
+  const handleChange = (newUrl: string, newRef: string) => {
+    onChannelDataChange(newUrl, newRef, selectedCategories);
   };
 
   const handleCategoryToggle = (id: string) => {
@@ -51,7 +48,8 @@ export function ChannelInputCard({
     } else {
       newCategories = [...selectedCategories, id];
     }
-    onChannelDataChange(localUrl, localRefUrl, localKeywords, newCategories);
+    // Update parent
+    onChannelDataChange(localUrl, localRefUrl, newCategories);
   };
   
 
@@ -72,7 +70,7 @@ export function ChannelInputCard({
               value={localUrl}
               onChange={(e) => {
                 setLocalUrl(e.target.value);
-                handleChange(e.target.value, localRefUrl, localKeywords);
+                handleChange(e.target.value, localRefUrl);
               }}
             />
           </div>
@@ -85,25 +83,12 @@ export function ChannelInputCard({
               value={localRefUrl}
               onChange={(e) => {
                 setLocalRefUrl(e.target.value);
-                handleChange(localUrl, e.target.value, localKeywords);
+                handleChange(localUrl, e.target.value);
               }}
             />
             <p className="text-[11px] text-slate-400">
               * 입력하신 사이트의 레이아웃 구조를 참고하되, 브랜드 컬러를 입혀서 디자인합니다.
             </p>
-          </div>
-
-          {/* Brand Keywords */}
-          <div className="space-y-2 md:col-span-2">
-             <Label>브랜드 키워드 (Optional)</Label>
-             <Input 
-               placeholder="예: 신뢰감, 전문성, 친근함 (콤마로 구분)" 
-               value={localKeywords}
-               onChange={(e) => {
-                 setLocalKeywords(e.target.value);
-                 handleChange(localUrl, localRefUrl, e.target.value);
-               }}
-             />
           </div>
         </div>
 
