@@ -8,7 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, FileUp, History, Home, Instagram, Search, Settings, Youtube } from "lucide-react";
+import { ChevronDown, FileUp, History, Home, Instagram, Search, Settings, ShoppingBag, Youtube } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -32,9 +32,17 @@ export function GlobalNav() {
 
   const youtubeNavItems = [
     { href: "/youtube", label: "대시보드", icon: Home },
-    { href: "/youtube/create", label: "메일 생성", icon: FileUp },
     { href: "/youtube/search", label: "채널 탐색", icon: Search },
-    { href: "/youtube/history", label: "이력 관리", icon: History },
+    { href: "/youtube/create", label: "메일 생성", icon: FileUp },
+    { href: "/youtube/mall", label: "몰 기획", icon: ShoppingBag }, // [NEW]
+    { 
+      label: "이력 관리", 
+      icon: History,
+      children: [
+        { href: "/youtube/history", label: "메일 발송 이력" },
+        { href: "/youtube/history/mall", label: "몰 기획 이력" } // [NEW]
+      ]
+    },
     { href: "/youtube/settings", label: "설정", icon: Settings },
   ];
 
