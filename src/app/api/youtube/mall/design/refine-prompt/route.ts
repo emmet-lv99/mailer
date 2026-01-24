@@ -273,7 +273,6 @@ BLOCK TYPE GUIDES:
 - 'carousel-center': Centered slider with side peek effect
 - 'grid-4/5': High-density product grid
 - 'hero-grid': Large hero banner + immediate product grid
-- 'wide-slider': Full-bleed slider banner
 - 'product-hero': Detail page top section (Gallery + Info)`;
   }
 
@@ -335,7 +334,6 @@ Vibe: Professional Korean e-commerce, clean, trustworthy, and high-fidelity.`;
       'product-hero': 'Main product details at the top',
       'sticky-tabs': 'Sticky navigation bar',
       'detail-body': 'Main long-form product description',
-      'wide-slider': 'Full-width edge-to-edge content slider',
       'text-bar': 'Minimalist announcement line'
     };
     return descriptions[type] || 'Standard e-commerce section';

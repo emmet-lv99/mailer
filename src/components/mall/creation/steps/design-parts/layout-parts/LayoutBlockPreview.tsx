@@ -32,7 +32,7 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
 
     // Helper to check for full-width types
     const isFullWidth = [
-        'wide-slider', 'full-scroll', 'image-strap', 'full-video', 'full-image', 'carousel-center'
+        'full-scroll', 'image-strap', 'full-video', 'full-image', 'carousel-center'
     ].includes(block.type);
 
     const baseClasses = cn(
@@ -55,7 +55,6 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     }
 
     if (block.category === 'hero') {
-        const isSlider = block.type === 'wide-slider';
         const isCarousel = block.type === 'carousel-center';
         
         return (
@@ -65,14 +64,7 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                 "h-32 bg-indigo-500/20 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 hover:ring-offset-slate-900",
                 isCarousel && "overflow-hidden" // Ensure side peek items don't overflow the rounded container
             )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
-                {isSlider ? (
-                     <div className="flex w-full h-full p-2 gap-2 overflow-hidden">
-                        <div className="flex-1 bg-indigo-400/20 rounded-lg flex items-center justify-center">
-                           <span className="text-[10px] text-indigo-300 font-bold uppercase">SLIDE 1</span>
-                        </div>
-                        <div className="w-4 bg-indigo-400/10 rounded-r-lg" />
-                     </div>
-                ) : isCarousel ? (
+                {isCarousel ? (
                     <div className="flex w-full h-full items-center justify-center gap-2 px-2 relative overflow-hidden">
                         {/* Left peek */}
                         <div className="w-12 h-[85%] bg-indigo-500/10 rounded-r-xl absolute -left-2 border-y border-r border-indigo-500/5" />
@@ -80,7 +72,7 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                         {/* Main Center */}
                         <div className="w-4/5 h-full bg-indigo-500/30 rounded-lg shadow-lg flex flex-col items-center justify-center gap-2 border border-indigo-400/20 z-10">
                             <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">Center Banner</span>
-                            <div className="w-1/2 h-1 bg-indigo-400/30 rounded-full" />
+                             <div className="w-1/2 h-1 bg-indigo-400/30 rounded-full" />
                         </div>
                         
                         {/* Right peek */}
