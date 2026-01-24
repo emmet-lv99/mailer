@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layout } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Check, Layout } from "lucide-react";
 
 interface LayoutSystemCardProps {
   layout: {
@@ -19,32 +20,6 @@ interface LayoutSystemCardProps {
 }
 
 export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardProps) {
-  const grids = [
-    { name: "Cafe24 Standard (Dense)", value: "cafe24-standard" },
-    { name: "Editorial (Loose)", value: "editorial" },
-    { name: "Mobile First (1-Col)", value: "mobile-first" },
-  ];
-
-  const mainLayouts = [
-    { name: "Hero Grid (Standard)", value: "hero-grid" },
-    { name: "Full Screen Scroll", value: "full-scroll" },
-    { name: "Sticky Story", value: "sticky-story" },
-    { name: "Minimal Archive", value: "minimal-archive" },
-  ];
-
-  const listLayouts = [
-    { name: "Grid 3-Column", value: "grid-3" },
-    { name: "Grid 2-Column", value: "grid-2" },
-    { name: "List View (Wide)", value: "list-wide" },
-    { name: "Masonry", value: "masonry" },
-  ];
-
-  const detailLayouts = [
-    { name: "Split View (Standard)", value: "split-view" },
-    { name: "Vertical Stack", value: "vertical-stack" },
-    { name: "Magazine Style", value: "magazine" },
-  ];
-
   const radiuses = [
     { name: "Sharp (0px)", value: "0px" },
     { name: "Subtle (4px)", value: "4px" },
@@ -56,6 +31,85 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     { name: "Comfortable (Wide)", value: "comfortable" },
     { name: "Compact (Narrow)", value: "compact" },
   ];
+
+  const mainLayouts = [
+    { name: "Hero Grid (Standard)", value: "hero-grid", desc: "Classic banner with product grid" },
+    { name: "Full Screen Scroll", value: "full-scroll", desc: "Immersive storytelling experience" },
+    { name: "Sticky Story", value: "sticky-story", desc: "Fixed content with scrolling images" },
+    { name: "Minimal Archive", value: "minimal-archive", desc: "Clean, gallery-focused layout" },
+  ];
+
+  const listLayouts = [
+    { name: "Grid 3-Column", value: "grid-3", desc: "Standard e-commerce balance" },
+    { name: "Grid 2-Column", value: "grid-2", desc: "Larger images for visual impact" },
+    { name: "List View (Wide)", value: "list-wide", desc: "Detailed information per row" },
+    { name: "Masonry", value: "masonry", desc: "Dynamic, pinterest-style grid" },
+  ];
+
+  const detailLayouts = [
+    { name: "Split View (Standard)", value: "split-view", desc: "Fixed image, scrolling details" },
+    { name: "Vertical Stack", value: "vertical-stack", desc: "Sequential content flow" },
+    { name: "Magazine Style", value: "magazine", desc: "Editorial layout with mixed media" },
+  ];
+
+  const renderBlueprint = (type: 'main' | 'list' | 'detail') => {
+    return (
+      <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-4 border border-white/5 shadow-2xl h-full min-h-[300px]">
+         <div className="flex justify-between items-center opacity-40">
+            <div className="w-12 h-2 bg-white/20 rounded-full" />
+            <div className="flex gap-2">
+              {[1,2,3].map(i => <div key={i} className="w-2 h-2 bg-white/20 rounded-full" />)}
+            </div>
+         </div>
+         
+         <div className="space-y-3 flex-1">
+           {type === 'main' && (
+             <>
+               <div className="h-32 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center animate-in fade-in duration-500" style={{ borderRadius: layout.borderRadius }}>
+                  <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">{layout.main}</span>
+               </div>
+               <div className="grid grid-cols-3 gap-3">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="h-20 bg-white/5 border border-white/10 rounded-lg" style={{ borderRadius: layout.borderRadius }} />
+                  ))}
+               </div>
+             </>
+           )}
+
+           {type === 'list' && (
+             <div className={cn("grid gap-3 transition-all duration-300", 
+                layout.list === 'grid-3' ? "grid-cols-3" : 
+                layout.list === 'grid-2' ? "grid-cols-2" : "grid-cols-1"
+             )}>
+                {[1,2,3,4,5,6].slice(0, layout.list === 'grid-2' ? 4 : 6).map(i => (
+                  <div key={i} className="aspect-[3/4] bg-white/5 border border-white/10 rounded-lg flex flex-col gap-2 p-2" style={{ borderRadius: layout.borderRadius }}>
+                     <div className="flex-1 bg-white/5 rounded-sm" />
+                     <div className="h-2 w-2/3 bg-white/10 rounded-sm" />
+                     <div className="h-2 w-1/3 bg-white/10 rounded-sm" />
+                  </div>
+                ))}
+             </div>
+           )}
+
+           {type === 'detail' && (
+             <div className="flex gap-4 h-full">
+                <div className="flex-1 bg-white/5 border border-white/10 rounded-lg h-5/6" style={{ borderRadius: layout.borderRadius }} />
+                <div className="flex-1 flex flex-col gap-3">
+                   <div className="h-6 w-3/4 bg-indigo-500/20 rounded-md" />
+                   <div className="h-4 w-1/2 bg-white/10 rounded-md" />
+                   <div className="h-20 w-full bg-white/5 rounded-md mt-4" />
+                   <div className="h-10 w-full bg-indigo-600/20 rounded-md mt-auto mb-10" style={{ borderRadius: layout.borderRadius }} />
+                </div>
+             </div>
+           )}
+         </div>
+
+         <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+            <span className="text-[40px] font-black uppercase tracking-tighter -rotate-12 select-none">Preview</span>
+         </div>
+      </div>
+    );
+  };
 
   return (
     <Card className="border-none shadow-sm bg-white rounded-3xl overflow-hidden h-full flex flex-col">
@@ -103,114 +157,58 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
           </div>
         </div>
 
-        {/* Page Specific Layouts - Refactored to Tabs */}
+        {/* Page Specific Layouts - Split View */}
         <div className="space-y-2">
           <Label className="text-[10px] text-indigo-500 uppercase font-black tracking-widest">Page Specific Patterns</Label>
           <Tabs defaultValue="main" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-100/50 p-1 rounded-xl h-10">
-              <TabsTrigger 
-                value="main" 
-                className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm"
-              >
-                메인
-              </TabsTrigger>
-              <TabsTrigger 
-                value="list" 
-                className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm"
-              >
-                리스트
-              </TabsTrigger>
-              <TabsTrigger 
-                value="detail" 
-                className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm"
-              >
-                상세
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100/50 p-1 rounded-xl h-10 mb-4">
+              <TabsTrigger value="main" className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm">메인</TabsTrigger>
+              <TabsTrigger value="list" className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm">리스트</TabsTrigger>
+              <TabsTrigger value="detail" className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm">상세</TabsTrigger>
             </TabsList>
 
-            <div className="mt-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
-              <TabsContent value="main" className="mt-0">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                     <Label className="text-xs font-bold text-gray-700">메인 페이지 구조</Label>
-                     <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Hero / Event / Display</span>
+            {['main', 'list', 'detail'].map((tab) => (
+              <TabsContent key={tab} value={tab} className="mt-0">
+                <div className="grid grid-cols-12 gap-6 h-[400px]">
+                  {/* Left: Block Items Selection */}
+                  <div className="col-span-5 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+                    {(tab === 'main' ? mainLayouts : tab === 'list' ? listLayouts : detailLayouts).map((item) => {
+                      const currentVal = tab === 'main' ? layout.main : tab === 'list' ? layout.list : layout.detail;
+                      const isSelected = currentVal === item.value;
+                      return (
+                        <button
+                          key={item.value}
+                          onClick={() => onLayoutChange(tab, item.value)}
+                          className={cn(
+                            "group relative flex flex-col items-start p-4 text-left rounded-xl border-2 transition-all duration-200 hover:shadow-md",
+                            isSelected 
+                              ? "border-indigo-600 bg-indigo-50/50" 
+                              : "border-gray-100 hover:border-indigo-200 bg-white"
+                          )}
+                        >
+                          <div className="flex justify-between w-full mb-1">
+                            <span className={cn("text-xs font-bold", isSelected ? "text-indigo-700" : "text-gray-900")}>
+                              {item.name}
+                            </span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600" strokeWidth={3} />}
+                          </div>
+                          <span className="text-[10px] text-gray-500 leading-tight">
+                            {item.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <Select value={layout.main} onValueChange={(val) => onLayoutChange("main", val)}>
-                    <SelectTrigger className="rounded-xl border-gray-200 h-11 bg-white">
-                      <SelectValue placeholder="메인 레이아웃 선택" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {mainLayouts.map((m) => (
-                        <SelectItem key={m.value} value={m.value} className="rounded-lg text-xs">
-                          {m.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground pl-1">
-                    쇼핑몰의 첫인상을 결정하는 메인 페이지의 전체적인 구조를 정의합니다.
-                  </p>
-                </div>
-              </TabsContent>
 
-              <TabsContent value="list" className="mt-0">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                     <Label className="text-xs font-bold text-gray-700">상품 리스트 구조</Label>
-                     <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Grid / Filter / Pagination</span>
+                  {/* Right: Preview Visualization */}
+                  <div className="col-span-7 h-full">
+                    {renderBlueprint(tab as any)}
                   </div>
-                  <Select value={layout.list} onValueChange={(val) => onLayoutChange("list", val)}>
-                    <SelectTrigger className="rounded-xl border-gray-200 h-11 bg-white">
-                      <SelectValue placeholder="리스트 선택" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {listLayouts.map((l) => (
-                        <SelectItem key={l.value} value={l.value} className="rounded-lg text-xs">
-                          {l.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground pl-1">
-                    카테고리 및 상품 목록 화면에서의 상품 진열 방식을 선택합니다.
-                  </p>
                 </div>
               </TabsContent>
-
-              <TabsContent value="detail" className="mt-0">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                     <Label className="text-xs font-bold text-gray-700">상품 상세 구조</Label>
-                     <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Gallery / Info / Review</span>
-                  </div>
-                  <Select value={layout.detail} onValueChange={(val) => onLayoutChange("detail", val)}>
-                    <SelectTrigger className="rounded-xl border-gray-200 h-11 bg-white">
-                      <SelectValue placeholder="상세 선택" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {detailLayouts.map((d) => (
-                        <SelectItem key={d.value} value={d.value} className="rounded-lg text-xs">
-                          {d.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground pl-1">
-                    개별 상품의 이미지와 정보를 고객에게 전달하는 레이아웃입니다.
-                  </p>
-                </div>
-              </TabsContent>
-            </div>
+            ))}
           </Tabs>
         </div>
-
-        {/* Layout Visualizer Blueprint */}
-        <div className="mt-4 flex-1 bg-slate-900 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 border border-white/5 shadow-2xl">
-           <div className="flex justify-between items-center opacity-40">
-              <div className="w-12 h-2 bg-white/20 rounded-full" />
-              <div className="flex gap-2">
-                {[1,2,3].map(i => <div key={i} className="w-2 h-2 bg-white/20 rounded-full" />)}
-              </div>
            </div>
            
            <div className="space-y-3">
@@ -230,7 +228,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
            <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
               <span className="text-[40px] font-black uppercase tracking-tighter -rotate-12 select-none">Layout Set</span>
            </div>
-        </div>
       </CardContent>
     </Card>
   );
