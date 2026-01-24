@@ -73,24 +73,24 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                         <div className="w-4 bg-indigo-400/10 rounded-r-lg" />
                      </div>
                 ) : isCarousel ? (
-                    <div className="flex w-full h-full items-center justify-center gap-4 px-4 relative">
+                    <div className="flex w-full h-full items-center justify-center gap-2 px-2 relative overflow-hidden">
                         {/* Left peek */}
-                        <div className="w-4 h-5/6 bg-indigo-500/10 rounded-l-lg absolute -left-2" />
+                        <div className="w-12 h-[85%] bg-indigo-500/10 rounded-r-xl absolute -left-2 border-y border-r border-indigo-500/5" />
                         
                         {/* Main Center */}
-                        <div className="w-3/4 h-5/6 bg-indigo-500/30 rounded-lg shadow-lg flex flex-col items-center justify-center gap-2 border border-indigo-400/20">
+                        <div className="w-4/5 h-full bg-indigo-500/30 rounded-lg shadow-lg flex flex-col items-center justify-center gap-2 border border-indigo-400/20 z-10">
                             <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">Center Banner</span>
                             <div className="w-1/2 h-1 bg-indigo-400/30 rounded-full" />
                         </div>
                         
                         {/* Right peek */}
-                        <div className="w-4 h-5/6 bg-indigo-500/10 rounded-r-lg absolute -right-2" />
+                        <div className="w-12 h-[85%] bg-indigo-500/10 rounded-l-xl absolute -right-2 border-y border-l border-indigo-500/5" />
                         
                         {/* Dots */}
-                        <div className="absolute bottom-1 flex gap-1">
-                            <div className="w-1 h-1 rounded-full bg-indigo-400" />
-                            <div className="w-1 h-1 rounded-full bg-indigo-400/30" />
-                            <div className="w-1 h-1 rounded-full bg-indigo-400/30" />
+                        <div className="absolute bottom-2 flex gap-1 z-20">
+                            <div className="w-1 h-1 rounded-full bg-indigo-300" />
+                            <div className="w-1 h-1 rounded-full bg-indigo-500/30" />
+                            <div className="w-1 h-1 rounded-full bg-indigo-500/30" />
                         </div>
                     </div>
                 ) : (
