@@ -195,7 +195,6 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     }
 
     if (block.category === 'shorts' || block.category === 'video-product') {
-        const isStory = block.type === 'story-grid';
         const isFullVideo = block.type === 'full-video';
         const isSplitVideo = block.type === 'split-video';
 
@@ -209,18 +208,7 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                     <span className="text-[10px] text-rose-400 font-bold uppercase tracking-widest">{getName(videoLayouts, block.type)}</span>
                     <RemoveButton onClick={handleRemove} />
                 </div>
-                {isStory ? (
-                    <div className="flex gap-3 justify-center py-1 overflow-hidden">
-                        {[1,2,3,4].map(i => (
-                            <div key={i} className="flex flex-col items-center gap-1 shrink-0">
-                                <div className="w-12 h-12 rounded-full bg-rose-500/20 border-2 border-rose-500/30 p-0.5">
-                                    <div className="w-full h-full rounded-full bg-rose-500/10" />
-                                </div>
-                                <div className="w-8 h-1 bg-rose-500/20 rounded-full" />
-                            </div>
-                        ))}
-                    </div>
-                ) : isFullVideo ? (
+                {isFullVideo ? (
                     <div className="w-full h-32 bg-rose-500/20 rounded-lg flex flex-col items-center justify-center gap-2 border border-rose-500/10 relative overflow-hidden">
                         <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                             <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-1" />
