@@ -256,15 +256,76 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     if (block.category === 'detail') {
         return (
             <div className={cn(
-               "w-full bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
-               "hover:ring-2 hover:ring-purple-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
+               baseClasses,
+               "bg-purple-500/10 border border-purple-500/20 p-3 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
+               "hover:ring-2 hover:ring-purple-500 hover:ring-offset-2 hover:ring-offset-slate-900",
+               !isFullWidth && "rounded-xl"
+            )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
                  <div className="flex justify-between items-center mb-2">
                     <span className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">{getName(detailLayouts, block.type)}</span>
                     <RemoveButton onClick={handleRemove} />
                  </div>
 
-                 {block.type === 'split-view' && (
+                 {block.type === 'product-hero' ? (
+                     <div className="flex gap-4">
+                         {/* Left: Gallery */}
+                         <div className="w-1/2 space-y-2">
+                            <div className="aspect-square bg-purple-500/20 rounded-md border border-purple-500/10" />
+                            <div className="flex gap-1">
+                                <div className="w-1/4 aspect-square bg-purple-500/20 rounded-sm" />
+                                <div className="w-1/4 aspect-square bg-purple-500/10 rounded-sm" />
+                                <div className="w-1/4 aspect-square bg-purple-500/10 rounded-sm" />
+                            </div>
+                         </div>
+                         {/* Right: Info */}
+                         <div className="w-1/2 flex flex-col gap-2">
+                             <div className="h-4 w-3/4 bg-purple-500/30 rounded-full" />
+                             <div className="h-2 w-1/2 bg-purple-500/20 rounded-full mb-2" />
+                             
+                             <div className="space-y-1 p-2 bg-purple-500/5 rounded-md border border-purple-500/10">
+                                <div className="h-1.5 w-full bg-purple-500/10 rounded-full" />
+                                <div className="h-1.5 w-full bg-purple-500/10 rounded-full" />
+                                <div className="h-1.5 w-2/3 bg-purple-500/10 rounded-full" />
+                             </div>
+                             
+                             <div className="mt-auto flex gap-2">
+                                 <div className="flex-1 h-8 bg-purple-500/20 rounded-md flex items-center justify-center">
+                                     <div className="w-12 h-1.5 bg-purple-500/40 rounded-full" />
+                                 </div>
+                                 <div className="w-8 h-8 bg-purple-500/10 rounded-md" />
+                             </div>
+                         </div>
+                     </div>
+                 ) : block.type === 'sticky-tabs' ? (
+                     <div className="w-full h-10 bg-purple-500/5 rounded-md border border-purple-500/10 flex items-center px-4 gap-6">
+                         <div className="flex flex-col gap-1">
+                             <div className="w-12 h-2 bg-purple-500/50 rounded-full" />
+                             <div className="w-full h-0.5 bg-purple-500" />
+                         </div>
+                         <div className="w-12 h-2 bg-purple-500/20 rounded-full" />
+                         <div className="w-12 h-2 bg-purple-500/20 rounded-full" />
+                         <div className="w-12 h-2 bg-purple-500/20 rounded-full" />
+                     </div>
+                 ) : block.type === 'detail-body' ? (
+                     <div className="w-full aspect-[4/5] bg-purple-500/10 rounded-md border border-purple-500/5 flex flex-col items-center justify-center gap-2">
+                         <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center">
+                             <div className="w-16 h-1 bg-purple-500/20 rotate-45" />
+                         </div>
+                         <div className="w-1/2 h-2 bg-purple-500/10 rounded-full" />
+                     </div>
+                 ) : block.type === 'review-board' ? (
+                    <div className="space-y-2">
+                        {[1,2,3].map(i => (
+                            <div key={i} className="flex gap-2 p-2 bg-purple-500/5 rounded-md">
+                                <div className="w-8 h-8 rounded-full bg-purple-500/20" />
+                                <div className="flex-1 space-y-1">
+                                    <div className="w-1/3 h-2 bg-purple-500/20 rounded-full" />
+                                    <div className="w-2/3 h-1.5 bg-purple-500/10 rounded-full" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                 ) : block.type === 'split-view' ? (
                      <div className="flex gap-2 h-20">
                         <div className="w-1/3 bg-purple-500/20 rounded-md" />
                         <div className="flex-1 space-y-1">
@@ -273,8 +334,7 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                            <div className="h-8 w-full bg-purple-500/5 rounded-sm mt-2" />
                         </div>
                      </div>
-                 )}
-                 {block.type !== 'split-view' && (
+                 ) : (
                     <div className="space-y-2">
                         <div className="w-full h-24 bg-purple-500/20 rounded-md" />
                         <div className="h-3 w-full bg-purple-500/20 rounded-sm" />

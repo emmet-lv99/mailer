@@ -69,7 +69,10 @@ export const radiuses = [
   ];
   
   export const detailLayouts = [
+    { name: "Product Hero (Commerce)", value: "product-hero", desc: "Main product info & gallery" },
+    { name: "Sticky Tabs", value: "sticky-tabs", desc: "Navigation anchor tabs" },
+    { name: "Detail Body", value: "detail-body", desc: "Long-form description area" },
+    { name: "Review Board", value: "review-board", desc: "Customer Q&A and reviews" },
     { name: "Split View (Standard)", value: "split-view", desc: "Fixed image, scrolling details" },
     { name: "Vertical Stack", value: "vertical-stack", desc: "Sequential content flow" },
-    { name: "Magazine Style", value: "magazine", desc: "Editorial layout with mixed media" },
   ];
