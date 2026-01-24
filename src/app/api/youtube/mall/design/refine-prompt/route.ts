@@ -1,4 +1,4 @@
-import { generateProductListPrompt } from "@/services/mall/layout-specs";
+import { generateProductListPrompt, generateVideoPrompt } from "@/services/mall/layout-specs";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -240,7 +240,7 @@ class PromptGenerator {
       this.generateHeader(pageType),
       this.generateLayoutSection(layoutBlocks),
       this.generateDesignStyleSection(designSpec),
-      this.generateProductCardSection(designSpec, layoutBlocks),
+      this.generateContentSection(designSpec, layoutBlocks),
       this.generateColorSection(designSpec, brandInfo),
       this.generateTypographySection(designSpec),
       this.generateSpacingSection(designSpec),
@@ -284,18 +284,28 @@ Visual Tone: Saturation ${spec.colors.saturation}, Tone ${spec.colors.tone}
 Treatment: Shadow ${spec.components.shadowIntensity}, Border ${spec.components.borderStyle}`;
   }
 
-  private generateProductCardSection(spec: DesignSpec, layoutBlocks: any[]): string {
+  private generateContentSection(spec: DesignSpec, layoutBlocks: any[]): string {
     const gridBlock = layoutBlocks.find(b => b.category === 'product-list' && ['grid-5', 'grid-4', 'grid-3', 'grid-2'].includes(b.type));
+    const videoBlock = layoutBlocks.find(b => (b.category === 'shorts' || b.category === 'video-product') && ['feed-scroll', 'full-width-video', 'split-video', 'story-grid'].includes(b.type));
     
+    let contentSectionValue = '';
+
     if (gridBlock) {
-      return `PRODUCT CARD & GRID SPECIFICATIONS:
-${generateProductListPrompt(gridBlock.type as any, spec.keywords)}`;
+      contentSectionValue += `PRODUCT CARD & GRID SPECIFICATIONS:\n${generateProductListPrompt(gridBlock.type as any, spec.keywords)}\n\n`;
     }
 
-    return `PRODUCT CARD DESIGN:
+    if (videoBlock) {
+      contentSectionValue += `VIDEO CONTENT SPECIFICATIONS:\n${generateVideoPrompt(videoBlock.type as any, spec.keywords)}\n\n`;
+    }
+
+    if (!contentSectionValue) {
+      contentSectionValue = `PRODUCT CARD DESIGN:
 - Image: WHITE background MANDATORY, 1:1 square ratio
 - Layout: Brand Name (12px), Product Name (14px), Price (16px Bold)
 - Style: Corner radius ${spec.components.borderRadius}, Shadow ${spec.components.shadowIntensity}`;
+    }
+
+    return contentSectionValue;
   }
 
   private generateColorSection(spec: DesignSpec, brandInfo: any): string {
