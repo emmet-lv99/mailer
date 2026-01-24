@@ -111,27 +111,28 @@ export async function POST(request: Request) {
          ETHEREAL, MONOCHROME, PASTEL, VIBRANT, WARM, COZY, CHIC]
 
       [IMPORTANT] LOGICAL CONSISTENCY RULES:
-      1. **Target Audience Analysis**: Determine Age/Gender from visual cues (people in thumbnails, comments).
-      2. **Strategy Alignment**: The 'Strategy' description MUST explicitly mention the same Age/Gender identified in step 1.
-      3. **Persona Consistency**: The Persona's gender and age range MUST be a subset of the Target Audience.
-         - IF Target Gender is 'MALE', Persona MUST be Male.
-         - IF Target Gender is 'FEMALE', Persona MUST be Female.
-         - IF Target Gender is 'ALL', pick the most dominant segment.
-      4. **Product Recommendation**: Products recommended must be relevant to this specific Persona.
+      1. **STEP 1: REASONING**: Fill the \`_reasoning\` field first. Explicitly state the observed Age & Gender from visuals.
+         - E.g., "The thumbnails show mostly men in their 30s. Therefore Target is MALE_30s."
+         - If ambiguous, default to "ALL" but be consistent.
+      2. **STEP 2: EXECUTION**: Use the decisions from \`_reasoning\` to fill \`target.gender\` and \`target.ageRange\`.
+      3. **STEP 3: ALIGNMENT**: 
+         - \`marketing.strategy\` text MUST mention the same gender/age.
+         - \`marketing.persona\` MUST have the same gender/age.
 
       [Output JSON Structure]
       {
+        "_reasoning": "Analyze the visuals here. State the dominant Gender (MALE/FEMALE/ALL) and Age Range clearly. This derivation guides the rest of the JSON.",
         "channelName": string,
         "marketing": {
           // 1. Target Audience
           "target": { 
              "ageRange": "20-30", 
-             "gender": "FEMALE", // [CRITICAL] MALE, FEMALE, or ALL. This sets the rule for Persona.
+             "gender": "FEMALE", // [CRITICAL] Must match _reasoning.
              "interests": [] 
           },
           // 2. Strategy (Must align with Target)
           "strategy": { 
-            "usp": "Strategy description... (Must cater to the identified Target)", 
+            "usp": "Strategy description... (Must explicitly mention the Target Gender/Age identified in _reasoning)", 
             "mood": "Standard Mood",
             "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
             "brandArchetype": { "primary": "Creator", "secondary": "Everyman", "mixReason": "Standard" },
@@ -141,7 +142,7 @@ export async function POST(request: Request) {
           // 3. Persona (Derived directly from Target)
           "persona": { 
             "name": "Name", 
-            "oneLiner": "Description (MUST match Target Gender/Age. E.g. '20s Female...')", 
+            "oneLiner": "Description (Must match Target Gender/Age)", 
             "needs": [], 
             "painPoints": [] 
           },

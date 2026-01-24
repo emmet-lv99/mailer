@@ -86,6 +86,7 @@ export interface DesignSpec {
 }
 
 export interface MallProjectAnalysis {
+  _reasoning?: string;
   channelName: string;
   marketing: MarketingSpec;
   design: DesignSpec;
