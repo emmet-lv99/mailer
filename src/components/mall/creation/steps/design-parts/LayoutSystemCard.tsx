@@ -229,9 +229,9 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
 
             {['list', 'detail'].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-0">
-                <div className="grid grid-cols-12 gap-6 h-[500px]">
+                <div className="grid grid-cols-12 gap-6 items-start">
                   {/* Left: Block Items Selection */}
-                  <div className="col-span-5 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="col-span-5 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar sticky top-0 h-[600px]">
                     <LayoutOptionList 
                         items={tab === 'list' ? listLayouts : detailLayouts}
                         mode="select"
@@ -241,7 +241,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                   </div>
 
                   {/* Right: Preview Visualization */}
-                  <div className="col-span-7 h-full">
+                  <div className="col-span-7">
                     {renderBlueprint(tab as any)}
                   </div>
                 </div>
