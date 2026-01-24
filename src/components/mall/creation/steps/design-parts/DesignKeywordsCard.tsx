@@ -57,7 +57,7 @@ export function DesignKeywordsCard({ selectedKeywords, onKeywordsChange }: Desig
               <Label className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
                 {category.name}
               </Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-3">
                 {category.data.map(([key, description]) => (
                   <div
                     key={key}
