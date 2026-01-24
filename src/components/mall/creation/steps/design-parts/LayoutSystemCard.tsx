@@ -5,12 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Check, Layout, X } from "lucide-react";
+import { Check, Layout, Play, X } from "lucide-react";
 import * as React from "react";
 
 interface MainBlock {
   id: string;
-  category: 'hero' | 'sub';
+  category: 'hero' | 'sub' | 'top-banner' | 'product-list' | 'category-product' | 'shorts' | 'video-product';
   type: string;
 }
 
@@ -27,7 +27,7 @@ interface LayoutSystemCardProps {
 }
 
 export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardProps) {
-  const [activeMainCategory, setActiveMainCategory] = React.useState<'hero' | 'sub'>('hero');
+  const [activeMainCategory, setActiveMainCategory] = React.useState<MainBlock['category']>('hero');
 
   const radiuses = [
     { name: "Sharp (0px)", value: "0px" },
@@ -39,6 +39,12 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
   const spacingRules = [
     { name: "Comfortable (Wide)", value: "comfortable" },
     { name: "Compact (Narrow)", value: "compact" },
+  ];
+
+  const topBannerLayouts = [
+    { name: "Text Bar (Simple)", value: "text-bar", desc: "Minimal notification line" },
+    { name: "Promotion (Timer)", value: "promotion-timer", desc: "Urgent countdown banner" },
+    { name: "Marquee (Scrolling)", value: "marquee", desc: "Auto-scrolling announcement" },
   ];
 
   const mainLayouts = [
@@ -54,6 +60,27 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     { name: "Promotion Bar", value: "promotion-bar", desc: "Simple notification area" },
   ];
 
+  const productListLayouts = [
+    { name: "Grid 4-Column", value: "grid-4", desc: "Standard high-density grid" },
+    { name: "Grid 2-Column", value: "grid-2", desc: "Large thumbnails for impact" },
+    { name: "Scroll (Horizontal)", value: "scroll-h", desc: "Swipeable product list" },
+  ];
+
+  const categoryProductLayouts = [
+    { name: "Tabbed List", value: "tabbed", desc: "Organize by category tabs" },
+    { name: "Collection Highlight", value: "collection", desc: "Curated collection focus" },
+  ];
+
+  const shortsLayouts = [
+    { name: "Story Grid", value: "story-grid", desc: "Instagram-style story circles" },
+    { name: "Feed Scroll", value: "feed-scroll", desc: "Vertical video feed" },
+  ];
+
+  const videoProductLayouts = [
+    { name: "Full Width Video", value: "full-video", desc: "Cinematic product showcase" },
+    { name: "Split Video", value: "split-video", desc: "Video with product details" },
+  ];
+
   const listLayouts = [
     { name: "Grid 3-Column", value: "grid-3", desc: "Standard e-commerce balance" },
     { name: "Grid 2-Column", value: "grid-2", desc: "Larger images for visual impact" },
@@ -67,7 +94,20 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     { name: "Magazine Style", value: "magazine", desc: "Editorial layout with mixed media" },
   ];
 
-  const handleAddBlock = (category: 'hero' | 'sub', type: string) => {
+  const getLayoutList = () => {
+    switch(activeMainCategory) {
+      case 'top-banner': return topBannerLayouts;
+      case 'hero': return mainLayouts;
+      case 'sub': return subBannerLayouts;
+      case 'product-list': return productListLayouts;
+      case 'category-product': return categoryProductLayouts;
+      case 'shorts': return shortsLayouts;
+      case 'video-product': return videoProductLayouts;
+      default: return mainLayouts;
+    }
+  };
+
+  const handleAddBlock = (category: MainBlock['category'], type: string) => {
     const newBlock: MainBlock = {
       id: crypto.randomUUID(),
       category,
@@ -81,6 +121,18 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     const newBlocks = (layout.mainBlocks || []).filter(b => b.id !== blockId);
     onLayoutChange('mainBlocks', newBlocks);
   };
+
+  const RemoveButton = ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
+    <button
+       onClick={(e) => {
+          e.stopPropagation();
+          onClick(e);
+       }}
+       className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
+    >
+       <X className="w-3 h-3" />
+    </button>
+  );
 
   const renderBlueprint = (type: 'main' | 'list' | 'detail') => {
     return (
@@ -104,6 +156,19 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
 
                {layout.mainBlocks?.map((block) => (
                  <React.Fragment key={block.id}>
+                   
+                   {/* Top Banner */}
+                   {block.category === 'top-banner' && (
+                     <div className={cn(
+                        "w-full bg-pink-500/20 border border-pink-500/30 rounded-md flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
+                        "h-8 hover:ring-2 hover:ring-pink-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                     )} style={{ borderRadius: layout.borderRadius }}>
+                         <span className="text-[9px] text-pink-300 font-bold uppercase tracking-widest">{block.type}</span>
+                         <RemoveButton onClick={() => handleRemoveBlock(block.id)} />
+                     </div>
+                   )}
+
+                   {/* Hero Section */}
                    {block.category === 'hero' && (
                       <div className={cn(
                         "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
@@ -112,38 +177,80 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                          <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest pointer-events-none">
                             {mainLayouts.find(l => l.value === block.type)?.name || block.type}
                          </span>
-                         <button
-                            onClick={(e) => {
-                               e.stopPropagation();
-                               handleRemoveBlock(block.id);
-                            }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
-                         >
-                            <X className="w-3 h-3" />
-                         </button>
+                         <RemoveButton onClick={() => handleRemoveBlock(block.id)} />
                       </div>
                    )}
 
+                   {/* Sub Banner */}
                    {block.category === 'sub' && (
                      <div className={cn(
                         "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
                         "h-12 hover:ring-2 hover:ring-orange-500 hover:ring-offset-2 hover:ring-offset-slate-900"
                      )} style={{ borderRadius: layout.borderRadius }}>
                          <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
-                         <span className="absolute text-[8px] text-orange-300/50 font-bold uppercase tracking-widest pointer-events-none top-1 left-2">
-                            {subBannerLayouts.find(l => l.value === block.type)?.name || block.type}
-                         </span>
-                         <button
-                            onClick={(e) => {
-                               e.stopPropagation();
-                               handleRemoveBlock(block.id);
-                            }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
-                         >
-                            <X className="w-3 h-3" />
-                         </button>
+                         <RemoveButton onClick={() => handleRemoveBlock(block.id)} />
                      </div>
                    )}
+
+                   {/* Product List */}
+                   {block.category === 'product-list' && (
+                     <div className={cn(
+                        "w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
+                        "hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                     )}>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[1,2,3,4].map(i => <div key={i} className="aspect-square bg-emerald-500/20 rounded-md" />)}
+                        </div>
+                        <RemoveButton onClick={() => handleRemoveBlock(block.id)} />
+                     </div>
+                   )}
+
+                   {/* Category Product */}
+                   {block.category === 'category-product' && (
+                     <div className={cn(
+                        "w-full bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0 space-y-2",
+                        "hover:ring-2 hover:ring-cyan-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                     )}>
+                         <div className="flex gap-2 justify-center pb-1 border-b border-cyan-500/10">
+                            {[1,2,3].map(i => <div key={i} className="w-12 h-1.5 bg-cyan-500/30 rounded-full" />)}
+                         </div>
+                         <div className="grid grid-cols-3 gap-2">
+                            {[1,2,3].map(i => <div key={i} className="aspect-[3/4] bg-cyan-500/20 rounded-md" />)}
+                         </div>
+                        <RemoveButton onClick={() => handleRemoveBlock(block.id)} />
+                     </div>
+                   )}
+                   
+                   {/* Shorts */}
+                   {block.category === 'shorts' && (
+                     <div className={cn(
+                        "w-full bg-rose-500/10 border border-rose-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
+                        "hover:ring-2 hover:ring-rose-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                     )}>
+                        <div className="flex gap-2 overflow-hidden">
+                           {[1,2,3,4].map(i => (
+                             <div key={i} className="w-16 h-24 bg-rose-500/20 rounded-lg border border-rose-500/10 flex items-center justify-center shrink-0">
+                                <Play className="w-3 h-3 text-rose-500/50 fill-rose-500/50" />
+                             </div>
+                           ))}
+                        </div>
+                        <RemoveButton onClick={() => handleRemoveBlock(block.id)} />
+                     </div>
+                   )}
+
+                   {/* Video Product */}
+                   {block.category === 'video-product' && (
+                     <div className={cn(
+                        "w-full bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
+                        "h-48 hover:ring-2 hover:ring-violet-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                     )}>
+                         <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
+                            <Play className="w-5 h-5 text-violet-300 ml-1 fill-violet-300" />
+                         </div>
+                        <RemoveButton onClick={() => handleRemoveBlock(block.id)} />
+                     </div>
+                   )}
+
                  </React.Fragment>
                ))}
              </div>
@@ -247,20 +354,25 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                     {/* Category Selector */}
                     <div className="space-y-1.5">
                        <Label className="text-xs text-muted-foreground font-semibold">편집 대상 Component</Label>
-                       <Select value={activeMainCategory} onValueChange={(val: 'hero' | 'sub') => setActiveMainCategory(val)}>
+                       <Select value={activeMainCategory} onValueChange={(val: any) => setActiveMainCategory(val)}>
                          <SelectTrigger className="rounded-xl border-gray-200 h-10 bg-white shadow-sm">
                            <SelectValue />
                          </SelectTrigger>
-                         <SelectContent className="rounded-xl">
-                           <SelectItem value="hero">Hero Banner</SelectItem>
-                           <SelectItem value="sub">Sub Banner</SelectItem>
+                         <SelectContent className="rounded-xl h-[300px]">
+                           <SelectItem value="top-banner">Top Banner (상단 띠배너)</SelectItem>
+                           <SelectItem value="hero">Hero Banner (메인 배너)</SelectItem>
+                           <SelectItem value="sub">Sub Banner (서브 배너)</SelectItem>
+                           <SelectItem value="product-list">Product List (상품 리스트)</SelectItem>
+                           <SelectItem value="category-product">Category Product (카테고리 상품)</SelectItem>
+                           <SelectItem value="shorts">Shorts (숏폼)</SelectItem>
+                           <SelectItem value="video-product">Video Product (비디오 커머스)</SelectItem>
                          </SelectContent>
                        </Select>
                     </div>
 
                     {/* Block Items List */}
                     <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                      {(activeMainCategory === 'hero' ? mainLayouts : subBannerLayouts).map((item) => {
+                      {getLayoutList().map((item) => {
                         const count = (layout.mainBlocks || []).filter(b => b.type === item.value).length;
                         return (
                           <button
@@ -339,7 +451,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             ))}
           </Tabs>
         </div>
-           
       </CardContent>
     </Card>
   );

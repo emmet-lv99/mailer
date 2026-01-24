@@ -51,7 +51,7 @@ export interface MarketingSpec {
 
 export interface MainBlock {
   id: string;
-  category: 'hero' | 'sub';
+  category: 'hero' | 'sub' | 'top-banner' | 'product-list' | 'category-product' | 'shorts' | 'video-product';
   type: string;
 }
 
