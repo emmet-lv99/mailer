@@ -85,7 +85,10 @@ export function FontSystemCard({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">전체 무게 중심 (Weight Rule)</Label>
+            <div className="flex flex-col gap-0.5">
+              <Label className="text-xs text-muted-foreground font-semibold">전체 무게 중심 (Weight Rule)</Label>
+              <p className="text-[10px] text-muted-foreground/70">쇼핑몰 전체의 시각적 '두께감'과 '무드'를 결정하는 규칙입니다.</p>
+            </div>
             <Select value={weightRule} onValueChange={onWeightChange}>
               <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
                 <SelectValue placeholder="무게 규칙 선택" />
