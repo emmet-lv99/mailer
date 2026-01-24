@@ -1,9 +1,12 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Plus, X } from "lucide-react";
 
 interface DesignConceptCardProps {
   analysisResult: any;
@@ -40,26 +43,60 @@ export function DesignConceptCard({
             <p className="text-sm text-gray-700 leading-relaxed mb-3">{analysisResult.design?.concept?.description}</p>
           )}
 
-           {/* Design Keywords (Visual Style) */}
-           <div className="mt-4">
-               <Label className="text-[10px] text-gray-500 uppercase">디자인 키워드 (Design Keywords)</Label>
-               {isEditing ? (
-                 <Input 
-                   value={analysisResult.design?.concept?.keywords?.join(", ") || ""} 
-                   onChange={(e) => updateDesign("concept", { ...analysisResult.design?.concept, keywords: e.target.value.split(",").map((s: string) => s.trim()) })}
-                   className="mt-1"
-                   placeholder="AI가 제안한 키워드를 수정하거나 추가하세요."
-                 />
-               ) : (
-                 <div className="flex flex-wrap gap-2 mt-2">
-                   {analysisResult.design?.concept?.keywords?.map((keyword: any, i: number) => (
-                     <span key={i} className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">
-                       #{keyword}
-                     </span>
-                   ))}
-                 </div>
-               )}
-           </div>
+            {/* Design Keywords (Visual Style) */}
+            <div className="mt-4">
+                <Label className="text-[10px] text-gray-500 uppercase">디자인 키워드 (Design Keywords)</Label>
+                {isEditing ? (
+                  <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-xl bg-gray-50/30">
+                    {analysisResult.design?.concept?.keywords?.map((keyword: string, i: number) => (
+                      <Badge 
+                        key={i} 
+                        variant="secondary" 
+                        className="py-1.5 pl-3 pr-2 flex items-center gap-1 bg-white border-indigo-100 hover:bg-white animate-in zoom-in-95 duration-200"
+                      >
+                        <span className="text-indigo-700 font-bold uppercase tracking-tight">{keyword}</span>
+                        <button 
+                          onClick={() => {
+                            const newKeywords = analysisResult.design.concept.keywords.filter((_: any, idx: number) => idx !== i);
+                            updateDesign("concept", { ...analysisResult.design.concept, keywords: newKeywords });
+                          }}
+                          className="p-0.5 rounded-full hover:bg-indigo-100 text-indigo-400 hover:text-indigo-600 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 rounded-full border-dashed border-indigo-200 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 flex gap-1 px-3"
+                      onClick={() => {
+                        const newKeyword = prompt("추가할 디자인 키워드를 입력하세요 (ENGLISH)");
+                        if (newKeyword) {
+                          const currentKeywords = analysisResult.design?.concept?.keywords || [];
+                          const keywordToAdd = newKeyword.trim().toUpperCase();
+                          if (keywordToAdd && !currentKeywords.includes(keywordToAdd)) {
+                            updateDesign("concept", { 
+                              ...analysisResult.design.concept, 
+                              keywords: [...currentKeywords, keywordToAdd] 
+                            });
+                          }
+                        }
+                      }}
+                    >
+                      <Plus className="w-3 h-3" /> 추가
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {analysisResult.design?.concept?.keywords?.map((keyword: any, i: number) => (
+                      <span key={i} className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">
+                        #{keyword}
+                      </span>
+                    ))}
+                  </div>
+                )}
+            </div>
         </div>
 
         {/* Color Palette */}
