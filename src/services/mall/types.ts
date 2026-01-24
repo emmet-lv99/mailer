@@ -72,6 +72,7 @@ export interface DesignSpec {
       spacing: string;
       grid: string;
       main: string;
+      mainSub: string;
       list: string;
       detail: string;
     };

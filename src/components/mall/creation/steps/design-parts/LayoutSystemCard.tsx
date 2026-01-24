@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Check, Layout } from "lucide-react";
+import * as React from "react";
 
 interface LayoutSystemCardProps {
   layout: {
@@ -13,6 +14,7 @@ interface LayoutSystemCardProps {
     spacing: string;
     grid: string;
     main: string;
+    mainSub?: string;
     list: string;
     detail: string;
   };
@@ -20,6 +22,8 @@ interface LayoutSystemCardProps {
 }
 
 export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardProps) {
+  const [activeMainCategory, setActiveMainCategory] = React.useState<'hero' | 'sub'>('hero');
+
   const radiuses = [
     { name: "Sharp (0px)", value: "0px" },
     { name: "Subtle (4px)", value: "4px" },
@@ -39,6 +43,13 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     { name: "Minimal Archive", value: "minimal-archive", desc: "Clean, gallery-focused layout" },
   ];
 
+  const subBannerLayouts = [
+    { name: "None (Hide)", value: "none", desc: "No sub banner displayed" },
+    { name: "Text Ticker", value: "text-ticker", desc: "Animated scrolling text line" },
+    { name: "Image Strap", value: "image-strap", desc: "Full-width decorative image" },
+    { name: "Promotion Bar", value: "promotion-bar", desc: "Simple notification area" },
+  ];
+
   const listLayouts = [
     { name: "Grid 3-Column", value: "grid-3", desc: "Standard e-commerce balance" },
     { name: "Grid 2-Column", value: "grid-2", desc: "Larger images for visual impact" },
@@ -54,7 +65,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
 
   const renderBlueprint = (type: 'main' | 'list' | 'detail') => {
     return (
-      <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-4 border border-white/5 shadow-2xl h-full min-h-[300px]">
+      <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-4 border border-white/5 shadow-2xl h-full min-h-[350px]">
          <div className="flex justify-between items-center opacity-40">
             <div className="w-12 h-2 bg-white/20 rounded-full" />
             <div className="flex gap-2">
@@ -62,16 +73,31 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             </div>
          </div>
          
-         <div className="space-y-3 flex-1">
+         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1">
            {type === 'main' && (
-             <>
-               <div className="h-32 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center animate-in fade-in duration-500" style={{ borderRadius: layout.borderRadius }} />
+             <div className="space-y-3">
+               {/* Hero Section */}
+               <div className={cn(
+                 "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300",
+                 activeMainCategory === 'hero' ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 h-36" : "h-32 opacity-60"
+               )} style={{ borderRadius: layout.borderRadius }} />
+
+               {/* Sub Banner Section */}
+               {layout.mainSub !== 'none' && (
+                 <div className={cn(
+                    "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300",
+                    activeMainCategory === 'sub' ? "ring-2 ring-orange-500 ring-offset-2 ring-offset-slate-900 h-12" : "h-10 opacity-60"
+                 )} style={{ borderRadius: layout.borderRadius }}>
+                    <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
+                 </div>
+               )}
+
                <div className="grid grid-cols-3 gap-3">
                   {[1,2,3].map(i => (
                     <div key={i} className="h-20 bg-white/5 border border-white/10 rounded-lg" style={{ borderRadius: layout.borderRadius }} />
                   ))}
                </div>
-             </>
+             </div>
            )}
 
            {type === 'list' && (
@@ -165,13 +191,71 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
               <TabsTrigger value="detail" className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm">상세</TabsTrigger>
             </TabsList>
 
-            {['main', 'list', 'detail'].map((tab) => (
+            <TabsContent value="main" className="mt-0">
+               <div className="grid grid-cols-12 gap-6 h-[400px]">
+                 {/* Left: Builder Item Selector */}
+                 <div className="col-span-5 flex flex-col gap-4">
+                    {/* Category Selector */}
+                    <div className="space-y-1.5">
+                       <Label className="text-xs text-muted-foreground font-semibold">편집 대상 Component</Label>
+                       <Select value={activeMainCategory} onValueChange={(val: 'hero' | 'sub') => setActiveMainCategory(val)}>
+                         <SelectTrigger className="rounded-xl border-gray-200 h-10 bg-white shadow-sm">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent className="rounded-xl">
+                           <SelectItem value="hero">Hero Banner (메인)</SelectItem>
+                           <SelectItem value="sub">Sub Banner (서브)</SelectItem>
+                         </SelectContent>
+                       </Select>
+                    </div>
+
+                    {/* Block Items List */}
+                    <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                      {(activeMainCategory === 'hero' ? mainLayouts : subBannerLayouts).map((item) => {
+                        const currentVal = activeMainCategory === 'hero' ? layout.main : layout.mainSub || 'none';
+                        const isSelected = currentVal === item.value;
+                        return (
+                          <button
+                            key={item.value}
+                            onClick={() => onLayoutChange(activeMainCategory === 'hero' ? 'main' : 'mainSub', item.value)}
+                            className={cn(
+                              "group relative flex flex-col items-start p-4 text-left rounded-xl border-2 transition-all duration-200 hover:shadow-md shrink-0",
+                              isSelected 
+                                ? "border-indigo-600 bg-indigo-50/50" 
+                                : "border-gray-100 hover:border-indigo-200 bg-white"
+                            )}
+                          >
+                             {isSelected && (
+                               <div className="absolute top-3 right-3">
+                                  <Check className="w-4 h-4 text-indigo-600" strokeWidth={3} />
+                               </div>
+                             )}
+                            <span className={cn("text-xs font-bold mb-1", isSelected ? "text-indigo-700" : "text-gray-900")}>
+                              {item.name}
+                            </span>
+                            <span className="text-[10px] text-gray-500 leading-tight">
+                              {item.desc}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                 </div>
+
+                 {/* Right: Preview Visualization */}
+                 <div className="col-span-7 h-full">
+                   {renderBlueprint('main')}
+                 </div>
+               </div>
+            </TabsContent>
+
+            {['list', 'detail'].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-0">
                 <div className="grid grid-cols-12 gap-6 h-[400px]">
                   {/* Left: Block Items Selection */}
                   <div className="col-span-5 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
-                    {(tab === 'main' ? mainLayouts : tab === 'list' ? listLayouts : detailLayouts).map((item) => {
-                      const currentVal = tab === 'main' ? layout.main : tab === 'list' ? layout.list : layout.detail;
+                    {(tab === 'list' ? listLayouts : detailLayouts).map((item) => {
+                      const currentVal = tab === 'list' ? layout.list : layout.detail;
                       const isSelected = currentVal === item.value;
                       return (
                         <button
