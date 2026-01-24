@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     const projectData = {
       // user_id: userId, // Removed
-      youtube_channel_url: youtubeChannelUrl,
+      youtube_channel_url: youtubeChannelUrl.trim().replace(/\/$/, ""),
       competitor_channels: competitorUrls || [],
       channel_name: channelName,
       marketing_analysis: marketingAnalysis,

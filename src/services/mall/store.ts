@@ -23,6 +23,8 @@ interface MallState {
   setAnalysisResult: (result: MallProjectAnalysis) => void;
   setReferenceImages: (images: string[]) => void;
   setReferenceAnalysis: (result: DesignSpec) => void;
+  updateAnalysisResult: (data: Partial<MallProjectAnalysis>) => void; // [NEW] Edit mode support
+  updateReferenceAnalysis: (data: Partial<DesignSpec>) => void; // [NEW] Edit mode support Step 2
   save: () => Promise<void>; // [NEW] Save Project
   loadProject: (project: any) => void;
   resetAll: () => void;
@@ -54,6 +56,18 @@ export const useMallStore = create<MallState>((set, get) => ({
 
   setReferenceImages: (images) => set({ referenceImages: images }),
   setReferenceAnalysis: (result) => set({ referenceAnalysis: result }),
+
+  updateAnalysisResult: (data) => set((state) => ({
+    analysisResult: state.analysisResult 
+      ? { ...state.analysisResult, ...data } 
+      : null
+  })),
+
+  updateReferenceAnalysis: (data) => set((state) => ({
+    referenceAnalysis: state.referenceAnalysis 
+      ? { ...state.referenceAnalysis, ...data } 
+      : null
+  })),
 
   // [NEW] Load existing project data
   loadProject: (project: any) => {

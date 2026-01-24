@@ -9,7 +9,7 @@
 ## 🏗️ Phase 1: 데이터 구조 잡기 (Backend & Types)
 가장 먼저 데이터를 담을 그릇부터 튼튼하게 만들어야 해.
 
-### [ ] Task 1-1. DB 테이블 생성 (Supabase)
+### [x] Task 1-1. DB 테이블 생성 (Supabase)
 이 SQL을 실행해서 테이블 2개를 만들어 줘.
 - `mall_projects`: 프로젝트 하나의 큰 단위 (예: "슈카월드 쇼핑몰 기획")
 - `mall_designs`: 그 안에서 생성된 디자인 시안들 (메인 시안 A, B, C...)
@@ -56,7 +56,7 @@ create table mall_designs (
 );
 ```
 
-### [ ] Task 1-2. 타입 정의 (`src/services/mall/types.ts`)
+### [x] Task 1-2. 타입 정의 (`src/services/mall/types.ts`)
 프론트에서 쓸 타입도 미리 정의해두자. **디자인 시스템 스펙**을 엄격하게 잡아야 해.
 
 ```typescript
@@ -167,13 +167,13 @@ export interface MallProject {
 ## 🎨 Phase 2: 기본 UI 뼈대 만들기 (Components)
 화면이 보여야 개발할 맛이 나니까, 껍데기부터 예쁘게 잡아보자.
 
-### [ ] Task 2-1. 단계별 스테퍼 (Stepper) 컴포넌트
+### [x] Task 2-1. 단계별 스테퍼 (Stepper) 컴포넌트
 우리는 총 3단계(분석 -> 레퍼런스 -> 제작)로 진행될 거야. 현재 진행 단계를 알려주는 컴포넌트를 만들자.
 - 위치: `src/components/mall/creation/step-indicator.tsx`
 - Props: `currentStep` (1, 2, 3)
 - 디자인: 번호 동그라미랑 선으로 이어지는 그 디자인 알지? (shadcn/ui 참고해도 좋아)
 
-### [ ] Task 2-2. 레이아웃 페이지 구성 (`page.tsx`)
+### [x] Task 2-2. 레이아웃 페이지 구성 (`page.tsx`)
 **Unified Entry Point Architecture**: 하나의 페이지에서 신규 생성과 이어하기를 모두 처리한다.
 - **URL**: `/youtube/mall` (New) vs `/youtube/mall?id=uuid` (Resume)
 - **Logic**:
@@ -190,7 +190,7 @@ export interface MallProject {
 ## 🧠 Phase 3: 핵심 로직 구현 (Logic & API)
 이제 진짜 머리 쓰는 작업이야. UI 흐름이 중요하니 잘 따라와.
 
-### [ ] Task 3-1. Step 1: 채널 분석 (Analysis)
+### [x] Task 3-1. Step 1: 채널 분석 (Analysis)
 유튜브 채널을 분석하고, 그 결과를 레포트 형태로 보여주는 단계야.
 - **UI 구성**:
     1.  **URL 입력창**: 내 유튜브 채널 주소 입력
