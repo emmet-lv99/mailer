@@ -284,9 +284,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
            )}
          </div>
 
-         <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-            <span className="text-[40px] font-black uppercase tracking-tighter -rotate-12 select-none">Preview</span>
-         </div>
       </div>
     );
   };
