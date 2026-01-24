@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Check, Layout } from "lucide-react";
+import { Check, Layout, X } from "lucide-react";
 import * as React from "react";
 
 interface LayoutSystemCardProps {
@@ -79,25 +79,44 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                {(!layout.main || layout.main === 'none') && (!layout.mainSub || layout.mainSub === 'none') && (
                   <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2">
                     <Layout className="w-8 h-8" />
-                    <span className="text-xs font-medium">Select a block to add</span>
+                     <span className="text-xs font-medium">Select a block to add</span>
                   </div>
                )}
 
                {/* Hero Section - Conditional Render */}
                {layout.main && layout.main !== 'none' && (
                   <div className={cn(
-                    "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+                    "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group",
                     activeMainCategory === 'hero' ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 h-36" : "h-32 opacity-80"
-                  )} style={{ borderRadius: layout.borderRadius }} />
+                  )} style={{ borderRadius: layout.borderRadius }}>
+                     <button
+                        onClick={(e) => {
+                           e.stopPropagation();
+                           onLayoutChange('main', 'none');
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10"
+                     >
+                        <X className="w-3 h-3" />
+                     </button>
+                  </div>
                )}
 
                {/* Sub Banner Section - Conditional Render */}
                {layout.mainSub && layout.mainSub !== 'none' && (
                  <div className={cn(
-                    "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+                    "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group",
                     activeMainCategory === 'sub' ? "ring-2 ring-orange-500 ring-offset-2 ring-offset-slate-900 h-12" : "h-10 opacity-80"
                  )} style={{ borderRadius: layout.borderRadius }}>
-                    <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
+                     <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
+                     <button
+                        onClick={(e) => {
+                           e.stopPropagation();
+                           onLayoutChange('mainSub', 'none');
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10"
+                     >
+                        <X className="w-3 h-3" />
+                     </button>
                  </div>
                )}
 
