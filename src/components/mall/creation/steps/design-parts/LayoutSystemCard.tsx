@@ -66,7 +66,9 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
            {type === 'main' && (
              <>
                <div className="h-32 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center animate-in fade-in duration-500" style={{ borderRadius: layout.borderRadius }}>
-                  <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">{layout.main}</span>
+                  <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">
+                    {mainLayouts.find(l => l.value === layout.main)?.name || layout.main}
+                  </span>
                </div>
                <div className="grid grid-cols-3 gap-3">
                   {[1,2,3].map(i => (
@@ -209,7 +211,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             ))}
           </Tabs>
         </div>
-           </div>
            
            <div className="space-y-3">
              <div className="h-24 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center" style={{ borderRadius: layout.borderRadius }}>
