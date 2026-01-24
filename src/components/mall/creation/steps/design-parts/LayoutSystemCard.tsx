@@ -92,7 +92,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
          </div>
          
          <div className="space-y-3 flex-1 p-2 relative">
-             <div className="space-y-3 min-h-[200px] flex flex-col items-center">
+             <div className="space-y-3 min-h-[200px] flex flex-col">
                {(blocks.length === 0) && (
                   <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2 py-20">
                     <Layout className="w-8 h-8" />
