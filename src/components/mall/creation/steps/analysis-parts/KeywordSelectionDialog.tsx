@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { STANDARD_DESIGN_KEYWORDS } from "@/services/mall/design-keywords";
 import { Check } from "lucide-react";
 
+import { toast } from "sonner";
+
 interface KeywordSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,6 +37,10 @@ export function KeywordSelectionDialog({
     if (selectedKeywords.includes(keyword)) {
       onKeywordsChange(selectedKeywords.filter((k) => k !== keyword));
     } else {
+      if (selectedKeywords.length >= 5) {
+        toast.warning("디자인 키워드는 최대 5개까지 선택 가능합니다.");
+        return;
+      }
       onKeywordsChange([...selectedKeywords, keyword]);
     }
   };
