@@ -103,45 +103,53 @@ export async function POST(request: Request) {
       Analyze the branding consistency, color usage, and visual identity from these images.
       
       [Task]
-      Generate a JSON object matching the following structure ONLY. 
-      - **LANGUAGE**: Descriptions, reasons, and user-facing values MUST be in **KOREAN (한국어)**.
-      - **EXCEPTIONS**: The "design.concept.keywords" field MUST be in **ENGLISH (ALL CAPS)**.
-      - **VOCABULARY**: Prioritize selecting from these specific technical styles if applicable:
-        [MINIMAL, BRUTALIST, SCANDINAVIAN, JAPANESE, CORPORATE, SWISS, FUTURISTIC,
-         NEON, CYBERPUNK, VAPORWAVE, GAMING, SYNTHWAVE,
-         VINTAGE, RETRO, FILM, ANALOG, ARTDECO, MIDCENTURY,
-         ORGANIC, NATURAL, BOTANICAL, TROPICAL, FARM,
-         LUXE, PREMIUM, GOLD, MARBLE, EDITORIAL,
-         PLAYFUL, KAWAII, CARTOON, STREETWEAR, MEMPHIS, DOODLE]
-      - **FORMAT**: Pure JSON, no markdown. 
-      - **KEYS**: Use camelCase for keys exactly as shown below.
-      
+      Generate a JSON object matching the following structure ONLY.
+      - **LANGUAGE**: "target.ageRange" and "mood.imagery" MUST be in **KOREAN (한국어)**.
+      - **KEYWORDS**: "design.concept.keywords" MUST be in **ENGLISH (ALL CAPS)**.
+      - **VOCABULARY**: Prioritize selecting from these specific technical styles:
+        [MINIMAL, BRUTALIST, SCANDINAVIAN, JAPANESE, CORPORATE, SWISS,
+         VINTAGE, RETRO, ORGANIC, NATURAL, LUXE, PREMIUM, PLAYFUL, STREETWEAR]
+
       Structure:
       {
         "channelName": string,
+        // 1. Marketing (Simplified)
         "marketing": {
-          "target": { "ageRange": string, "gender": string, "interests": string[] },
-          "persona": { "name": string, "oneLiner": string, "needs": string[], "painPoints": string[] },
-          "product": { "categories": string[], "priceRange": "low"|"mid"|"high"|"luxury", "keyFeatures": string[] },
+          "target": { 
+             "ageRange": "18-24" | "25-34" | "35-44" | "45+", // Infer from comments/content
+             "gender": "ALL",
+             "interests": ["General Interest"] 
+          },
+          "persona": { "name": "Standard Persona", "oneLiner": "Standard Customer", "needs": [], "painPoints": [] },
+          "product": { "categories": [], "priceRange": "mid", "keyFeatures": [] },
           "strategy": { 
-            "usp": string, 
-            "mood": string,
+            "usp": "Standard Strategy", 
+            "mood": "Standard Mood",
             "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
-            "brandArchetype": { "primary": string, "secondary": string, "mixReason": string },
-            "storyBrand": { "hero": string, "problem": string, "guide": string, "plan": string, "success": string },
-            "competitors": [{"name": string, "reason": string}]
+            "brandArchetype": { "primary": "Creator", "secondary": "Everyman", "mixReason": "Standard" },
+            "storyBrand": { "hero": "", "problem": "", "guide": "", "plan": "", "success": "" },
+            "competitors": []
           },
-          "structure": { "gnb": string[], "mainLayout": string[] }
+          "structure": { "gnb": [], "mainLayout": [] }
         },
+        // 2. Design (Focused on 3 Key Fields)
         "design": {
-          "concept": { "keywords": string[], "description": string },
-          "foundation": {
-            "colors": { "primary": hex, "secondary": hex, "background": { "main": hex, "sub": hex }, "text": { "title": hex, "body": hex, "disabled": hex } },
-            "typography": { "fontFamily": string, "scale": string, "weightRule": string },
-            "shapeLayout": { "borderRadius": string, "spacing": "compact"|"comfortable"|"airy", "grid": string }
+          "concept": { 
+             "keywords": string[], // [CRITICAL] 3-5 English Keywords (e.g. MINIMAL, PLAYFUL)
+             "description": string 
           },
-          "components": { "buttons": string, "cards": string, "inputForm": string, "gnbFooter": string },
-          "mood": { "imagery": string, "graphicMotifs": string, "iconography": string }
+          "foundation": {
+            "colors": { 
+               "primary": hex, // [CRITICAL] Extract dominate brand color from banner/profile
+               "secondary": "#333333", 
+               "background": { "main": "#FFFFFF", "sub": "#F8F8F8" }, 
+               "text": { "title": "#111111", "body": "#666666", "disabled": "#CCCCCC" } 
+            },
+            "typography": { "fontFamily": "Noto Sans KR", "scale": "standard", "weightRule": "standard" },
+            "shapeLayout": { "borderRadius": "8px", "spacing": "comfortable", "grid": "cafe24-standard" }
+          },
+          "components": { "buttons": "standard", "cards": "standard", "inputForm": "standard", "gnbFooter": "standard" },
+          "mood": { "imagery": string, "graphicMotifs": "standard", "iconography": "standard" }
         }
       }
     `;
