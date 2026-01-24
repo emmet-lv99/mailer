@@ -15,6 +15,25 @@ export interface LayoutBlockSpec {
   useCases: string[];
 }
 
+export const VISUAL_FIDELITY_RULES = `
+━━━ VISUAL FIDELITY & MATERIAL QUALITY ━━━
+- LIGHTING: Multi-point studio lighting, soft diffused shadows, no harsh glare. High dynamic range (HDR).
+- MATERIALS: Anti-aliased UI edges, glassmorphism hints where appropriate, premium paper-texture backgrounds or pure #FFFFFF.
+- FIDELITY: 8K resolution, high-fidelity UI/UX rendering, ray-traced reflections on glass/metallic products.
+- KOREAN COMMERCE STANDARD: High item density, clean vertical hierarchy, focused readability.
+`;
+
+export const FEW_SHOT_EXAMPLES = [
+  {
+    type: 'Luxury Fashion',
+    prompt: 'Hyper-realistic direct 2D screenshot of a luxury fashion mall. Minimalism, extensive whitespace, serif typography (#111111). Header with centered logo. Hero banner featuring a high-end leather bag with soft cinematic lighting. 3-column product grid with zero borders, delicate 1px dividers, high-resolution studio photography on pure white backgrounds.'
+  },
+  {
+    type: 'Modern Tech',
+    prompt: 'Clean modern electronics store UI. Sans-serif "Inter" font, bold headings, sharp 8px corner radii. Vibrant accent colors for CTA (#007AFF). 4-column product grid with subtle elevation shadows. Detailed specs visible on hover. 16:9 cinematic product video preview centered.'
+  }
+];
+
 export const PRODUCT_LIST_BLOCKS: Record<string, LayoutBlockSpec> = {
   
   /**
@@ -54,20 +73,13 @@ export const PRODUCT_LIST_BLOCKS: Record<string, LayoutBlockSpec> = {
     },
     
     promptTemplate: `
-PRODUCT LIST - 5-COLUMN GRID:
-Container:
-- Max-width: 1280px (centered), Padding: 0 40px (side)
-Grid Layout:
-- Columns: 5 (desktop), Column gap: 20px, Row gap: 20px
-- Calculation: (1280px - 80px padding - 80px gaps) / 5 = 220px per card
-PRODUCT CARD STRUCTURE (220px × 340px):
-- Card: Width 220px, Height 340px, Background #FFFFFF, Border 1px solid #E8E8E8, Radius [BORDER_RADIUS]
-- Image: Width 220px, Height 220px (1:1), Background #FFFFFF (PURE WHITE - MANDATORY)
-- Badges: SALE(#FF0000), NEW(#00CC66), BEST(#0066FF) at top-left
-- Info Section: Padding 12px, Height 120px
-- Brand: 11px, #666666, 1 line
-- Name: 13px, #333333, 2 lines, height 36px
-- Price: 15px, bold, #000000. If discounted: [20%] ₩21,280 (₩26,600 line-through)
+PRODUCT LIST - 5-COLUMN GRID (MAX DENSITY):
+- Layout: 5 items per row, Grid gap 20px, Side padding 40px.
+- Card: 220px width, 1:1 Square Image (White Background MANDATORY).
+- Visuals: Studio lighting, sharp focus on product, no lifestyle distractions.
+- Text: Brand in 11px gray, Name 13px dark-gray (2 lines), Price 15px bold black.
+- Badges: Micro-labels for SALE/NEW/BEST with high-contrast colors.
+- Quality: Pixel-perfect alignment, clean UI architecture.
 `,
     
     useCases: ['제품 수가 많은 카테고리', '데스크톱 사용자 중심 쇼핑몰', 'Catalog style']
@@ -392,9 +404,10 @@ export function generateVideoPrompt(
   const adaptation = getVideoKeywordAdaptation(designKeywords);
   let prompt = block.promptTemplate;
   
-  prompt += `\nDESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}):`;
-  prompt += `\n- Border-radius: ${adaptation.borderRadius}`;
-  prompt += `\n- Play Button Style: ${adaptation.playButtonStyle}`;
+  prompt += `\n\n━━━ DESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}) ━━━`;
+  prompt += `\n- Corner Geometry: ${adaptation.borderRadius} corner radius`;
+  prompt += `\n- Interaction: ${adaptation.playButtonStyle} Play Button with subtle glow`;
+  prompt += `\n${VISUAL_FIDELITY_RULES}`;
   
   return prompt;
 }
@@ -418,13 +431,12 @@ export function generateProductListPrompt(
   
   let prompt = block.promptTemplate;
   
-  prompt += `\nDESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}):`;
-  prompt += `\n- Border-radius: ${adaptation.borderRadius}`;
-  prompt += `\n- Card shadow: ${adaptation.shadow}`;
-  prompt += `\n- Card border: ${adaptation.cardBorder}`;
-  prompt += `\n- Hover shadow: ${adaptation.hoverShadow}`;
-  if (adaptation.spacing) prompt += `\n- Spacing: ${adaptation.spacing}`;
-  if (adaptation.hoverTransform) prompt += `\n- Hover transform: ${adaptation.hoverTransform}`;
+  prompt += `\n\n━━━ DESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}) ━━━`;
+  prompt += `\n- Surface Style: ${adaptation.borderRadius} radius, ${adaptation.cardBorder} border`;
+  prompt += `\n- Atmosphere: Shadow intensity ${adaptation.shadow}, Hover elevation ${adaptation.hoverShadow}`;
+  if (adaptation.spacing) prompt += `\n- Verticality: ${adaptation.spacing}`;
+  if (adaptation.hoverTransform) prompt += `\n- Dynamics: ${adaptation.hoverTransform}`;
+  prompt += `\n${VISUAL_FIDELITY_RULES}`;
   
   return prompt;
 }

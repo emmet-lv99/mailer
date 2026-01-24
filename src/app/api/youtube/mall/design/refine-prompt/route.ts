@@ -1,4 +1,4 @@
-import { generateProductListPrompt, generateVideoPrompt } from "@/services/mall/layout-specs";
+import { FEW_SHOT_EXAMPLES, generateProductListPrompt, generateVideoPrompt, VISUAL_FIDELITY_RULES } from "@/services/mall/layout-specs";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -382,14 +382,20 @@ export async function POST(request: Request) {
 
     const systemPrompt = `You are a professional Prompt Engineer for Imagen 4.
 Your task is to convert the following TECHNICAL DESIGN SPECIFICATION into a highly detailed, 
-vivid, and atmospheric prompt that Imagen 4 can understand.
+vivid, and atmospheric prompt that Imagen 4 can use to create a world-class e-commerce design.
 
 ━━━ CRITICAL INSTRUCTIONS ━━━
 1. ALWAYS maintain the requested LAYOUT STRUCTURE and BLOCK SEQUENCE.
 2. Focus on "Material Quality", "Lighting", and "Professional E-commerce Photography style".
-3. Describe the UI elements as if they are part of a real high-fidelity web surface.
-4. Keep the output under 1000 characters for optimal performance.
-5. NEVER include any introductory text or closing commentary.
+3. Use extremely descriptive, technical, and atmospheric language. 
+4. Describe UI elements as high-fidelity visual artifacts (anti-aliased edges, soft HDR lighting).
+5. Stay under 1400 characters for optimal performance.
+6. NEVER include any introductory text or closing commentary.
+
+${VISUAL_FIDELITY_RULES}
+
+━━━ FEW-SHOT EXAMPLES (Reference for Style & Depth) ━━━
+${FEW_SHOT_EXAMPLES.map((ex: any) => `[${ex.type}]\n${ex.prompt}`).join('\n\n')}
 
 ━━━ TECHNICAL SPECIFICATION ━━━
 ${technicalContext}
