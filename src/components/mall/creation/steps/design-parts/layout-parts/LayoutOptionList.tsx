@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { MainBlock } from "@/services/mall/types";
+import { LayoutBlock } from "@/services/mall/types";
 import { Check } from "lucide-react";
 
 interface LayoutOption {
@@ -12,7 +12,7 @@ interface LayoutOptionListProps {
     items: LayoutOption[];
     selectedVal?: string; // For radio-style selection (list/detail)
     activeMainCategory?: string; // For context
-    existingBlocks?: MainBlock[]; // For counting in main builder
+    existingBlocks?: LayoutBlock[]; // For counting in main builder
     onSelect: (value: string) => void;
     mode: 'add' | 'select'; // 'add' adds to stack, 'select' picks one option
 }

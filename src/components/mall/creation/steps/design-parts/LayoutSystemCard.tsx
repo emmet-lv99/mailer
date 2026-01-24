@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import { MainBlock } from "@/services/mall/types";
+import { LayoutBlock } from "@/services/mall/types";
 import { Layout } from "lucide-react";
 import * as React from "react";
 
@@ -31,18 +30,26 @@ interface LayoutSystemCardProps {
     borderRadius: string;
     spacing: string;
     grid: string;
-    mainBlocks: MainBlock[];
-    list: string;
-    detail: string;
+    mainBlocks: LayoutBlock[];
+    list: LayoutBlock[] | string; // Handle legacy string temporarily
+    detail: LayoutBlock[] | string; // Handle legacy string temporarily
   };
   onLayoutChange: (field: string, value: any) => void;
 }
 
 export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardProps) {
-  const [activeMainCategory, setActiveMainCategory] = React.useState<MainBlock['category']>('hero');
+  const [activeMainCategory, setActiveMainCategory] = React.useState<LayoutBlock['category']>('hero');
 
-  const getLayoutList = () => {
-    switch(activeMainCategory) {
+  // Convert legacy string data to empty array or single block if needed (Migration logic helper)
+  const getBlocks = (field: 'mainBlocks' | 'list' | 'detail'): LayoutBlock[] => {
+    const val = layout[field];
+    if (Array.isArray(val)) return val;
+    // Legacy support: if it's a string, maybe return a default block? or just empty
+    return [];
+  };
+
+  const getLayoutList = (category?: string) => {
+    switch(category) {
       case 'top-banner': return topBannerLayouts;
       case 'hero': return mainLayouts;
       case 'sub': return subBannerLayouts;
@@ -50,26 +57,31 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
       case 'category-product': return categoryProductLayouts;
       case 'shorts': return shortsLayouts;
       case 'video-product': return videoProductLayouts;
+      case 'list': return listLayouts;
+      case 'detail': return detailLayouts;
       default: return mainLayouts;
     }
   };
 
-  const handleAddBlock = (category: MainBlock['category'], type: string) => {
-    const newBlock: MainBlock = {
+  const handleAddBlock = (field: 'mainBlocks' | 'list' | 'detail', category: string, type: string) => {
+    const currentBlocks = getBlocks(field);
+    const newBlock: LayoutBlock = {
       id: crypto.randomUUID(),
-      category,
+      category: category,
       type
     };
-    const newBlocks = [...(layout.mainBlocks || []), newBlock];
-    onLayoutChange('mainBlocks', newBlocks);
+    onLayoutChange(field, [...currentBlocks, newBlock]);
   };
 
-  const handleRemoveBlock = (blockId: string) => {
-    const newBlocks = (layout.mainBlocks || []).filter(b => b.id !== blockId);
-    onLayoutChange('mainBlocks', newBlocks);
+  const handleRemoveBlock = (field: 'mainBlocks' | 'list' | 'detail', blockId: string) => {
+    const currentBlocks = getBlocks(field);
+    onLayoutChange(field, currentBlocks.filter(b => b.id !== blockId));
   };
 
   const renderBlueprint = (type: 'main' | 'list' | 'detail') => {
+    const field = type === 'main' ? 'mainBlocks' : type;
+    const blocks = getBlocks(field as any);
+
     return (
       <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative flex flex-col gap-4 border border-white/5 shadow-2xl min-h-[400px]">
          <div className="flex justify-between items-center opacity-40">
@@ -80,53 +92,24 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
          </div>
          
          <div className="space-y-3 flex-1 p-2 relative">
-           {type === 'main' && (
              <div className="space-y-3 min-h-[200px] flex flex-col items-center">
-               {(!layout.mainBlocks || layout.mainBlocks.length === 0) && (
+               {(blocks.length === 0) && (
                   <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2 py-20">
                     <Layout className="w-8 h-8" />
                      <span className="text-xs font-medium">Select a block to add</span>
                   </div>
                )}
 
-               {layout.mainBlocks?.map((block) => (
+               {blocks.map((block) => (
                  <React.Fragment key={block.id}>
                     <LayoutBlockPreview 
                         block={block} 
                         borderRadius={layout.borderRadius} 
-                        onRemove={handleRemoveBlock} 
+                        onRemove={(id) => handleRemoveBlock(field as any, id)} 
                     />
                  </React.Fragment>
                ))}
              </div>
-           )}
-
-           {type === 'list' && (
-             <div className={cn("grid gap-3 transition-all duration-300", 
-                layout.list === 'grid-3' ? "grid-cols-3" : 
-                layout.list === 'grid-2' ? "grid-cols-2" : "grid-cols-1"
-             )}>
-                {[1,2,3,4,5,6].slice(0, layout.list === 'grid-2' ? 4 : 6).map(i => (
-                  <div key={i} className="aspect-[3/4] bg-white/5 border border-white/10 rounded-lg flex flex-col gap-2 p-2" style={{ borderRadius: layout.borderRadius }}>
-                     <div className="flex-1 bg-white/5 rounded-sm" />
-                     <div className="h-2 w-2/3 bg-white/10 rounded-sm" />
-                     <div className="h-2 w-1/3 bg-white/10 rounded-sm" />
-                  </div>
-                ))}
-             </div>
-           )}
-
-           {type === 'detail' && (
-             <div className="flex gap-4 h-full">
-                <div className="flex-1 bg-white/5 border border-white/10 rounded-lg h-5/6" style={{ borderRadius: layout.borderRadius }} />
-                <div className="flex-1 flex flex-col gap-3">
-                   <div className="h-6 w-3/4 bg-indigo-500/20 rounded-md" />
-                   <div className="h-4 w-1/2 bg-white/10 rounded-md" />
-                   <div className="h-20 w-full bg-white/5 rounded-md mt-4" />
-                   <div className="h-10 w-full bg-indigo-600/20 rounded-md mt-auto mb-10" style={{ borderRadius: layout.borderRadius }} />
-                </div>
-             </div>
-           )}
          </div>
       </div>
     );
@@ -213,10 +196,10 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
 
                     {/* Block Items List */}
                     <LayoutOptionList 
-                        items={getLayoutList()} 
+                        items={getLayoutList(activeMainCategory)} 
                         mode="add"
-                        existingBlocks={layout.mainBlocks}
-                        onSelect={(type) => handleAddBlock(activeMainCategory, type)}
+                        existingBlocks={getBlocks('mainBlocks')}
+                        onSelect={(type) => handleAddBlock('mainBlocks', activeMainCategory, type)}
                     />
                  </div>
 
@@ -233,10 +216,10 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                   {/* Left: Block Items Selection */}
                   <div className="col-span-5 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar sticky top-0 h-[600px]">
                     <LayoutOptionList 
-                        items={tab === 'list' ? listLayouts : detailLayouts}
-                        mode="select"
-                        selectedVal={tab === 'list' ? layout.list : layout.detail}
-                        onSelect={(val) => onLayoutChange(tab, val)}
+                        items={getLayoutList(tab)}
+                        mode="add"
+                        existingBlocks={getBlocks(tab as any)}
+                        onSelect={(type) => handleAddBlock(tab as any, tab, type)}
                     />
                   </div>
 

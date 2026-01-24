@@ -49,9 +49,9 @@ export interface MarketingSpec {
   };
 }
 
-export interface MainBlock {
+export interface LayoutBlock {
   id: string;
-  category: 'hero' | 'sub' | 'top-banner' | 'product-list' | 'category-product' | 'shorts' | 'video-product';
+  category: string;
   type: string;
 }
 
@@ -77,9 +77,9 @@ export interface DesignSpec {
       borderRadius: string;
       spacing: string;
       grid: string;
-      mainBlocks: MainBlock[];
-      list: string;
-      detail: string;
+      mainBlocks: LayoutBlock[];
+      list: LayoutBlock[];
+      detail: LayoutBlock[];
     };
   };
   // components removed from UI
