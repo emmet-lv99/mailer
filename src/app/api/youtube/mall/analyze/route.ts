@@ -1,4 +1,4 @@
-import { geminiVisionModel } from "@/lib/gemini";
+import genAI, { geminiVisionModel } from "@/lib/gemini";
 import { getChannelDetails, getChannelIdFromUrl, getRecentVideos, getVideoComments } from "@/lib/youtube";
 import { MallProjectAnalysis } from "@/services/mall/types";
 import { NextResponse } from "next/server";
@@ -33,12 +33,12 @@ export async function POST(request: Request) {
 
     // Fetch Videos
     const videos = channelInfo.uploadsPlaylistId 
-      ? await getRecentVideos(channelInfo.uploadsPlaylistId, 5) // Analyze top 5
+      ? await getRecentVideos(channelInfo.uploadsPlaylistId, 50) // Analyze recent 50
       : [];
 
     // [New] Fetch Comments & Prepare Thumbnails
-    // Balance visual inputs: 1 Banner + 1 Profile + 2 Video Thumbnails = 4 Images
-    const topVideos = videos.slice(0, 2); 
+    // Balance visual inputs: 1 Banner + 1 Profile + 5 Video Thumbnails = 7 Images
+    const topVideos = videos.slice(0, 5); 
     
     // Helper to download image to base64
     const downloadImage = async (url?: string | null) => {
@@ -77,8 +77,37 @@ export async function POST(request: Request) {
       description: channelInfo.description,
       keywords: channelInfo.keywords,
       recentVideos: videos.map(v => ({ title: v.title, description: v.description?.slice(0, 100) })),
-      topComments: allComments.slice(0, 2000), // Limit comment text context
+      topComments: allComments.slice(0, 2000), 
     };
+
+    // [New] Step 2.5: Google Search Grounding (Research)
+    let searchContext = "";
+    try {
+        const researchModel = genAI.getGenerativeModel({ 
+            model: "gemini-2.0-flash", 
+            // @ts-ignore - googleSearch is supported in v2 but types might be outdated
+            tools: [{ googleSearch: {} }] 
+        });
+        
+        const searchPrompt = `
+        Search for the YouTube channel "${channelInfo.title}" (Korean: ${channelInfo.title}).
+        Find information about:
+        1. Main Subscriber Demographics (Gender, Age)
+        2. Key Content Themes (e.g. Army, Dating, Comedy)
+        3. Recent Controversies or Changes in public opinion (e.g. 2024 issues)
+        
+        Summarize the findings in one paragraph (Korean).
+        `;
+        
+        const searchResult = await researchModel.generateContent(searchPrompt);
+        const searchText = searchResult.response.text();
+        if (searchText) {
+            console.log("Creation: Google Search Result:", searchText);
+            searchContext = `[Google Search Insights]\n${searchText}`;
+        }
+    } catch (e) {
+        console.warn("Google Search Grounding Failed (Skipping):", e);
+    }
 
     // 3. Prompt Gemini (Multimodal)
     const prompt = `
@@ -90,9 +119,11 @@ export async function POST(request: Request) {
       Input: 
       - Channel URL: ${channelUrl}
       - Reference URL: ${referenceUrl || "None"}
-      - Brand Keywords: ${brandKeywords || "None"} (Consider these if provided)
+      - Brand Keywords: ${brandKeywords || "None"}
       Description: ${analysisContext.description}
       Keywords: ${analysisContext.keywords}
+      
+      ${searchContext}
       
       [Content Context]
       Recent Videos: ${JSON.stringify(analysisContext.recentVideos)}
