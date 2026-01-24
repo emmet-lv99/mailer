@@ -136,7 +136,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
 
   const renderBlueprint = (type: 'main' | 'list' | 'detail') => {
     return (
-      <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-4 border border-white/5 shadow-2xl h-full min-h-[350px]">
+      <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative flex flex-col gap-4 border border-white/5 shadow-2xl min-h-[400px]">
          <div className="flex justify-between items-center opacity-40">
             <div className="w-12 h-2 bg-white/20 rounded-full" />
             <div className="flex gap-2">
@@ -144,7 +144,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             </div>
          </div>
          
-         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar p-2 relative">
+         <div className="space-y-3 flex-1 p-2 relative">
            {type === 'main' && (
              <div className="space-y-3 min-h-[200px] flex flex-col items-center">
                {(!layout.mainBlocks || layout.mainBlocks.length === 0) && (
@@ -348,11 +348,11 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             </TabsList>
 
             <TabsContent value="main" className="mt-0">
-               <div className="grid grid-cols-12 gap-6 h-[400px]">
+               <div className="grid grid-cols-12 gap-6 items-start">
                  {/* Left: Builder Item Selector */}
-                 <div className="col-span-5 flex flex-col gap-4">
+                 <div className="col-span-5 flex flex-col gap-4 sticky top-0 h-[600px]">
                     {/* Category Selector */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 flex-shrink-0">
                        <Label className="text-xs text-muted-foreground font-semibold">편집 대상 Component</Label>
                        <Select value={activeMainCategory} onValueChange={(val: any) => setActiveMainCategory(val)}>
                          <SelectTrigger className="rounded-xl border-gray-200 h-10 bg-white shadow-sm">
@@ -371,7 +371,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                     </div>
 
                     {/* Block Items List */}
-                    <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                    <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1 bg-white/50 rounded-xl p-1">
                       {getLayoutList().map((item) => {
                         const count = (layout.mainBlocks || []).filter(b => b.type === item.value).length;
                         return (
@@ -403,7 +403,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                  </div>
 
                  {/* Right: Preview Visualization */}
-                 <div className="col-span-7 h-full">
+                 <div className="col-span-7">
                    {renderBlueprint('main')}
                  </div>
                </div>
@@ -411,7 +411,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
 
             {['list', 'detail'].map((tab) => (
               <TabsContent key={tab} value={tab} className="mt-0">
-                <div className="grid grid-cols-12 gap-6 h-[400px]">
+                <div className="grid grid-cols-12 gap-6 h-[500px]">
                   {/* Left: Block Items Selection */}
                   <div className="col-span-5 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
                     {(tab === 'list' ? listLayouts : detailLayouts).map((item) => {
