@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 interface DesignConceptCardProps {
@@ -35,23 +34,9 @@ export function DesignConceptCard({
                 onChange={(e) => updateDesign("concept", { ...analysisResult.design?.concept, description: e.target.value })}
                 className="text-sm h-20 mb-3"
               />
-              <Label className="text-[10px] text-gray-400 uppercase">Keywords (콤마로 구분)</Label>
-              <Input 
-                value={analysisResult.design?.concept?.keywords?.join(", ") || ""} 
-                onChange={(e) => updateDesign("concept", { ...analysisResult.design?.concept, keywords: e.target.value.split(",").map((s: string) => s.trim()) })}
-              />
             </>
           ) : (
-            <>
-              <p className="text-sm text-gray-700 leading-relaxed mb-3">{analysisResult.design?.concept?.description}</p>
-              <div className="flex flex-wrap gap-2">
-                {analysisResult.design?.concept?.keywords?.map((keyword: any, i: number) => (
-                  <span key={i} className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">
-                    #{keyword}
-                  </span>
-                ))}
-              </div>
-            </>
+            <p className="text-sm text-gray-700 leading-relaxed mb-3">{analysisResult.design?.concept?.description}</p>
           )}
         </div>
 
@@ -108,26 +93,7 @@ export function DesignConceptCard({
           </div>
         </div>
 
-        {/* Components Style */}
-        <div>
-          <h4 className="font-semibold mb-2 text-sm">Components Style</h4>
-          <div className="grid grid-cols-1 gap-3">
-            {["buttons", "cards", "inputForm", "gnbFooter"].map((key) => (
-              <div key={key} className="bg-gray-50/50 p-2 rounded-lg border border-dashed space-y-1">
-                <Label className="text-[10px] font-bold text-gray-400 uppercase">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                {isEditing ? (
-                  <Input 
-                    value={(analysisResult.design?.components as any)[key] || ""} 
-                    onChange={(e) => updateDesign("components", { ...analysisResult.design?.components, [key]: e.target.value })}
-                    className="h-8 text-xs"
-                  />
-                ) : (
-                  <p className="text-xs text-gray-700">{(analysisResult.design?.components as any)[key]}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Components Style - Removed by request */}
 
         {/* Mood & Imagery */}
         <div>
