@@ -133,21 +133,83 @@ export function MarketingStrategyCard({
                </div>
             )}
             
-            {/* Gender (Optional Display) */}
+            {/* Gender Section (Multi-select) */}
             <div className={`pt-3 border-t border-slate-200 ${isEditing ? 'mt-3' : 'mt-0'}`}>
                {isEditing ? (
-                 <div className="space-y-1">
-                   <Label className="text-[10px] text-gray-500">성별</Label>
-                   <Input 
-                      className="bg-white"
-                      value={analysisResult.marketing?.target?.gender || ""} 
-                      onChange={(e) => updateMarketing("target", { ...analysisResult.marketing?.target, gender: e.target.value })}
-                   />
+                 <div className="space-y-2">
+                   <Label className="text-[11px] text-gray-500">성별 (복수 선택 가능)</Label>
+                   <div className="grid grid-cols-2 gap-2">
+                     {['MALE', 'FEMALE'].map((genderKey) => {
+                        const label = genderKey === 'MALE' ? '남성' : '여성';
+                        // Normalize functionality: Check if "ALL", "MALE", "FEMALE" is in the string
+                        // API might return "ALL", "Male", "Female", or "Male, Female"
+                        const currentVal = (analysisResult.marketing?.target?.gender || "").toUpperCase();
+                        
+                        const isSelected = 
+                          currentVal.includes("ALL") || 
+                          currentVal.includes(genderKey) || 
+                          (genderKey === 'MALE' && (currentVal.includes("남성") || currentVal.includes("MEN"))) ||
+                          (genderKey === 'FEMALE' && (currentVal.includes("여성") || currentVal.includes("WOMEN")));
+
+                        return (
+                          <div
+                            key={genderKey}
+                            onClick={() => {
+                               // Toggle Logic
+                               let newGenders = [];
+                               const isMaleSelected = currentVal.includes("ALL") || currentVal.includes("MALE") || currentVal.includes("남성");
+                               const isFemaleSelected = currentVal.includes("ALL") || currentVal.includes("FEMALE") || currentVal.includes("여성");
+
+                               if (genderKey === 'MALE') {
+                                  if (isMaleSelected) { // Deselect Male
+                                     if (isFemaleSelected) newGenders.push("FEMALE"); 
+                                  } else { // Select Male
+                                     newGenders.push("MALE");
+                                     if (isFemaleSelected) newGenders.push("FEMALE");
+                                  }
+                               } else { // FEMALE
+                                  if (isFemaleSelected) { // Deselect Female
+                                     if (isMaleSelected) newGenders.push("MALE");
+                                  } else { // Select Female
+                                     newGenders.push("FEMALE");
+                                     if (isMaleSelected) newGenders.push("MALE");
+                                  }
+                               }
+
+                               // Determine final string
+                               let finalStr = "";
+                               if (newGenders.length === 2) finalStr = "ALL";
+                               else if (newGenders.length === 1) finalStr = newGenders[0];
+                               // If empty, maybe default to ALL or empty? Let's leave empty.
+                               
+                               updateMarketing("target", { ...analysisResult.marketing?.target, gender: finalStr });
+                            }}
+                            className={`
+                              cursor-pointer border p-3 rounded text-center text-sm transition-all relative bg-white
+                              ${isSelected 
+                                ? 'border-sky-600 text-sky-700 font-bold ring-1 ring-sky-600' 
+                                : 'border-slate-200 text-slate-500 hover:bg-slate-50'}
+                            `}
+                          >
+                            {label}
+                            {isSelected && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-sky-600" />}
+                          </div>
+                        );
+                     })}
+                   </div>
                  </div>
                ) : (
                   <div className="flex gap-2 items-center mt-2">
                      <span className="text-xs font-bold text-slate-500 uppercase mr-2">GENDER</span>
-                     <span className="text-sm text-slate-700">{analysisResult.marketing?.target?.gender}</span>
+                     <span className="text-sm text-slate-700 font-medium">
+                        {(() => {
+                           const val = (analysisResult.marketing?.target?.gender || "").toUpperCase();
+                           if (val.includes("ALL")) return "남성, 여성 (전체)";
+                           if (val.includes("MALE") || val.includes("남성")) return "남성";
+                           if (val.includes("FEMALE") || val.includes("여성")) return "여성";
+                           return val;
+                        })()}
+                     </span>
                   </div>
                )}
             </div>
