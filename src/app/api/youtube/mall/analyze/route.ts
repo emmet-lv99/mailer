@@ -141,7 +141,8 @@ export async function POST(request: Request) {
       1. **Search Phase**: First, look at [Data Source 1] to understand the channel's public perception, controversies, and general demographic consensus.
       2. **Content Phase**: Analyze [Data Source 2] to identify recurrent themes.
       3. **Engagement Phase**: Check [Data Source 3] to see *who* is actually talking.
-      4. **Visual Phase**: Finally, look at [Data Source 4].
+      4. **Visual Phase**: Look at [Data Source 4] to identify existing brand colors and aesthetics.
+      5. **Visual Translation Phase**: Translate the findings from steps 1-3 into specific visual languages. (e.g., "Humorous" [Soul] -> "Kitsch/Bold" [Tool]).
 
       [Demographic Heuristics]
       - **Army/Military (군대)**, Gaming, Cars, Sports -> **Strongly bias towards MALE**.
@@ -149,24 +150,28 @@ export async function POST(request: Request) {
       - Sketch Comedy -> Can be mixed, but if it involves "Soldiers" or "Military", it is MALE.
       - **Controversy Check**: If there is a "Military Mockery" controversy, the core audience is likely MALE (who are angry).
 
+      [Design Heuristics (Visual Translation)]
+      - **Friendly / Humorous / B-tier** -> CASUAL, PLAYFUL, RETRO, VIBRANT, KITSCH.
+      - **Professional / High-end / Tech** -> MINIMAL, MODERN, BOLD, INDUSTRIAL, LUXURY.
+      - **Emotional / Warm / Daily** -> ORGANIC, NATURAL, WARM, COZY, PASTEL.
+      - **Youthful / Trend-sensitive** -> POP, SPORTY, GRUNGE, CHIC, Y2K.
+
       [Task Guidelines]
       Generate a JSON object matching the following structure ONLY.
       - **LANGUAGE**: "target.ageRange" and "mood.imagery" MUST be in **KOREAN (한국어)**.
       - **KEYWORDS**: "design.concept.keywords" MUST be in **ENGLISH (ALL CAPS)**.
-      - **VOCABULARY**: Select 3-5 keywords from these design styles & moods:
-        [MINIMAL, MODERN, BOLD, TYPOGRAPHY, VINTAGE, RETRO, ORGANIC, NATURAL, 
-         KITSCH, POP, INDUSTRIAL, ELEGANT, LUXURY, CASUAL, SPORTY, GRUNGE, 
-         ETHEREAL, MONOCHROME, PASTEL, VIBRANT, WARM, COZY, CHIC]
+      - **VOCABULARY**: Select 3-5 keywords from the list in [Design Heuristics].
 
       [IMPORTANT] LOGICAL CONSISTENCY RULES:
       1. **STEP 1: REASONING**: Fill the \`_reasoning\` field first. 
-         - Synthesize ALL 4 Data Sources.
-         - *Critical*: If [Search] says "Male dominated" but [Visuals] look generic, Trust [Search] & [Comments] for demographics.
-         - Explicitly state: "Search indicates X, Content shows Y, Comments suggest Z. Therefore final verdict is W."
+         - Synthesize ALL 4 Data Sources & Demographic Heuristics.
+         - **Visual Translation Logic**: Explicitly state how the Brand Soul (Strategy) translates into Visual Style (Design).
+         - E.g., "The brand identity is 'Humorous' and 'Relatable' (Soul). Therefore, the design style should be 'KITSCH' and 'VIBRANT' (Tool) to reflect this energy."
       2. **STEP 2: EXECUTION**: Fill \`target.gender\` and \`target.ageRange\` based on the verdict.
       3. **STEP 3: ALIGNMENT**: 
-         - \`marketing.strategy\` text MUST mention the same gender/age.
-         - \`marketing.persona\` MUST have the same gender/age.
+         - \`marketing.strategy.brandKeywords\` must be abstract adjectives (Personality).
+         - \`design.concept.keywords\` must be visual style nouns (Aesthetic), derived from those adjectives.
+         - \`design.concept.description\` must explain the logical connection between the brand soul and the design style.
 
       [CRITICAL WARNING: ANTI-BIAS]
       - **DO NOT DEFAULT TO FEMALE PERSONA.** 
