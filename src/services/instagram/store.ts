@@ -4,11 +4,13 @@ import { InstagramUser } from './types';
 
 interface InstagramState {
   keyword: string;
+  searchMode: 'tag' | 'target';
   results: InstagramUser[];
   selectedUsernames: Set<string>;
   analysisResults: any[];
   
   setKeyword: (q: string) => void;
+  setSearchMode: (mode: 'tag' | 'target') => void;
   setResults: (users: InstagramUser[]) => void;
   toggleSelection: (username: string) => void;
   resetSelection: () => void;
@@ -21,11 +23,13 @@ interface InstagramState {
 
 export const useInstagramStore = create<InstagramState>((set) => ({
   keyword: "",
+  searchMode: 'tag',
   results: [],
   selectedUsernames: new Set(),
   analysisResults: [],
 
   setKeyword: (q) => set({ keyword: q }),
+  setSearchMode: (mode) => set({ searchMode: mode }),
   setResults: (users) => set({ results: users }),
   
   toggleSelection: (username) => set((state) => {

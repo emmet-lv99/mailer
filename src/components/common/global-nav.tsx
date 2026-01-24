@@ -2,7 +2,13 @@
 "use client";
 
 import { UserAuth } from "@/components/common/user-auth";
-import { FileUp, History, Home, Instagram, Search, Settings, Youtube } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, FileUp, History, Home, Instagram, Search, Settings, Youtube } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -16,8 +22,7 @@ export function GlobalNav() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    // Path detection logic can be added here if needed
+    setIsMounted(true); // Ensure setIsMounted(true) is preserved if it was there, or add it. Original had it.
     if (pathname.startsWith("/instagram")) {
         setActiveApp("instagram");
     } else {
@@ -35,8 +40,16 @@ export function GlobalNav() {
 
   const instagramNavItems = [
     { href: "/instagram", label: "대시보드", icon: Home },
-    { href: "/instagram/search", label: "아이디 검색", icon: Search },
+    { 
+      label: "검색", 
+      icon: Search,
+      children: [
+        { href: "/instagram/search", label: "태그 검색" },
+        { href: "/instagram/search?mode=target", label: "타겟 검색" }
+      ]
+    },
     { href: "/instagram/history", label: "이력 관리", icon: History },
+    { href: "/instagram/settings", label: "설정", icon: Settings },
   ];
 
   const currentNavItems = activeApp === "youtube" ? youtubeNavItems : instagramNavItems;
@@ -88,8 +101,35 @@ export function GlobalNav() {
 
           {/* Navigation Items */}
           <nav className="hidden md:flex items-center gap-1">
-            {currentNavItems.map((item) => {
+            {currentNavItems.map((item: any) => {
               const IconComponent = item.icon;
+              
+              if (item.children) {
+                 const isActive = item.children.some((child: any) => pathname === child.href || (child.href.includes('?') ? pathname === child.href.split('?')[0] : pathname.startsWith(child.href)));
+                 return (
+                   <DropdownMenu key={item.label}>
+                     <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors outline-none ${
+                        isActive
+                          ? "bg-accent text-accent-foreground font-medium"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}>
+                         <IconComponent className="h-4 w-4" />
+                         {item.label}
+                         <ChevronDown className="h-3 w-3 ml-0.5 opacity-50" />
+                     </DropdownMenuTrigger>
+                     <DropdownMenuContent align="start">
+                        {item.children.map((child: any) => (
+                           <DropdownMenuItem key={child.label} asChild>
+                             <Link href={child.href} className="cursor-pointer w-full">
+                               {child.label}
+                             </Link>
+                           </DropdownMenuItem>
+                        ))}
+                     </DropdownMenuContent>
+                   </DropdownMenu>
+                 )
+              }
+
               const isActive = pathname === item.href;
               return (
                 <Link

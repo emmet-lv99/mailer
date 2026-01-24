@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function InstagramAnalyzePage() {
-    const { results, selectedUsernames, analysisResults, setAnalysisResults, removeAnalysisResult, updateUserStatus } = useInstagramStore();
+    const { results, selectedUsernames, analysisResults, setAnalysisResults, removeAnalysisResult, updateUserStatus, searchMode } = useInstagramStore();
     const [loading, setLoading] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [registering, setRegistering] = useState<Set<string>>(new Set());
@@ -29,9 +29,10 @@ export default function InstagramAnalyzePage() {
     const startAnalysis = async () => {
         setLoading(true);
         try {
-            const response = await instagramService.analyze(targets);
+            const promptType = searchMode === 'target' ? 'INSTA_TARGET' : 'INSTA';
+            const response = await instagramService.analyze(targets, promptType);
             setAnalysisResults(response.results);
-            toast.success(`${response.results.length}명 분석 완료!`);
+            toast.success(`${response.results.length}명 분석 완료! (${promptType === 'INSTA_TARGET' ? '타겟 분석' : '기본 분석'})`);
         } catch (error: any) {
             toast.error(error.message);
         } finally {
@@ -198,7 +199,11 @@ export default function InstagramAnalyzePage() {
                                         <span className="text-lg text-muted-foreground font-medium">/10</span>
                                     </div>
                                     <div className="text-sm font-medium text-right mt-1 text-muted-foreground">
-                                        {analysis.category}
+                                        {analysis.category && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground">
+                                                {analysis.category}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>

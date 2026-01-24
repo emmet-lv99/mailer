@@ -2,11 +2,11 @@
 import { SearchResponse } from "./types";
 
 export const instagramService = {
-  search: async (keyword: string, limit: number = 10): Promise<SearchResponse> => {
+  search: async (keyword: string, limit: number = 10, mode: 'tag' | 'target' = 'tag'): Promise<SearchResponse> => {
     const res = await fetch("/api/instagram/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword, limit }),
+      body: JSON.stringify({ keyword, limit, mode }),
     });
 
     if (!res.ok) {
@@ -17,11 +17,11 @@ export const instagramService = {
     return res.json();
   },
 
-  analyze: async (users: any[]): Promise<{ results: any[] }> => {
+  analyze: async (users: any[], promptType: 'INSTA' | 'INSTA_TARGET' = 'INSTA'): Promise<{ results: any[] }> => {
     const res = await fetch("/api/instagram/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ users }),
+      body: JSON.stringify({ users, promptType }),
     });
 
     if (!res.ok) {

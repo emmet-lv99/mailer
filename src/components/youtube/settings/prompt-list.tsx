@@ -21,10 +21,11 @@ interface PromptListProps {
   selectedId: number | null;
   onSelect: (prompt: Prompt | null) => void;
   onRefresh?: () => void;
+  promptType?: 'YOUTUBE' | 'INSTA' | 'INSTA_TARGET';
 }
 
-export function PromptList({ selectedId, onSelect }: PromptListProps) {
-  const { data: prompts, error, mutate } = useSWR<Prompt[]>("/api/youtube/prompts", fetcher);
+export function PromptList({ selectedId, onSelect, promptType = 'YOUTUBE' }: PromptListProps) {
+  const { data: prompts, error, mutate } = useSWR<Prompt[]>(`/api/prompts?type=${promptType}`, fetcher);
 
   if (error) return <div className="text-red-500 text-sm">로딩 에러</div>;
   if (!prompts) return <div className="text-muted-foreground text-sm">로딩 중...</div>;

@@ -11,6 +11,11 @@ export type InstagramUser = {
     likes: number;
     comments: number;
     timestamp: string;
+    latest_comments?: {
+      text: string;
+      ownerUsername: string;
+      timestamp: string;
+    }[];
   }[];
   is_registered: boolean;
   db_status: 'todo' | 'ignored' | 'sent' | 'replied' | null;

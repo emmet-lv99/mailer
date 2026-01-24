@@ -8,22 +8,35 @@ import { useInstagramStore } from "@/services/instagram/store"; // Import Store
 import { InstagramUser } from "@/services/instagram/types";
 import { Search } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-export default function InstagramSearchPage() {
+import { useSearchParams } from "next/navigation";
+
+function SearchPageContent() {
+  const searchParams = useSearchParams();
+  const urlMode = searchParams.get('mode') === 'target' ? 'target' : 'tag';
+  
   // Use Global Store
   const { 
     keyword, setKeyword, 
+    searchMode, setSearchMode,
     results, setResults, 
     selectedUsernames, toggleSelection, setSelectedUsers 
   } = useInstagramStore();
 
   const [limit, setLimit] = useState(30);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(results.length > 0); // Init based on store
+  const [searched, setSearched] = useState(results.length > 0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+
+  // Sync URL mode to Store
+  useEffect(() => {
+    if (urlMode !== searchMode) {
+        setSearchMode(urlMode);
+    }
+  }, [urlMode, searchMode, setSearchMode]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +45,8 @@ export default function InstagramSearchPage() {
     setLoading(true);
     setSearched(false);
     try {
-      const data = await instagramService.search(keyword, limit);
+      // In target mode, limit is always 1 (semantically), but API handles it.
+      const data = await instagramService.search(keyword, limit, urlMode);
       setResults(data.results);
       setSearched(true);
     } catch (error: any) {
@@ -42,14 +56,21 @@ export default function InstagramSearchPage() {
     }
   };
 
+  // ... (rest of helper functions same as before) 
+  // (Assuming context here, I will just copy them or keep them if outside this block, but they were inside component.
+  // Since I am replacing the COMPONENT BODY or Structure, I should be careful.
+  // The user file has helpers inside the component.
+  // I will just replace the TOP part and render logic.)
+  
   // Helper function to extract date
   const getLatestPostDate = (user: InstagramUser) => {
       if (!user.recent_posts || user.recent_posts.length === 0) return null;
       const sorted = [...user.recent_posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       return new Date(sorted[0].timestamp);
   };
-
-  // Calculate stats
+  
+  // ... (getAverageUploadCycle, isUserActive, sortedResults, toggleSort, toggleSelectAll, getProxiedUrl)
+  
   const getAverageUploadCycle = (posts: any[]) => {
       if (!posts || posts.length < 2) return null;
       const sorted = [...posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -60,7 +81,33 @@ export default function InstagramSearchPage() {
           totalDiff += diff;
       }
       const avgMs = totalDiff / (sorted.length - 1);
-      return Math.round(avgMs / (1000 * 60 * 60 * 24)); // Days
+      return Math.round(avgMs / (1000 * 60 * 60 * 24));
+  };
+
+  const getCommunicationStats = (user: InstagramUser) => {
+    let totalFetchedComments = 0;
+    let myReplies = 0;
+    
+    user.recent_posts.forEach(post => {
+        if (post.latest_comments) {
+            totalFetchedComments += post.latest_comments.length;
+            post.latest_comments.forEach(c => {
+                 if (c.ownerUsername === user.username) {
+                     myReplies++;
+                 }
+            });
+        }
+    });
+
+    if (totalFetchedComments === 0) return null;
+
+    const fanComments = totalFetchedComments - myReplies;
+    const replyRate = fanComments > 0 ? Math.round((myReplies / fanComments) * 100) : 0;
+    
+    return {
+        replyRate,
+        sampleSize: totalFetchedComments
+    };
   };
 
   const isUserActive = (latestDate: Date | null) => {
@@ -94,7 +141,6 @@ export default function InstagramSearchPage() {
   
   const getProxiedUrl = (url: string | null | undefined) => {
       if (!url) return "";
-      // If it's already a base64 or local image, return as is
       if (url.startsWith("data:") || url.startsWith("/")) return url;
       return `/api/image-proxy?url=${encodeURIComponent(url)}`;
   };
@@ -103,9 +149,13 @@ export default function InstagramSearchPage() {
     <div className="container mx-auto p-6 max-h-screen flex flex-col gap-6">
       {/* Header */}
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">인스타그램 아이디 검색</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+            {urlMode === 'target' ? '타겟 아이디 검색' : '인스타그램 태그 검색'}
+        </h1>
         <p className="text-muted-foreground">
-          해시태그로 잠재 타겟을 탐색하고, 선택하여 심층 분석하세요.
+            {urlMode === 'target' 
+             ? '특정 인스타그램 계정을 직접 검색하여 분석합니다.' 
+             : '해시태그로 잠재 타겟을 탐색하고, 선택하여 심층 분석하세요.'}
         </p>
       </header>
 
@@ -116,31 +166,36 @@ export default function InstagramSearchPage() {
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="해시태그 또는 키워드 입력 (예: #홈카페, #육아소통)"
-              className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder={urlMode === 'target' 
+                ? "인스타그램 아이디 입력 (예: anmok_hunter)" 
+                : "해시태그 또는 키워드 입력 (예: #홈카페, #육아소통)"}
+              className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
             />
           </div>
           
-          <div className="w-[100px]">
-              <select 
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={limit}
-                  onChange={(e) => setLimit(Number(e.target.value))}
-              >
-                  <option value={10}>10명</option>
-                  <option value={30}>30명</option>
-                  <option value={50}>50명</option>
-                  <option value={100}>100명</option>
-              </select>
-          </div>
+          {urlMode !== 'target' && (
+              <div className="w-[100px]">
+                  <select 
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      value={limit}
+                      onChange={(e) => setLimit(Number(e.target.value))}
+                  >
+                      <option value={10}>10명</option>
+                      <option value={30}>30명</option>
+                      <option value={50}>50명</option>
+                      <option value={100}>100명</option>
+                  </select>
+              </div>
+          )}
 
           <Button type="submit" disabled={loading}>
             {loading ? "검색 중..." : "검색"}
           </Button>
         </form>
       </Card>
+
 
       {/* Results */}
       {searched && (
@@ -157,7 +212,6 @@ export default function InstagramSearchPage() {
                 </Link>
             </div>
           </div>
-          {/* Analysis View Removed */}
           
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg bg-card mb-4">
@@ -192,6 +246,7 @@ export default function InstagramSearchPage() {
                   const latestDate = getLatestPostDate(user);
                   const isActive = isUserActive(latestDate);
                   const avgCycle = getAverageUploadCycle(user.recent_posts);
+                  const commStats = getCommunicationStats(user);
 
                   return (
                     <div 
@@ -265,7 +320,7 @@ export default function InstagramSearchPage() {
                       </div>
 
                       {/* Stats Section */}
-                      <div className="grid grid-cols-2 divide-x border-y bg-muted/20">
+                      <div className="grid grid-cols-3 divide-x border-y bg-muted/20">
                           <div className="p-2 text-center">
                               <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">팔로워</div>
                               <div className="text-sm font-medium">{user.followers_count === -1 ? '?' : user.followers_count.toLocaleString()}</div>
@@ -273,6 +328,12 @@ export default function InstagramSearchPage() {
                           <div className="p-2 text-center">
                               <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">평균 주기</div>
                               <div className="text-sm font-medium">{avgCycle ? `${avgCycle}일` : '-'}</div>
+                          </div>
+                          <div className="p-2 text-center">
+                              <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">소통 지수</div>
+                               <div className={`text-sm font-bold ${commStats ? (commStats.replyRate >= 30 ? 'text-green-600' : commStats.replyRate >= 10 ? 'text-blue-600' : 'text-muted-foreground') : 'text-muted-foreground'}`}>
+                                  {commStats ? `${commStats.replyRate}%` : '-'}
+                              </div>
                           </div>
                       </div>
 
@@ -342,4 +403,12 @@ export default function InstagramSearchPage() {
       )}
     </div>
   );
+}
+
+export default function InstagramSearchPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <SearchPageContent />
+        </Suspense>
+    );
 }

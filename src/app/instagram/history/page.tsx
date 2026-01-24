@@ -282,6 +282,20 @@ export default function InstagramHistoryPage() {
                                                 <div className="space-y-4">
                                                     <div>
                                                         <h4 className="flex items-center gap-2 font-semibold mb-2 text-sm text-foreground">
+                                                            🏷️ 카테고리 (Category)
+                                                        </h4>
+                                                        <div className="flex items-center">
+                                                            {user.category ? (
+                                                                <Badge variant="secondary" className="px-3 py-1 text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
+                                                                    {user.category}
+                                                                </Badge>
+                                                            ) : (
+                                                                <span className="text-xs text-muted-foreground">-</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="flex items-center gap-2 font-semibold mb-2 text-sm text-foreground">
                                                             📝 메모 (Memo)
                                                         </h4>
                                                         <input 

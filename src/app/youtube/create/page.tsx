@@ -33,7 +33,7 @@ export default function Home() {
   // const [apiKeyMissing, setApiKeyMissing] = useState(false); // Removed
   
   // Fetch default prompt
-  const { data: prompts } = useSWR("/api/youtube/prompts", fetcher);
+  const { data: prompts } = useSWR("/api/prompts?type=YOUTUBE", fetcher);
   const defaultPrompt = Array.isArray(prompts) ? prompts.find((p: any) => p.is_default) : null;
 
   // --- Effects ---

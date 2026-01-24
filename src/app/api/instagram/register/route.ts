@@ -20,10 +20,11 @@ export async function POST(req: Request) {
       profile_pic_url: user.profile_pic_url,
       
       // Analysis Data
-      analysis_summary: user.analysis?.summary,
+      analysis_summary: user.analysis?.analysis_summary || user.analysis?.summary,
       originality_score: user.analysis?.originality_score,
       mood_keywords: user.analysis?.mood_keywords, // Stored as JSONB if postgres, or text array
       is_target: user.analysis?.is_target,
+      category: user.analysis?.category,
 
       status: 'todo', // Default status for new registration
       updated_at: new Date().toISOString(),

@@ -19,9 +19,10 @@ interface PromptEditorProps {
   prompt: Prompt | null;
   onSaved: () => void;
   onDeleted: () => void;
+  promptType?: 'YOUTUBE' | 'INSTA' | 'INSTA_TARGET';
 }
 
-export function PromptEditor({ prompt, onSaved, onDeleted }: PromptEditorProps) {
+export function PromptEditor({ prompt, onSaved, onDeleted, promptType = 'YOUTUBE' }: PromptEditorProps) {
   const { mutate } = useSWRConfig();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,14 +58,16 @@ export function PromptEditor({ prompt, onSaved, onDeleted }: PromptEditorProps) 
     setLoading(true);
     try {
       if (prompt) {
-          await promptService.update(prompt.id, formData);
+          // Update doesn't usually change type, but good to be safe or just update ID
+          await promptService.update(prompt.id, { ...formData, type: promptType });
           toast.success("프롬프트가 수정되었습니다.");
       } else {
-          await promptService.create(formData);
+          // Create with Type
+          await promptService.create({ ...formData, type: promptType });
           toast.success("새 프롬프트가 생성되었습니다.");
       }
       
-      mutate("/api/youtube/prompts"); // Refresh list
+      mutate(`/api/prompts?type=${promptType}`); // Refresh list with type
       onSaved();
     } catch (error) {
       console.error(error);
@@ -82,7 +85,7 @@ export function PromptEditor({ prompt, onSaved, onDeleted }: PromptEditorProps) 
       await promptService.delete(prompt.id);
 
       toast.success("프롬프트가 삭제되었습니다.");
-      mutate("/api/youtube/prompts");
+      mutate(`/api/prompts?type=${promptType}`);
       onDeleted();
     } catch (error) {
       console.error(error);

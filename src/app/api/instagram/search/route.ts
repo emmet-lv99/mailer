@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { keyword, limit = 10 } = body;
+    const { keyword, limit = 10, mode = 'tag' } = body;
 
     if (!keyword) {
       return NextResponse.json({ error: "Keyword is required" }, { status: 400 });
@@ -20,34 +20,59 @@ export async function POST(req: Request) {
     let detailItems: any[] = [];
     let targetUsernames: string[] = [];
 
+    // Fetch Settings
+    let postLimit = 10;
+    try {
+        const { data: setting } = await supabase
+            .from('settings')
+            .select('value')
+            .eq('key', 'insta_post_limit')
+            .single();
+        
+        if (setting && setting.value) {
+            postLimit = parseInt(setting.value, 10) || 10;
+        }
+    } catch (e) {
+        console.warn("Failed to fetch settings, using default postLimit 10", e);
+    }
+
     // --- REAL EXECUTION (Only if token exists) ---
     if (process.env.APIFY_API_TOKEN) {
         try {
-            // Step 1: Discover Users via Hashtag
-            const isHashtag = keyword.startsWith("#");
-            const query = isHashtag ? keyword.slice(1) : keyword;
-            
-            console.log(`[Step 1] Discovering users for hashtag: ${query}`);
-            const discoveryInput = {
-                hashtags: [query],
-                resultsLimit: limit * 2, // Fetch more posts to ensure we get enough unique users
-            };
-            
-            // Use hashtag scraper for discovery
-            const discoveryRun = await client.actor("apify/instagram-hashtag-scraper").call(discoveryInput);
-            const discoveryDataset = await client.dataset(discoveryRun.defaultDatasetId).listItems();
-            discoveryItems = discoveryDataset.items;
-            
-            // Extract unique usernames
-            const uniqueUsernames = new Set<string>();
-            for (const item of (discoveryItems as any[])) {
-                if (item.ownerUsername && uniqueUsernames.size < limit) {
-                     uniqueUsernames.add(item.ownerUsername);
+            // TARGET MODE: Skip Discovery, Direct Lookup
+            if (mode === 'target') {
+                const username = keyword.replace(/^@/, '').trim();
+                targetUsernames = [username];
+                console.log(`[Target Search] Looking up specific user: ${username}`);
+            } 
+            // TAG MODE: Discovery via Hashtag
+            else {
+                // Step 1: Discover Users via Hashtag
+                const isHashtag = keyword.startsWith("#");
+                const query = isHashtag ? keyword.slice(1) : keyword;
+                
+                console.log(`[Step 1] Discovering users for hashtag: ${query}`);
+                const discoveryInput = {
+                    hashtags: [query],
+                    resultsLimit: limit * 2, // Fetch more posts to ensure we get enough unique users
+                };
+                
+                // Use hashtag scraper for discovery
+                const discoveryRun = await client.actor("apify/instagram-hashtag-scraper").call(discoveryInput);
+                const discoveryDataset = await client.dataset(discoveryRun.defaultDatasetId).listItems();
+                discoveryItems = discoveryDataset.items;
+                
+                // Extract unique usernames
+                const uniqueUsernames = new Set<string>();
+                for (const item of (discoveryItems as any[])) {
+                    if (item.ownerUsername && uniqueUsernames.size < limit) {
+                         uniqueUsernames.add(item.ownerUsername);
+                    }
                 }
+                
+                targetUsernames = Array.from(uniqueUsernames);
+                console.log(`[Step 1] Found ${targetUsernames.length} unique users.`);
             }
-            
-            targetUsernames = Array.from(uniqueUsernames);
-            console.log(`[Step 1] Found ${targetUsernames.length} unique users.`);
             
             if (targetUsernames.length > 0) {
                 // Step 2: Fetch Details for these Users (Profile Scraper)
@@ -62,6 +87,7 @@ export async function POST(req: Request) {
                         resultsType: "details",
                         resultsLimit: 10, // Increased post limit
                         searchLimit: 1,
+                        commentsPerPost: 10, // [NEW] Fetch top 10 comments per post
                     };
                     
                     console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links`);
@@ -90,12 +116,18 @@ export async function POST(req: Request) {
 
             const latestPosts = item.latestPosts || [];
             
-            const recent_posts = latestPosts.slice(0, 10).map((post: any) => ({
+            const recent_posts = latestPosts.slice(0, postLimit).map((post: any) => ({
+                id: post.id || "",
                 caption: post.caption || "",
                 imageUrl: post.displayUrl || post.thumbnailUrl || "",
                 likes: post.likesCount || 0,
                 comments: post.commentsCount || 0,
-                timestamp: post.timestamp || new Date().toISOString()
+                timestamp: post.timestamp || new Date().toISOString(),
+                latest_comments: (post.latestComments || []).map((c: any) => ({
+                    text: c.text || "",
+                    ownerUsername: c.ownerUsername || "",
+                    timestamp: c.timestamp || ""
+                }))
             }));
             
             results.push({
