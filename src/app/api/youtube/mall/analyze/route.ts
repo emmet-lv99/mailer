@@ -168,6 +168,18 @@ export async function POST(request: Request) {
          - \`marketing.strategy\` text MUST mention the same gender/age.
          - \`marketing.persona\` MUST have the same gender/age.
 
+      [CRITICAL WARNING: ANTI-BIAS]
+      - **DO NOT DEFAULT TO FEMALE PERSONA.** 
+      - AI models often hallucinate that "Shopping Malls = Female". **BREAK THIS STEREOTYPE.**
+      - IF Target is MALE:
+        - Persona MUST be Male (e.g., "Kim Cheol-su").
+        - Strategy MUST focus on Male values: "Utility, Spec, Humor, B-tier sensibility, Honest Review".
+        - DO NOT talk about "Daily empathy", "Small happiness", "Mood" if the channel is a rough Male comedy.
+      - IF Target is FEMALE:
+        - Focus on "Mood, Empathy, Aesthetics".
+      - IF Target is ALL:
+        - Use gender-neutral terms.
+
       [Output JSON Structure]
       {
         "_reasoning": "Analyze the visuals here. State the dominant Gender (MALE/FEMALE/ALL) and Age Range clearly. This derivation guides the rest of the JSON.",
