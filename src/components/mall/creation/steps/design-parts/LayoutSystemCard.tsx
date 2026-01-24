@@ -19,8 +19,7 @@ import {
   spacingRules,
   subBannerLayouts,
   topBannerLayouts,
-  videoLayouts,
-  videoProductLayouts
+  videoLayouts
 } from "./layout-parts/layout-data";
 import { LayoutBlockPreview } from "./layout-parts/LayoutBlockPreview";
 import { LayoutOptionList } from "./layout-parts/LayoutOptionList";
@@ -56,7 +55,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
       case 'product-list': return productListLayouts;
       case 'category-product': return categoryProductLayouts;
       case 'shorts': return videoLayouts;
-      case 'video-product': return videoProductLayouts;
       case 'list': return listLayouts;
       case 'detail': return detailLayouts;
       default: return mainLayouts;
@@ -189,7 +187,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                            <SelectItem value="product-list">Product List (상품 리스트)</SelectItem>
                            <SelectItem value="category-product">Category Product (카테고리 상품)</SelectItem>
                            <SelectItem value="shorts">Video (비디오)</SelectItem>
-                           <SelectItem value="video-product">Video Product (비디오 커머스)</SelectItem>
                          </SelectContent>
                        </Select>
                     </div>

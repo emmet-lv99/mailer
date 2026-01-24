@@ -49,11 +49,7 @@ export const radiuses = [
   export const videoLayouts = [
     { name: "Story Grid", value: "story-grid", desc: "Instagram-style story circles" },
     { name: "Feed Scroll", value: "feed-scroll", desc: "Vertical video feed" },
-  ];
-  
-  export const videoProductLayouts = [
     { name: "Full Width Video", value: "full-video", desc: "Cinematic product showcase" },
-    { name: "Full Width Image", value: "full-image", desc: "Static immersive image" },
     { name: "Split Video", value: "split-video", desc: "Video with product details" },
   ];
   
