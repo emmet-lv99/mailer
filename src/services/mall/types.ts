@@ -49,6 +49,12 @@ export interface MarketingSpec {
   };
 }
 
+export interface MainBlock {
+  id: string;
+  category: 'hero' | 'sub';
+  type: string;
+}
+
 export interface DesignSpec {
   concept: {
     keywords?: string[]; // keywords removed from UI
@@ -71,8 +77,7 @@ export interface DesignSpec {
       borderRadius: string;
       spacing: string;
       grid: string;
-      main: string;
-      mainSub: string;
+      mainBlocks: MainBlock[];
       list: string;
       detail: string;
     };

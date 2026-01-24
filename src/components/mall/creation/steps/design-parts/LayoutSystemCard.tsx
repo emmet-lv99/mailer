@@ -8,17 +8,22 @@ import { cn } from "@/lib/utils";
 import { Check, Layout, X } from "lucide-react";
 import * as React from "react";
 
+interface MainBlock {
+  id: string;
+  category: 'hero' | 'sub';
+  type: string;
+}
+
 interface LayoutSystemCardProps {
   layout: {
     borderRadius: string;
     spacing: string;
     grid: string;
-    main: string;
-    mainSub?: string;
+    mainBlocks: MainBlock[];
     list: string;
     detail: string;
   };
-  onLayoutChange: (field: string, value: string) => void;
+  onLayoutChange: (field: string, value: any) => void;
 }
 
 export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardProps) {
@@ -44,7 +49,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
   ];
 
   const subBannerLayouts = [
-    { name: "None (Hide)", value: "none", desc: "No sub banner displayed" },
     { name: "Text Ticker", value: "text-ticker", desc: "Animated scrolling text line" },
     { name: "Image Strap", value: "image-strap", desc: "Full-width decorative image" },
     { name: "Promotion Bar", value: "promotion-bar", desc: "Simple notification area" },
@@ -63,6 +67,21 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     { name: "Magazine Style", value: "magazine", desc: "Editorial layout with mixed media" },
   ];
 
+  const handleAddBlock = (category: 'hero' | 'sub', type: string) => {
+    const newBlock: MainBlock = {
+      id: crypto.randomUUID(),
+      category,
+      type
+    };
+    const newBlocks = [...(layout.mainBlocks || []), newBlock];
+    onLayoutChange('mainBlocks', newBlocks);
+  };
+
+  const handleRemoveBlock = (blockId: string) => {
+    const newBlocks = (layout.mainBlocks || []).filter(b => b.id !== blockId);
+    onLayoutChange('mainBlocks', newBlocks);
+  };
+
   const renderBlueprint = (type: 'main' | 'list' | 'detail') => {
     return (
       <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-4 border border-white/5 shadow-2xl h-full min-h-[350px]">
@@ -75,58 +94,58 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
          
          <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar p-2 relative">
            {type === 'main' && (
-             <div className="space-y-3 min-h-[200px] flex flex-col justify-center">
-               {(!layout.main || layout.main === 'none') && (!layout.mainSub || layout.mainSub === 'none') && (
-                  <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2">
+             <div className="space-y-3 min-h-[200px] flex flex-col items-center">
+               {(!layout.mainBlocks || layout.mainBlocks.length === 0) && (
+                  <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2 py-20">
                     <Layout className="w-8 h-8" />
                      <span className="text-xs font-medium">Select a block to add</span>
                   </div>
                )}
 
-               {/* Hero Section - Conditional Render */}
-               {layout.main && layout.main !== 'none' && (
-                  <div className={cn(
-                    "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group",
-                    activeMainCategory === 'hero' ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 h-36" : "h-32 opacity-80"
-                  )} style={{ borderRadius: layout.borderRadius }}>
-                     <button
-                        onClick={(e) => {
-                           e.stopPropagation();
-                           onLayoutChange('main', 'none');
-                        }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10"
-                     >
-                        <X className="w-3 h-3" />
-                     </button>
-                  </div>
-               )}
+               {layout.mainBlocks?.map((block) => (
+                 <React.Fragment key={block.id}>
+                   {block.category === 'hero' && (
+                      <div className={cn(
+                        "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
+                        "h-32 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                      )} style={{ borderRadius: layout.borderRadius }}>
+                         <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest pointer-events-none">
+                            {mainLayouts.find(l => l.value === block.type)?.name || block.type}
+                         </span>
+                         <button
+                            onClick={(e) => {
+                               e.stopPropagation();
+                               handleRemoveBlock(block.id);
+                            }}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
+                         >
+                            <X className="w-3 h-3" />
+                         </button>
+                      </div>
+                   )}
 
-               {/* Sub Banner Section - Conditional Render */}
-               {layout.mainSub && layout.mainSub !== 'none' && (
-                 <div className={cn(
-                    "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group",
-                    activeMainCategory === 'sub' ? "ring-2 ring-orange-500 ring-offset-2 ring-offset-slate-900 h-12" : "h-10 opacity-80"
-                 )} style={{ borderRadius: layout.borderRadius }}>
-                     <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
-                     <button
-                        onClick={(e) => {
-                           e.stopPropagation();
-                           onLayoutChange('mainSub', 'none');
-                        }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10"
-                     >
-                        <X className="w-3 h-3" />
-                     </button>
-                 </div>
-               )}
-
-               {(layout.main && layout.main !== 'none') && (
-                 <div className="grid grid-cols-3 gap-3 animate-in fade-in delay-100 duration-500">
-                    {[1,2,3].map(i => (
-                      <div key={i} className="h-20 bg-white/5 border border-white/10 rounded-lg" style={{ borderRadius: layout.borderRadius }} />
-                    ))}
-                 </div>
-               )}
+                   {block.category === 'sub' && (
+                     <div className={cn(
+                        "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
+                        "h-12 hover:ring-2 hover:ring-orange-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+                     )} style={{ borderRadius: layout.borderRadius }}>
+                         <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
+                         <span className="absolute text-[8px] text-orange-300/50 font-bold uppercase tracking-widest pointer-events-none top-1 left-2">
+                            {subBannerLayouts.find(l => l.value === block.type)?.name || block.type}
+                         </span>
+                         <button
+                            onClick={(e) => {
+                               e.stopPropagation();
+                               handleRemoveBlock(block.id);
+                            }}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-slate-800 text-slate-400 hover:text-white rounded-full flex items-center justify-center shadow-lg border border-white/10 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer"
+                         >
+                            <X className="w-3 h-3" />
+                         </button>
+                     </div>
+                   )}
+                 </React.Fragment>
+               ))}
              </div>
            )}
 
@@ -242,25 +261,24 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                     {/* Block Items List */}
                     <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
                       {(activeMainCategory === 'hero' ? mainLayouts : subBannerLayouts).map((item) => {
-                        const currentVal = activeMainCategory === 'hero' ? layout.main : layout.mainSub || 'none';
-                        const isSelected = currentVal === item.value;
+                        const count = (layout.mainBlocks || []).filter(b => b.type === item.value).length;
                         return (
                           <button
                             key={item.value}
-                            onClick={() => onLayoutChange(activeMainCategory === 'hero' ? 'main' : 'mainSub', item.value)}
+                            onClick={() => handleAddBlock(activeMainCategory, item.value)}
                             className={cn(
                               "group relative flex flex-col items-start p-4 text-left rounded-xl border-2 transition-all duration-200 hover:shadow-md shrink-0",
-                              isSelected 
+                              count > 0
                                 ? "border-indigo-600 bg-indigo-50/50" 
                                 : "border-gray-100 hover:border-indigo-200 bg-white"
                             )}
                           >
-                             {isSelected && (
-                               <div className="absolute top-3 right-3">
-                                  <Check className="w-4 h-4 text-indigo-600" strokeWidth={3} />
+                             {count > 0 && (
+                               <div className="absolute top-3 right-3 bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                  {count}
                                </div>
                              )}
-                            <span className={cn("text-xs font-bold mb-1", isSelected ? "text-indigo-700" : "text-gray-900")}>
+                            <span className={cn("text-xs font-bold mb-1", count > 0 ? "text-indigo-700" : "text-gray-900")}>
                               {item.name}
                             </span>
                             <span className="text-[10px] text-gray-500 leading-tight">
