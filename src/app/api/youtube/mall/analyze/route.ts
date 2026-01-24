@@ -139,11 +139,15 @@ export async function POST(request: Request) {
       I have provided the Channel Banner, Profile Icon, and recent Video Thumbnails. 
       
       [Analysis Protocol]
-      1. **Search Phase**: First, look at [Data Source 1] to understand the channel's public perception, controversies, and general demographic consensus.
+      1. **Search Phase**: First, look at [Data Source 1] to understand the channel's public perception.
       2. **Content Phase**: Analyze [Data Source 2] to identify recurrent themes.
       3. **Engagement Phase**: Check [Data Source 3] to see *who* is actually talking.
       4. **Visual Phase**: Look at [Data Source 4] to identify existing brand colors and aesthetics.
-      5. **Visual Translation Phase**: Translate the findings from steps 1-3 into specific visual languages. (e.g., "Humorous" [Soul] -> "Kitsch/Bold" [Tool]).
+      5. **Design Derivation Phase (4-Steps)**:
+         - **Step A: Brand Soul**: Synthesize steps 1-3 to define the brand's core personality.
+         - **Step B: Design System Definition**: Define the structural principles (Grid, Layout, Typography weight) needed to carry that personality.
+         - **Step C: Visual Translation**: Translate the Soul & System into specific visual keyword tokens.
+         - **Step D: Asset Harmonization**: Finalize colors and imagery that align with the above.
 
       [Demographic Heuristics]
       - **Army/Military (군대)**, Gaming, Cars, Sports -> **Strongly bias towards MALE**.
@@ -167,13 +171,14 @@ export async function POST(request: Request) {
       Generate a JSON object matching the following structure ONLY.
       - **LANGUAGE**: "target.ageRange" and "mood.imagery" MUST be in **KOREAN (한국어)**.
       - **KEYWORDS**: "design.concept.keywords" MUST be selected ONLY from the [Standard Design Keyword Dictionary] above. Select 3-5 keys.
-      - **VOCABULARY**: Select 3-5 keywords from the list in [Design Heuristics].
 
       [IMPORTANT] LOGICAL CONSISTENCY RULES:
-      1. **STEP 1: REASONING**: Fill the \`_reasoning\` field first. 
-         - Synthesize ALL 4 Data Sources & Demographic Heuristics.
-         - **Visual Translation Logic**: Explicitly state how the Brand Soul (Strategy) translates into Visual Style (Design).
-         - E.g., "The brand identity is 'Humorous' and 'Relatable' (Soul). Therefore, the design style should be 'KITSCH' and 'VIBRANT' (Tool) to reflect this energy."
+      1. **STEP 1: REASONING**: Fill the \`_reasoning\` field first using the **4-Step Design Derivation** flow.
+         - **1. Inheritance (Soul)**: "The brand identity is X."
+         - **2. Design System (System)**: "To support X, we need a [specific grid/typographic weight] principle."
+         - **3. Translation (Style)**: "Therefore, the design style should be [Standard Keywords]."
+         - **4. Harmonization (Asset)**: "Finally, colors and imagery are chosen to match."
+         - *Critical*: Demographics must be consistent across all steps.
       2. **STEP 2: EXECUTION**: Fill \`target.gender\` and \`target.ageRange\` based on the verdict.
       3. **STEP 3: ALIGNMENT**: 
          - \`marketing.strategy.brandKeywords\` must be abstract adjectives (Personality).
