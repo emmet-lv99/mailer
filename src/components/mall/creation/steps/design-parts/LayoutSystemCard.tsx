@@ -10,6 +10,9 @@ interface LayoutSystemCardProps {
     borderRadius: string;
     spacing: string;
     grid: string;
+    main: string;
+    list: string;
+    detail: string;
   };
   onLayoutChange: (field: string, value: string) => void;
 }
@@ -19,6 +22,26 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     { name: "Cafe24 Standard (Dense)", value: "cafe24-standard" },
     { name: "Editorial (Loose)", value: "editorial" },
     { name: "Mobile First (1-Col)", value: "mobile-first" },
+  ];
+
+  const mainLayouts = [
+    { name: "Hero Grid (Standard)", value: "hero-grid" },
+    { name: "Full Screen Scroll", value: "full-scroll" },
+    { name: "Sticky Story", value: "sticky-story" },
+    { name: "Minimal Archive", value: "minimal-archive" },
+  ];
+
+  const listLayouts = [
+    { name: "Grid 3-Column", value: "grid-3" },
+    { name: "Grid 2-Column", value: "grid-2" },
+    { name: "List View (Wide)", value: "list-wide" },
+    { name: "Masonry", value: "masonry" },
+  ];
+
+  const detailLayouts = [
+    { name: "Split View (Standard)", value: "split-view" },
+    { name: "Vertical Stack", value: "vertical-stack" },
+    { name: "Magazine Style", value: "magazine" },
   ];
 
   const radiuses = [
@@ -38,27 +61,13 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
       <CardHeader className="p-6 pb-2">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
           <Layout className="w-5 h-5 text-indigo-500" />
-          4. 페이지 레이아웃
+          4. 페이지 레이아웃 세트
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 pt-4 flex-1 space-y-6">
+      <CardContent className="p-6 pt-4 flex-1 space-y-8">
+        {/* Global Rules */}
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">그리드 시스템 (Grid)</Label>
-            <Select value={layout.grid} onValueChange={(val) => onLayoutChange("grid", val)}>
-              <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
-                <SelectValue placeholder="그리드 선택" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {grids.map((g) => (
-                  <SelectItem key={g.value} value={g.value} className="rounded-lg">
-                    {g.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+          <Label className="text-[10px] text-indigo-500 uppercase font-black tracking-widest">Global Design Rules</Label>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">곡률 (Radius)</Label>
@@ -93,20 +102,86 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
           </div>
         </div>
 
+        {/* Page Specific Layouts */}
+        <div className="space-y-4">
+          <Label className="text-[10px] text-indigo-500 uppercase font-black tracking-widest">Page Specific Patterns</Label>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground font-semibold">메인 페이지 (Main)</Label>
+              <Select value={layout.main} onValueChange={(val) => onLayoutChange("main", val)}>
+                <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
+                  <SelectValue placeholder="메인 레이아웃 선택" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {mainLayouts.map((m) => (
+                    <SelectItem key={m.value} value={m.value} className="rounded-lg">
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground font-semibold">리스트 (Listing)</Label>
+                <Select value={layout.list} onValueChange={(val) => onLayoutChange("list", val)}>
+                  <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
+                    <SelectValue placeholder="리스트 선택" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {listLayouts.map((l) => (
+                      <SelectItem key={l.value} value={l.value} className="rounded-lg">
+                        {l.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground font-semibold">상세 (Detail)</Label>
+                <Select value={layout.detail} onValueChange={(val) => onLayoutChange("detail", val)}>
+                  <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
+                    <SelectValue placeholder="상세 선택" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {detailLayouts.map((d) => (
+                      <SelectItem key={d.value} value={d.value} className="rounded-lg">
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Layout Visualizer Blueprint */}
-        <div className="mt-4 flex-1 bg-slate-50 rounded-2xl border border-slate-100 p-4 border-dashed relative overflow-hidden flex flex-col gap-2">
-           <div className="h-6 w-full bg-slate-200/50 rounded-md" style={{ borderRadius: layout.borderRadius }} />
-           <div className="flex gap-2 h-16">
-              <div className="flex-[2] bg-indigo-100/50 rounded-md" style={{ borderRadius: layout.borderRadius }} />
-              <div className="flex-1 bg-slate-200/30 rounded-md border border-slate-200/50" style={{ borderRadius: layout.borderRadius }} />
+        <div className="mt-4 flex-1 bg-slate-900 rounded-3xl p-6 relative overflow-hidden flex flex-col gap-4 border border-white/5 shadow-2xl">
+           <div className="flex justify-between items-center opacity-40">
+              <div className="w-12 h-2 bg-white/20 rounded-full" />
+              <div className="flex gap-2">
+                {[1,2,3].map(i => <div key={i} className="w-2 h-2 bg-white/20 rounded-full" />)}
+              </div>
            </div>
-           <div className="grid grid-cols-4 gap-2 h-10">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="bg-slate-200/20 rounded-sm" style={{ borderRadius: layout.borderRadius }} />
-              ))}
+           
+           <div className="space-y-3">
+             <div className="h-24 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center" style={{ borderRadius: layout.borderRadius }}>
+                <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">{layout.main}</span>
+             </div>
+             
+             <div className="grid grid-cols-3 gap-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="h-16 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center" style={{ borderRadius: layout.borderRadius }}>
+                     <span className="text-[8px] text-white/20 font-bold uppercase">{layout.list}</span>
+                  </div>
+                ))}
+             </div>
            </div>
-           <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-              <span className="text-[40px] font-black uppercase tracking-tighter -rotate-12 select-none">Blueprint</span>
+
+           <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+              <span className="text-[40px] font-black uppercase tracking-tighter -rotate-12 select-none">Layout Set</span>
            </div>
         </div>
       </CardContent>

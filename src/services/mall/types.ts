@@ -71,6 +71,9 @@ export interface DesignSpec {
       borderRadius: string;
       spacing: string;
       grid: string;
+      main: string;
+      list: string;
+      detail: string;
     };
   };
   // components removed from UI
