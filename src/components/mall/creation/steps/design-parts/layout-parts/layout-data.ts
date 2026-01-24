@@ -21,12 +21,16 @@ export const radiuses = [
     { name: "Full Screen Scroll", value: "full-scroll", desc: "Immersive storytelling experience" },
     { name: "Sticky Story", value: "sticky-story", desc: "Fixed content with scrolling images" },
     { name: "Minimal Archive", value: "minimal-archive", desc: "Clean, gallery-focused layout" },
+    { name: "Wide Slider", value: "wide-slider", desc: "Full-width carousel slider" },
   ];
   
   export const subBannerLayouts = [
     { name: "Text Ticker", value: "text-ticker", desc: "Animated scrolling text line" },
     { name: "Image Strap", value: "image-strap", desc: "Full-width decorative image" },
     { name: "Promotion Bar", value: "promotion-bar", desc: "Simple notification area" },
+    { name: "Grid 2-Banner", value: "grid-2-banner", desc: "Two side-by-side promo banners" },
+    { name: "Coupon Banner", value: "coupon-banner", desc: "Special offer/coupon focus" },
+    { name: "Text/Image Split", value: "text-image-split", desc: "Half text, half image layout" },
   ];
   
   export const productListLayouts = [
@@ -38,6 +42,8 @@ export const radiuses = [
   export const categoryProductLayouts = [
     { name: "Tabbed List", value: "tabbed", desc: "Organize by category tabs" },
     { name: "Collection Highlight", value: "collection", desc: "Curated collection focus" },
+    { name: "Magazine Grid (3-Col)", value: "magazine-3", desc: "Editorial style grid" },
+    { name: "Review Grid (4-Col)", value: "review-4", desc: "Customer reviews standard grid" },
   ];
   
   export const shortsLayouts = [
@@ -47,6 +53,7 @@ export const radiuses = [
   
   export const videoProductLayouts = [
     { name: "Full Width Video", value: "full-video", desc: "Cinematic product showcase" },
+    { name: "Full Width Image", value: "full-image", desc: "Static immersive image" },
     { name: "Split Video", value: "split-video", desc: "Video with product details" },
   ];
   

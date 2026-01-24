@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { LayoutBlock } from "@/services/mall/types";
-import { Play, X } from "lucide-react";
+import { X } from "lucide-react";
 import * as React from "react";
 import {
     detailLayouts,
@@ -43,14 +43,24 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     }
 
     if (block.category === 'hero') {
+        const isSlider = block.type === 'wide-slider';
         return (
             <div className={cn(
                 "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
                 "h-32 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 hover:ring-offset-slate-900"
             )} style={{ borderRadius }}>
-                <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest pointer-events-none">
-                    {getName(mainLayouts, block.type)}
-                </span>
+                {isSlider ? (
+                     <div className="flex w-full h-full p-2 gap-2 overflow-hidden">
+                        <div className="flex-1 bg-indigo-400/20 rounded-lg flex items-center justify-center">
+                           <span className="text-[10px] text-indigo-300 font-bold uppercase">SLIDE 1</span>
+                        </div>
+                        <div className="w-4 bg-indigo-400/10 rounded-r-lg" />
+                     </div>
+                ) : (
+                    <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest pointer-events-none">
+                        {getName(mainLayouts, block.type)}
+                    </span>
+                )}
                 <RemoveButton onClick={handleRemove} />
             </div>
         );
@@ -62,7 +72,27 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                 "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
                 "h-12 hover:ring-2 hover:ring-orange-500 hover:ring-offset-2 hover:ring-offset-slate-900"
             )} style={{ borderRadius }}>
-                <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
+                {block.type === 'grid-2-banner' ? (
+                    <div className="grid grid-cols-2 w-full h-full gap-2 p-1">
+                        <div className="bg-orange-500/30 rounded-md" />
+                        <div className="bg-yellow-500/30 rounded-md" />
+                    </div>
+                ) : block.type === 'coupon-banner' ? (
+                    <div className="flex items-center justify-between w-full px-4">
+                        <div className="w-8 h-8 rounded-full bg-orange-400/40" />
+                        <div className="w-32 h-2 bg-orange-400/30 rounded-full" />
+                    </div>
+                ) : block.type === 'text-image-split' ? (
+                     <div className="flex w-full h-full p-1 gap-2">
+                        <div className="w-1/3 flex flex-col justify-center gap-1">
+                            <div className="h-2 w-full bg-orange-500/30 rounded-full" />
+                            <div className="h-2 w-2/3 bg-orange-500/30 rounded-full" />
+                        </div>
+                        <div className="flex-1 bg-orange-500/20 rounded-md" />
+                     </div>
+                ) : (
+                    <div className="w-2/3 h-1.5 bg-orange-500/40 rounded-full" />
+                )}
                 <RemoveButton onClick={handleRemove} />
             </div>
         );
@@ -74,8 +104,10 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                 "w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
                 "hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 hover:ring-offset-slate-900"
             )} style={{ borderRadius }}>
-                <div className="grid grid-cols-4 gap-2">
-                    {[1, 2, 3, 4].map(i => <div key={i} className="aspect-square bg-emerald-500/20 rounded-md" />)}
+                <div className={cn("grid gap-2", block.type === 'scroll-h' ? "flex overflow-hidden" : "grid-cols-4")}>
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className={cn("bg-emerald-500/20 rounded-md", block.type === 'scroll-h' ? "w-16 h-16 shrink-0 aspect-square" : "aspect-square")} />
+                    ))}
                 </div>
                 <RemoveButton onClick={handleRemove} />
             </div>
@@ -88,44 +120,34 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
                 "w-full bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0 space-y-2",
                 "hover:ring-2 hover:ring-cyan-500 hover:ring-offset-2 hover:ring-offset-slate-900"
             )} style={{ borderRadius }}>
-                <div className="flex gap-2 justify-center pb-1 border-b border-cyan-500/10">
-                    {[1, 2, 3].map(i => <div key={i} className="w-12 h-1.5 bg-cyan-500/30 rounded-full" />)}
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3].map(i => <div key={i} className="aspect-[3/4] bg-cyan-500/20 rounded-md" />)}
-                </div>
-                <RemoveButton onClick={handleRemove} />
-            </div>
-        );
-    }
-
-    if (block.category === 'shorts') {
-        return (
-            <div className={cn(
-                "w-full bg-rose-500/10 border border-rose-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
-                "hover:ring-2 hover:ring-rose-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
-                <div className="flex gap-2 overflow-hidden">
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="w-16 h-24 bg-rose-500/20 rounded-lg border border-rose-500/10 flex items-center justify-center shrink-0">
-                            <Play className="w-3 h-3 text-rose-500/50 fill-rose-500/50" />
-                        </div>
-                    ))}
-                </div>
-                <RemoveButton onClick={handleRemove} />
-            </div>
-        );
-    }
-
-    if (block.category === 'video-product') {
-        return (
-            <div className={cn(
-                "w-full bg-violet-500/10 border border-violet-500/20 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
-                "h-48 hover:ring-2 hover:ring-violet-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
-                <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
-                    <Play className="w-5 h-5 text-violet-300 ml-1 fill-violet-300" />
-                </div>
+                {block.type === 'magazine-3' ? (
+                    <div className="grid grid-cols-3 gap-2">
+                        {[1,2,3].map(i => (
+                            <div key={i} className="aspect-[4/5] bg-cyan-700/20 rounded-md flex flex-col justify-end p-1 gap-1">
+                                <div className="h-1 w-full bg-cyan-500/40" />
+                                <div className="h-3 w-full bg-cyan-500/20" />
+                            </div>
+                        ))}
+                    </div>
+                ) : block.type === 'review-4' ? (
+                    <div className="grid grid-cols-4 gap-2">
+                       {[1,2,3,4].map(i => (
+                           <div key={i} className="aspect-square bg-cyan-300/10 rounded-md border border-cyan-500/10 p-1">
+                               <div className="w-full h-3/4 bg-cyan-500/10 rounded-sm mb-1" />
+                               <div className="w-1/2 h-1 bg-cyan-500/30" />
+                           </div>
+                       ))}
+                    </div>
+                ) : (
+                    <>
+                    <div className="flex gap-2 justify-center pb-1 border-b border-cyan-500/10">
+                        {[1, 2, 3].map(i => <div key={i} className="w-12 h-1.5 bg-cyan-500/30 rounded-full" />)}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                        {[1, 2, 3].map(i => <div key={i} className="aspect-[3/4] bg-cyan-500/20 rounded-md" />)}
+                    </div>
+                    </>
+                )}
                 <RemoveButton onClick={handleRemove} />
             </div>
         );
