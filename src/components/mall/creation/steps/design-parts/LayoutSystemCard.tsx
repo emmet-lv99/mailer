@@ -83,7 +83,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     const blocks = getBlocks(field as any);
 
     return (
-      <div className="flex-1 bg-slate-900 rounded-2xl p-6 relative flex flex-col gap-4 border border-white/5 shadow-2xl min-h-[400px]">
+      <div className="flex-1 bg-slate-900 rounded-2xl py-6 relative flex flex-col gap-4 border border-white/5 shadow-2xl min-h-[400px]">
          <div className="flex justify-between items-center opacity-40">
             <div className="w-12 h-2 bg-white/20 rounded-full" />
             <div className="flex gap-2">

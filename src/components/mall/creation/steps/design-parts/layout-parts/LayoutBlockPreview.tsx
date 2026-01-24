@@ -32,12 +32,12 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
 
     // Helper to check for full-width types
     const isFullWidth = [
-        'wide-slider', 'full-scroll', 'image-strap', 'full-video', 'full-image'
+        'wide-slider', 'full-scroll', 'image-strap', 'full-video', 'full-image', 'carousel-center'
     ].includes(block.type);
 
     const baseClasses = cn(
         "relative group shrink-0 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
-        isFullWidth ? "-mx-2 w-[calc(100%+16px)] rounded-none" : "w-full rounded-xl"
+        isFullWidth ? "w-full rounded-none mx-0" : "mx-6 rounded-xl"
     );
 
     if (block.category === 'top-banner') {
