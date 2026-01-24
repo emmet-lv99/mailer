@@ -265,29 +265,6 @@ export function MarketingStrategyCard({
            </div>
         </div>
 
-        {/* Market Structure IA */}
-        <div>
-           <h4 className="font-semibold mb-2 text-sm">Market Structure (IA)</h4>
-           <div className="space-y-3">
-             <div>
-                <Label className="text-[10px] text-gray-400 uppercase">GNB Suggestions {isEditing && "(콤마로 구분)"}</Label>
-                {isEditing ? (
-                  <Input 
-                    value={analysisResult.marketing?.structure?.gnb?.join(", ") || ""} 
-                    onChange={(e) => updateMarketing("structure", { ...analysisResult.marketing?.structure, gnb: e.target.value.split(",").map((s: string) => s.trim()) })}
-                    className="mt-1"
-                  />
-                ) : (
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {analysisResult.marketing?.structure?.gnb?.map((menu: any, i: number) => (
-                      <span key={i} className="text-xs border px-2 py-0.5 rounded-md bg-white shadow-sm">{menu}</span>
-                    ))}
-                  </div>
-                )}
-             </div>
-           </div>
-        </div>
-
         {/* Competitors List */}
         <div>
           <h4 className="font-semibold mb-2 text-sm">Competitors</h4>
