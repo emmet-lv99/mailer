@@ -46,7 +46,7 @@ export const radiuses = [
     { name: "Review Grid (4-Col)", value: "review-4", desc: "Customer reviews standard grid" },
   ];
   
-  export const shortsLayouts = [
+  export const videoLayouts = [
     { name: "Story Grid", value: "story-grid", desc: "Instagram-style story circles" },
     { name: "Feed Scroll", value: "feed-scroll", desc: "Vertical video feed" },
   ];
