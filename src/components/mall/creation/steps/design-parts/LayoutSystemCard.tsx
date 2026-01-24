@@ -65,11 +65,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
          <div className="space-y-3 flex-1">
            {type === 'main' && (
              <>
-               <div className="h-32 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center animate-in fade-in duration-500" style={{ borderRadius: layout.borderRadius }}>
-                  <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">
-                    {mainLayouts.find(l => l.value === layout.main)?.name || layout.main}
-                  </span>
-               </div>
+               <div className="h-32 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center animate-in fade-in duration-500" style={{ borderRadius: layout.borderRadius }} />
                <div className="grid grid-cols-3 gap-3">
                   {[1,2,3].map(i => (
                     <div key={i} className="h-20 bg-white/5 border border-white/10 rounded-lg" style={{ borderRadius: layout.borderRadius }} />
