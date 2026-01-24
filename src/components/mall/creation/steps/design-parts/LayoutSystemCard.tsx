@@ -208,23 +208,6 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
           </Tabs>
         </div>
            
-           <div className="space-y-3">
-             <div className="h-24 w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center" style={{ borderRadius: layout.borderRadius }}>
-                <span className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">{layout.main}</span>
-             </div>
-             
-             <div className="grid grid-cols-3 gap-3">
-                {[1,2,3].map(i => (
-                  <div key={i} className="h-16 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center" style={{ borderRadius: layout.borderRadius }}>
-                     <span className="text-[8px] text-white/20 font-bold uppercase">{layout.list}</span>
-                  </div>
-                ))}
-             </div>
-           </div>
-
-           <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-              <span className="text-[40px] font-black uppercase tracking-tighter -rotate-12 select-none">Layout Set</span>
-           </div>
       </CardContent>
     </Card>
   );
