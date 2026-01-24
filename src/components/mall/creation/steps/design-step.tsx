@@ -22,7 +22,8 @@ export function DesignStep({ onBack }: DesignStepProps) {
     setDesignVariants, 
     selectDesign,
     generationStatus,
-    setGenerationStatus
+    setGenerationStatus,
+    refinedPrompts
   } = useMallStore();
  
   const [currentStepId, setCurrentStepId] = useState<StepID>('MAIN_PC');
@@ -45,24 +46,14 @@ export function DesignStep({ onBack }: DesignStepProps) {
     setGenerationStatus('generating');
     
     try {
-      // 1. Prompt Engineering Stage (Refine via Gemini)
-      toast.loading("기획안을 바탕으로 최적의 프롬프트를 생성 중입니다...", { id: "refine-prompt" });
+      // 1. Get Pre-refined Prompt from Store
+      const refinedPrompt = refinedPrompts[currentStepId];
+      if (!refinedPrompt) {
+        toast.error("프롬프트가 설정되지 않았습니다. 이전 단계에서 프롬프트를 생성해 주세요.");
+        return;
+      }
       
-      const refineRes = await fetch("/api/youtube/mall/design/refine-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          analysisResult, 
-          referenceAnalysis, 
-          pageType: currentStepId 
-        }),
-      });
-
-      if (!refineRes.ok) throw new Error("Prompt refinement failed");
-      const { refinedPrompt, archetypeKey } = await refineRes.json();
-      
-      setActiveArchetypeKey(archetypeKey);
-      toast.success(`[${archetypeKey} 스타일] 프롬프트 최적화 완료!`, { id: "refine-prompt" });
+      const archetypeKey = activeArchetypeKey || 'STANDARD'; // Fallback
 
       // 2. Image Generation Stage (Imagen 4)
       let referenceImage = null;
@@ -153,7 +144,7 @@ export function DesignStep({ onBack }: DesignStepProps) {
         {/* Navigation Footer */}
         <div className="p-4 border-t bg-white flex justify-between items-center shadow-inner">
            <Button variant="ghost" onClick={onBack} className="text-slate-400">이전 단계로</Button>
-           <p className="text-[10px] text-slate-300 font-mono">STEP 3 :: IMAGEN 4 TURBO ENGINE</p>
+           <p className="text-[10px] text-slate-300 font-mono">STEP 5 :: IMAGEN 4 TURBO ENGINE</p>
         </div>
       </div>
 

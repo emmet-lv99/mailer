@@ -4,6 +4,7 @@ import { StepIndicator } from "@/components/mall/creation/step-indicator";
 import { ChannelAnalysisStep } from "@/components/mall/creation/steps/channel-analysis-step";
 import { DesignStep } from "@/components/mall/creation/steps/design-step";
 import { DesignSystemStep } from "@/components/mall/creation/steps/design-system-step"; // [New]
+import { PromptStep } from "@/components/mall/creation/steps/prompt-step";
 import { ReferenceStep } from "@/components/mall/creation/steps/reference-step";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -23,7 +24,7 @@ export default function MallPage() {
     }
   }, [projectId]);
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 4)); // [Update] Limit 4
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 5));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   return (
@@ -34,7 +35,8 @@ export default function MallPage() {
         {currentStep === 1 && <ChannelAnalysisStep onNext={nextStep} />}
         {currentStep === 2 && <DesignSystemStep onNext={nextStep} onBack={prevStep} />}
         {currentStep === 3 && <ReferenceStep onNext={nextStep} onBack={prevStep} />}
-        {currentStep === 4 && <DesignStep onBack={prevStep} />}
+        {currentStep === 4 && <PromptStep onNext={nextStep} onBack={prevStep} />}
+        {currentStep === 5 && <DesignStep onBack={prevStep} />}
       </div>
     </div>
   );

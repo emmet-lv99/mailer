@@ -20,6 +20,7 @@ interface MallState {
   designVariants: Record<string, string[]>; // { 'MAIN_PC': [...], 'DETAIL_PC': [...] }
   selectedDesigns: Record<string, string>; // { 'MAIN_PC': 'base64...', ... }
   generationStatus: 'idle' | 'generating' | 'completed';
+  refinedPrompts: Record<string, string>; // { 'MAIN_PC': 'Refined...', ... }
 
   // Actions
   setProjectId: (id: string | null) => void;
@@ -33,6 +34,7 @@ interface MallState {
   setDesignVariants: (step: string, images: string[]) => void;
   selectDesign: (step: string, image: string) => void;
   setGenerationStatus: (status: 'idle' | 'generating' | 'completed') => void;
+  setRefinedPrompt: (step: string, prompt: string) => void;
   save: () => Promise<void>; 
   loadProject: (project: any) => void;
   resetAll: () => void;
@@ -54,6 +56,7 @@ export const useMallStore = create<MallState>((set, get) => ({
   designVariants: {},
   selectedDesigns: {},
   generationStatus: 'idle',
+  refinedPrompts: {},
 
   setProjectId: (id) => set({ projectId: id }),
   setStep: (step) => set({ currentStep: step }),
@@ -91,6 +94,10 @@ export const useMallStore = create<MallState>((set, get) => ({
   })),
 
   setGenerationStatus: (status) => set({ generationStatus: status }),
+
+  setRefinedPrompt: (step, prompt) => set((state) => ({
+    refinedPrompts: { ...state.refinedPrompts, [step]: prompt }
+  })),
 
   // [NEW] Load existing project data
   loadProject: (project: any) => {
@@ -148,5 +155,8 @@ export const useMallStore = create<MallState>((set, get) => ({
     analysisResult: null,
     referenceImages: [],
     referenceAnalysis: null,
+    refinedPrompts: {},
+    designVariants: {},
+    selectedDesigns: {},
   }),
 }));
