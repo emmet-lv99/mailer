@@ -66,7 +66,93 @@ export function MarketingStrategyCard({
           </div>
         </div>
 
-        {/* Target Audience Section Removed by User Request */}
+        {/* Target Audience Section (AI Inferred + Editable) */}
+        <div>
+          <h4 className="font-semibold mb-2 text-sm">Target Audience</h4>
+          <div className="space-y-3 bg-slate-50 p-4 rounded-lg border">
+            {isEditing ? (
+               <div className="space-y-2">
+                 <Label className="text-[11px] text-gray-500">AI가 분석한 타겟 연령 (수정 가능)</Label>
+                 <div className="grid grid-cols-2 gap-2">
+                   {[
+                      { id: '10s', label: '10대' },
+                      { id: '20-30s', label: '20-30대' },
+                      { id: '40-50s', label: '40-50대' },
+                      { id: '60+', label: '60대 이상' },
+                   ].map((age) => {
+                     // Parse current string into array logic
+                     const currentAges = analysisResult.marketing?.target?.ageRange 
+                        ? analysisResult.marketing.target.ageRange.split(',').map((s: string) => s.trim())
+                        : [];
+                        
+                     // Mapping Logic: The AI might return "20-30대" strings directly or IDs if prompted.
+                     // Since prompt asks for Korean "20-30대", we check partially.
+                     // Ideally, we should unify keys. Let's assume text match for now.
+                     // Simply checking if the label is contained in the string.
+                     const isSelected = currentAges.some((s: string) => s.includes(age.label) || s.includes(age.id));
+                     
+                     return (
+                        <div 
+                          key={age.id}
+                          onClick={() => {
+                             let newAges = [...currentAges];
+                             // Toggle Logic (Text based)
+                             // Since AI returns formatted text, we toggle by adding/removing the Label.
+                             if (isSelected) {
+                                newAges = newAges.filter((s: string) => !s.includes(age.label) && !s.includes(age.id));
+                             } else {
+                                newAges.push(age.label);
+                             }
+                             updateMarketing("target", { 
+                                ...analysisResult.marketing?.target, 
+                                ageRange: newAges.join(", ") 
+                             });
+                          }}
+                          className={`
+                            cursor-pointer border p-3 rounded text-center text-sm transition-all relative bg-white
+                            ${isSelected 
+                              ? 'border-indigo-600 text-indigo-700 font-bold ring-1 ring-indigo-600' 
+                              : 'border-slate-200 text-slate-500 hover:bg-slate-50'}
+                          `}
+                        >
+                          {age.label}
+                          {isSelected && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                        </div>
+                     );
+                   })}
+                 </div>
+               </div>
+            ) : (
+               <div className="flex gap-2 items-center flex-wrap">
+                  <span className="text-xs font-bold text-slate-500 uppercase mr-2">AGE</span>
+                  {analysisResult.marketing?.target?.ageRange?.split(',').map((age: string, i: number) => (
+                    <span key={i} className="text-sm font-medium bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full border border-indigo-100">
+                      {age.trim()}
+                    </span>
+                  ))}
+               </div>
+            )}
+            
+            {/* Gender (Optional Display) */}
+            <div className={`pt-3 border-t border-slate-200 ${isEditing ? 'mt-3' : 'mt-0'}`}>
+               {isEditing ? (
+                 <div className="space-y-1">
+                   <Label className="text-[10px] text-gray-500">성별</Label>
+                   <Input 
+                      className="bg-white"
+                      value={analysisResult.marketing?.target?.gender || ""} 
+                      onChange={(e) => updateMarketing("target", { ...analysisResult.marketing?.target, gender: e.target.value })}
+                   />
+                 </div>
+               ) : (
+                  <div className="flex gap-2 items-center mt-2">
+                     <span className="text-xs font-bold text-slate-500 uppercase mr-2">GENDER</span>
+                     <span className="text-sm text-slate-700">{analysisResult.marketing?.target?.gender}</span>
+                  </div>
+               )}
+            </div>
+          </div>
+        </div>
 
         {/* Strategy Section */}
         <div>

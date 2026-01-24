@@ -11,8 +11,7 @@ interface ChannelInputCardProps {
   referenceUrl: string;
   brandKeywords: string;
   selectedCategories: string[];
-  selectedAges: string[]; // [Updated] Array
-  onChannelDataChange: (url: string, refUrl: string, keywords: string, categories: string[], ages: string[]) => void;
+  onChannelDataChange: (url: string, refUrl: string, keywords: string, categories: string[]) => void;
   onAnalyze: () => void;
   isLoading: boolean;
 }
@@ -28,19 +27,11 @@ const CATEGORIES = [
   { id: 'GENERAL', label: '종합/기타' },
 ];
 
-const AGE_GROUPS = [
-  { id: '10s', label: '10대' },
-  { id: '20-30s', label: '20-30대' },
-  { id: '40-50s', label: '40-50대' },
-  { id: '60+', label: '60대 이상' },
-];
-
 export function ChannelInputCard({
   channelUrl,
   referenceUrl,
   brandKeywords,
   selectedCategories,
-  selectedAges,
   onChannelDataChange,
   onAnalyze,
   isLoading
@@ -50,7 +41,7 @@ export function ChannelInputCard({
   const [localKeywords, setLocalKeywords] = useState(brandKeywords);
 
   const handleChange = (newUrl: string, newRef: string, newKeys: string) => {
-    onChannelDataChange(newUrl, newRef, newKeys, selectedCategories, selectedAges);
+    onChannelDataChange(newUrl, newRef, newKeys, selectedCategories);
   };
 
   const handleCategoryToggle = (id: string) => {
@@ -60,18 +51,9 @@ export function ChannelInputCard({
     } else {
       newCategories = [...selectedCategories, id];
     }
-    onChannelDataChange(localUrl, localRefUrl, localKeywords, newCategories, selectedAges);
+    onChannelDataChange(localUrl, localRefUrl, localKeywords, newCategories);
   };
   
-  const handleAgeToggle = (id: string) => {
-    let newAges;
-    if (selectedAges.includes(id)) {
-      newAges = selectedAges.filter(a => a !== id);
-    } else {
-      newAges = [...selectedAges, id];
-    }
-    onChannelDataChange(localUrl, localRefUrl, localKeywords, selectedCategories, newAges);
-  };
 
   return (
     <Card>
@@ -152,38 +134,11 @@ export function ChannelInputCard({
           </div>
         </div>
 
-        {/* 3. Target Age Selection (Multi-select) */}
-        <div className="space-y-3">
-          <Label className="text-base font-semibold">타겟 연령층 <span className="text-red-500">*</span> <span className="text-xs font-normal text-slate-500">(중복 선택 가능)</span></Label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {AGE_GROUPS.map((age) => {
-              const isSelected = selectedAges.includes(age.id);
-              return (
-                 <div 
-                  key={age.id}
-                  onClick={() => handleAgeToggle(age.id)}
-                  className={`
-                    cursor-pointer rounded-lg border p-4 text-center transition-all hover:bg-slate-50 relative
-                    ${isSelected 
-                      ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-600 text-indigo-700 font-bold' 
-                      : 'border-slate-200 text-slate-600'}
-                  `}
-                >
-                  {age.label}
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-600" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         <Button 
           className="w-full h-12 text-lg" 
           size="lg" 
           onClick={onAnalyze} 
-          disabled={!localUrl || selectedCategories.length === 0 || selectedAges.length === 0 || isLoading}
+          disabled={!localUrl || selectedCategories.length === 0 || isLoading}
         >
           {isLoading ? "AI 분석 중... (약 10초)" : "분석 시작하기"}
         </Button>

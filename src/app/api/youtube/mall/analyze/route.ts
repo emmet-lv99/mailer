@@ -176,13 +176,7 @@ export async function POST(request: Request) {
        console.log("Overriding Categories with:", productCategories);
        analysisData.marketing.product.categories = productCategories;
     }
-    if (targetAge && targetAge.length > 0) {
-      // Logic expects comma separated string or single string if multiple ages selected
-      console.log("Overriding Target Age with:", targetAge);
-      // If targetAge is array, join it. If string (legacy), leave it.
-      const ageRange = Array.isArray(targetAge) ? targetAge.join(", ") : targetAge;
-      analysisData.marketing.target.ageRange = ageRange;
-    }
+    // targetAge Removed. AI infers it.
     if (brandKeywords) {
        console.log("Overriding Keywords with:", brandKeywords);
        // Split comma-separated keywords if necessary, or just treat as one if schema allows.

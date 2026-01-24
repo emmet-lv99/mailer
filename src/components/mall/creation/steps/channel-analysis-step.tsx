@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 // Sub-components
+import { MallProjectAnalysis } from "@/services/mall/types";
 import { ChannelInputCard } from "./analysis-parts/ChannelInputCard";
 import { DesignConceptCard } from "./analysis-parts/DesignConceptCard";
 import { DuplicateCheckDialog } from "./analysis-parts/DuplicateCheckDialog";
@@ -35,7 +36,9 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
 
   // New State for Selectors
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedAges, setSelectedAges] = useState<string[]>([]); // [Updated] Array
+  // selectedAges removed from Input phase, but we might want to store it AFTER analysis to allow editing.
+  // For now, let's keep it in state but not pass it to Input Card.
+  const [selectedAges, setSelectedAges] = useState<string[]>([]); 
   const [referenceUrl, setReferenceUrl] = useState<string>("");
   const [brandKeywords, setBrandKeywords] = useState<string>("");
 
@@ -48,9 +51,8 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
         // Pass all new inputs to backend
         body: JSON.stringify({ 
            channelUrl, 
-           // competitors removed
            productCategories: selectedCategories, 
-           targetAge: selectedAges, // Array
+           // targetAge removed from request - let AI infer it
            referenceUrl,
            brandKeywords
         }),
@@ -58,8 +60,17 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
 
       if (!response.ok) throw new Error("Analysis failed");
 
-      const data = await response.json();
+      const data: MallProjectAnalysis = await response.json();
       setAnalysisResult(data);
+      
+      // [New] If AI inferred age, update local state
+      if (data.marketing.target.ageRange) {
+         // The AI usually returns a string "20-30대" or comma separated. 
+         // We might want to parse it if we want to sync with the checkbox UI immediately.
+         // For now, let's just leave it in the result object, 
+         // and the MarketingStrategyCard will serve as the editor.
+      }
+      
       toast.success("채널 분석이 완료되었습니다!");
     } catch (error) {
       toast.error("분석 중 오류가 발생했습니다. URL을 확인해주세요.");
@@ -78,10 +89,7 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
        toast.error("상품 카테고리를 하나 이상 선택해주세요.");
        return;
     }
-    if (selectedAges.length === 0) {
-      toast.error("타겟 연령층을 하나 이상 선택해주세요.");
-      return;
-   }
+    // Age check removed
 
     // Normalize URL
     const normalizedUrl = channelUrl.trim().replace(/\/$/, "");
@@ -151,13 +159,11 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
         referenceUrl={referenceUrl}
         brandKeywords={brandKeywords}
         selectedCategories={selectedCategories}
-        selectedAges={selectedAges}
-        onChannelDataChange={(url, refUrl, keywords, cats, ages) => {
-           setChannelData(url, []); // Clear competitors
+        onChannelDataChange={(url, refUrl, keywords, cats) => {
+           setChannelData(url, []);
            setReferenceUrl(refUrl);
            setBrandKeywords(keywords);
            setSelectedCategories(cats);
-           setSelectedAges(ages);
         }}
         onAnalyze={handleAnalyzeWithCheck}
         isLoading={isLoading}
