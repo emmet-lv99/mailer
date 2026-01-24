@@ -104,7 +104,8 @@ export async function POST(request: Request) {
       
       [Task]
       Generate a JSON object matching the following structure ONLY. 
-      - **LANGUAGE**: All values (descriptions, keywords, reasons) MUST be in **KOREAN (한국어)**.
+      - **LANGUAGE**: Descriptions, reasons, and user-facing values MUST be in **KOREAN (한국어)**.
+      - **EXCEPTIONS**: The "design.concept.keywords" field MUST be in **ENGLISH (ALL CAPS)** for technical system matching (e.g., ["BRUTALIST", "VINTAGE", "COZY"]).
       - **FORMAT**: Pure JSON, no markdown. 
       - **KEYS**: Use camelCase for keys exactly as shown below.
       
@@ -155,8 +156,6 @@ export async function POST(request: Request) {
     
     // Clean up JSON
     let cleanedJson = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-    // Helper: auto-fix common key casing issues if needed (simple regex replace for specific known issues)
-    // cleanedJson = cleanedJson.replace(/"input_form":/g, '"inputForm":').replace(/"gnb_footer":/g, '"gnbFooter":');
 
     console.log("Gemini Raw Response:", cleanedJson);
     const analysisData: MallProjectAnalysis = JSON.parse(cleanedJson);

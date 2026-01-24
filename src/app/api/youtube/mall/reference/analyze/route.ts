@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       [Task]
       Generate a JSON object matching the 'DesignSpec' structure below. 
       Focus on finding the *common pattern* across the provided images.
-      - **LANGUAGE**: All values MUST be in **KOREAN (한국어)**.
+      - **LANGUAGE**: All values (descriptions, colors, component details) MUST be in **KOREAN (한국어)**.
+      - **EXCEPTIONS**: The "concept.keywords" field MUST be in **ENGLISH (ALL CAPS)** for technical matching (e.g., ["MINIMAL", "NEON", "VINTAGE"]).
       - **KEYS**: Use camelCase keys.
       
       Structure:

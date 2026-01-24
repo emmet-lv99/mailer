@@ -13,8 +13,13 @@ interface MallState {
   analysisResult: MallProjectAnalysis | null;
   
   // Step 2: Reference Analysis
-  referenceImages: string[]; // [NEW] Base64 previews to restore UI
+  referenceImages: string[];
   referenceAnalysis: DesignSpec | null;
+
+  // Step 3: Design Generation [NEW]
+  designVariants: Record<string, string[]>; // { 'MAIN_PC': [...], 'DETAIL_PC': [...] }
+  selectedDesigns: Record<string, string>; // { 'MAIN_PC': 'base64...', ... }
+  generationStatus: 'idle' | 'generating' | 'completed';
 
   // Actions
   setProjectId: (id: string | null) => void;
@@ -24,8 +29,11 @@ interface MallState {
   setReferenceImages: (images: string[]) => void;
   setReferenceAnalysis: (result: DesignSpec) => void;
   updateAnalysisResult: (data: Partial<MallProjectAnalysis>) => void; // [NEW] Edit mode support
-  updateReferenceAnalysis: (data: Partial<DesignSpec>) => void; // [NEW] Edit mode support Step 2
-  save: () => Promise<void>; // [NEW] Save Project
+  updateReferenceAnalysis: (data: Partial<DesignSpec>) => void;
+  setDesignVariants: (step: string, images: string[]) => void;
+  selectDesign: (step: string, image: string) => void;
+  setGenerationStatus: (status: 'idle' | 'generating' | 'completed') => void;
+  save: () => Promise<void>; 
   loadProject: (project: any) => void;
   resetAll: () => void;
 }
@@ -41,6 +49,11 @@ export const useMallStore = create<MallState>((set, get) => ({
   // Step 2
   referenceImages: [],
   referenceAnalysis: null,
+
+  // Step 3
+  designVariants: {},
+  selectedDesigns: {},
+  generationStatus: 'idle',
 
   setProjectId: (id) => set({ projectId: id }),
   setStep: (step) => set({ currentStep: step }),
@@ -68,6 +81,16 @@ export const useMallStore = create<MallState>((set, get) => ({
       ? { ...state.referenceAnalysis, ...data } 
       : null
   })),
+
+  setDesignVariants: (step, images) => set((state) => ({
+    designVariants: { ...state.designVariants, [step]: images }
+  })),
+
+  selectDesign: (step, image) => set((state) => ({
+    selectedDesigns: { ...state.selectedDesigns, [step]: image }
+  })),
+
+  setGenerationStatus: (status) => set({ generationStatus: status }),
 
   // [NEW] Load existing project data
   loadProject: (project: any) => {
