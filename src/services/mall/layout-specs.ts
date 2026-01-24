@@ -463,6 +463,24 @@ Content (Right):
 - Headline: 28-32px bold, Description: 16px, Features: Bullet list with ✓ icons
 - Price: 24px bold, CTA Button: 240px wide, 52px height
 `
+  },
+
+  /**
+   * STORY GRID - 인스타그램 스토리 스타일 그리드
+   */
+  'story-grid': {
+    id: 'story-grid',
+    name: 'Story Grid',
+    nameKo: '스토리 그리드',
+    category: 'video',
+    description: 'Instagram story-style grid layout',
+    descriptionKo: 'Instagram 스토리 스타일 그리드',
+    
+    promptTemplate: `
+STORY GRID - INSTAGRAM STYLE GRID:
+Grid: 1280px max-width, 6 columns, 2 rows, Gap 16px
+Video Cards: 187px × 332px (9:16), 12px radius, Center 48px play button, Title below
+`
   }
 };
 
@@ -493,6 +511,10 @@ export function generateMainBlockPrompt(
   
   const adaptation = getVideoKeywordAdaptation(designKeywords);
   let prompt = block.promptTemplate;
+
+  prompt += `\n\n━━━ TECHNICAL SPECIFICATIONS (BLOCK: ${block.id}) ━━━`;
+  if (block.visualStructure) prompt += `\nVisual Layout:\n${block.visualStructure}`;
+  if (block.specifications) prompt += `\nRaw Specs: ${JSON.stringify(block.specifications)}`;
   
   prompt += `\n\n━━━ DESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}) ━━━`;
   prompt += `\n- Corner Geometry: ${adaptation.borderRadius} corner radius`;
@@ -512,6 +534,10 @@ export function generateVideoPrompt(
   
   const adaptation = getVideoKeywordAdaptation(designKeywords);
   let prompt = block.promptTemplate;
+
+  prompt += `\n\n━━━ TECHNICAL SPECIFICATIONS (BLOCK: ${block.id}) ━━━`;
+  if (block.visualStructure) prompt += `\nVisual Layout:\n${block.visualStructure}`;
+  if (block.specifications) prompt += `\nRaw Specs: ${JSON.stringify(block.specifications)}`;
   
   prompt += `\n\n━━━ DESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}) ━━━`;
   prompt += `\n- Corner Geometry: ${adaptation.borderRadius} corner radius`;
@@ -541,6 +567,10 @@ export function generateProductListPrompt(
   const adaptation = getProductListKeywordAdaptation(designKeywords);
   
   let prompt = block.promptTemplate;
+
+  prompt += `\n\n━━━ TECHNICAL SPECIFICATIONS (BLOCK: ${block.id}) ━━━`;
+  if (block.visualStructure) prompt += `\nVisual Layout:\n${block.visualStructure}`;
+  if (block.specifications) prompt += `\nRaw Specs: ${JSON.stringify(block.specifications)}`;
   
   prompt += `\n\n━━━ DESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}) ━━━`;
   prompt += `\n- Surface Style: ${adaptation.borderRadius} radius, ${adaptation.cardBorder} border`;

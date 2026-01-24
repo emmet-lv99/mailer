@@ -1,4 +1,5 @@
 import { DESIGN_ARCHETYPES } from "@/services/mall/design-archetypes";
+import { STANDARD_DESIGN_KEYWORDS } from "@/services/mall/design-keywords";
 import { FEW_SHOT_EXAMPLES, generateMainBlockPrompt, generateProductListPrompt, generateVideoPrompt, VISUAL_FIDELITY_RULES } from "@/services/mall/layout-specs";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
@@ -242,6 +243,8 @@ class PromptGenerator {
     const sections = [
       this.generateHeader(pageType),
       this.generateLayoutSection(layoutBlocks),
+      this.generateArchetypeDNA(archetype),
+      this.generateKeywordDefinitions(designSpec.keywords),
       this.generateDesignStyleSection(designSpec),
       this.generateContentSection(designSpec, layoutBlocks, archetype),
       this.generateColorSection(designSpec, brandInfo),
@@ -251,6 +254,33 @@ class PromptGenerator {
       this.generateFooter(brandInfo)
     ];
     return sections.filter(Boolean).join('\n\n');
+  }
+
+  private generateArchetypeDNA(archetype: any): string {
+    if (!archetype) return '';
+    return `ARCHETYPE VISUAL DNA (${archetype.mood_name}):
+- Lighting: ${archetype.visual_dna.lighting}
+- Colors: ${archetype.visual_dna.colors}
+- Typography: ${archetype.visual_dna.typography}
+- Layout: ${archetype.visual_dna.layout}
+- Imagery: ${archetype.visual_dna.imagery}
+- Detailed Lighting: ${archetype.lighting_detailed.philosophy} (${archetype.lighting_detailed.shadow_treatment})
+- Photography Strategy: ${archetype.product_photography.background}, ${archetype.product_photography.composition}, ${archetype.product_photography.lighting}
+- Technical Params: ${archetype.technical_params}`;
+  }
+
+  private generateKeywordDefinitions(keywords: string[]): string {
+    const definitions = keywords.map(kw => {
+      const upperKw = kw.toUpperCase().trim();
+      const styleDef = (STANDARD_DESIGN_KEYWORDS.VISUAL_STYLE as any)[upperKw];
+      const moodDef = (STANDARD_DESIGN_KEYWORDS.MOOD_TONE as any)[upperKw];
+      const compDef = (STANDARD_DESIGN_KEYWORDS.COMPLEXITY as any)[upperKw];
+      const def = styleDef || moodDef || compDef;
+      return def ? `- ${kw}: ${def}` : null;
+    }).filter(Boolean);
+
+    if (definitions.length === 0) return '';
+    return `KEYWORD SEMANTIC DEFINITIONS:\n${definitions.join('\n')}`;
   }
 
   private generateHeader(pageType: string): string {
@@ -400,11 +430,14 @@ vivid, and atmospheric prompt that Imagen 4 can use to create a world-class e-co
 
 ━━━ CRITICAL INSTRUCTIONS ━━━
 1. ALWAYS maintain the requested LAYOUT STRUCTURE and BLOCK SEQUENCE.
-2. Focus on "Material Quality", "Lighting", and "Professional E-commerce Photography style".
-3. Use extremely descriptive, technical, and atmospheric language. 
-4. Describe UI elements as high-fidelity visual artifacts (anti-aliased edges, soft HDR lighting).
-5. Stay under 1400 characters for optimal performance.
-6. NEVER include any introductory text or closing commentary.
+2. FORMAT: Write a unified, atmospheric narrative in professional English prose. 
+3. TOTAL KNOWLEDGE INTEGRATION: You must synthesize ALL provided technical specifications, ASCII layouts, Archetype DNA, and Keyword definitions into the final prompt.
+4. DO NOT just list keywords or copy-paste specs. Weave them into vivid, descriptive sentences that sound like a Design Director's brief.
+5. Focus on "Material Quality", "Advanced Lighting Strategy", and "High-Fidelity UI/UX 8K Rendering".
+6. Describe UI elements as high-fidelity visual artifacts (anti-aliased edges, soft HDR lighting, depth of field, ray-traced reflections).
+7. Use the FEW-SHOT EXAMPLES below as a MANDATORY reference for style, technical depth, and vocabulary.
+8. Stay under 1400 characters for optimal performance.
+9. NEVER include any introductory text or closing commentary.
 
 ${VISUAL_FIDELITY_RULES}
 
