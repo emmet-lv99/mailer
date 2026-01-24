@@ -33,13 +33,27 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [existingProjects, setExistingProjects] = useState<any[]>([]);
 
+  // New State for Selectors
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedAge, setSelectedAge] = useState<string>("");
+  const [referenceUrl, setReferenceUrl] = useState<string>("");
+  const [brandKeywords, setBrandKeywords] = useState<string>("");
+
   const startAnalysis = async () => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/youtube/mall/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channelUrl, competitorUrls: competitors }),
+        // Pass all new inputs to backend
+        body: JSON.stringify({ 
+           channelUrl, 
+           // competitors removed
+           productCategories: selectedCategories, // Array
+           targetAge: selectedAge,
+           referenceUrl,
+           brandKeywords
+        }),
       });
 
       if (!response.ok) throw new Error("Analysis failed");
@@ -56,7 +70,18 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
   };
 
   const handleAnalyzeWithCheck = async () => {
-    if (!channelUrl) return;
+    if (!channelUrl) {
+       toast.error("URL을 입력해주세요.");
+       return;
+    }
+    if (selectedCategories.length === 0) {
+       toast.error("상품 카테고리를 하나 이상 선택해주세요.");
+       return;
+    }
+    if (!selectedAge) {
+      toast.error("타겟 연령층을 선택해주세요.");
+      return;
+   }
 
     // Normalize URL
     const normalizedUrl = channelUrl.trim().replace(/\/$/, "");
@@ -123,8 +148,17 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
 
       <ChannelInputCard
         channelUrl={channelUrl}
-        competitors={competitors}
-        onChannelDataChange={setChannelData}
+        referenceUrl={referenceUrl}
+        brandKeywords={brandKeywords}
+        selectedCategories={selectedCategories}
+        selectedAge={selectedAge}
+        onChannelDataChange={(url, refUrl, keywords, cats, age) => {
+           setChannelData(url, []); // Clear competitors
+           setReferenceUrl(refUrl);
+           setBrandKeywords(keywords);
+           setSelectedCategories(cats);
+           setSelectedAge(age);
+        }}
         onAnalyze={handleAnalyzeWithCheck}
         isLoading={isLoading}
       />

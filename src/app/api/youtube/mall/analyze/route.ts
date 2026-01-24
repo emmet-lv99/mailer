@@ -5,13 +5,14 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { channelUrl, competitorUrls } = await request.json();
+    const { channelUrl, competitorUrls, productCategories, targetAge, brandKeywords, referenceUrl } = await request.json(); // [Updated] Read Inputs
 
     if (!channelUrl) {
       return NextResponse.json({ error: "Channel URL is required" }, { status: 400 });
     }
 
     console.log("Analyzing URL:", channelUrl); 
+    console.log("User Input:", { productCategories, targetAge });
 
     // 1. Fetch YouTube Data
     let channelId;
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
       downloadImage(channelInfo.thumbnails?.high?.url || channelInfo.thumbnails?.default?.url),
     ]);
 
-    const allComments = commentsResults.flat().map(c => `"${c.text}" (Likes: ${c.likes})`).join("\n");
+    const allComments = commentsResults.flat().map((c: any) => `"${c.text}" (Likes: ${c.likes})`).join("\n");
     
     // Collect all valid images for Vision
     const validImages = [bannerBuffer, profileBuffer, ...videoThumbnails].filter(Boolean) as string[];
@@ -78,8 +79,6 @@ export async function POST(request: Request) {
       recentVideos: videos.map(v => ({ title: v.title, description: v.description?.slice(0, 100) })),
       topComments: allComments.slice(0, 2000), // Limit comment text context
     };
-
-    console.log(`Sending to AI: ${validImages.length} images (Banner, Profile, Videos), ${commentsResults.flat().length} comments.`);
 
     // 3. Prompt Gemini (Multimodal)
     const prompt = `
@@ -95,9 +94,6 @@ export async function POST(request: Request) {
       [Content Context]
       Recent Videos: ${JSON.stringify(analysisContext.recentVideos)}
       
-      [Audience Voice (Comments)]
-      ${analysisContext.topComments}
-
       [Visual Context]
       I have provided the Channel Banner, Profile Icon, and recent Video Thumbnails. 
       Analyze the branding consistency, color usage, and visual identity from these images.
@@ -174,6 +170,32 @@ export async function POST(request: Request) {
 
     console.log("Gemini Raw Response:", cleanedJson);
     const analysisData: MallProjectAnalysis = JSON.parse(cleanedJson);
+
+    // [New] Override with User Inputs
+    if (productCategories && productCategories.length > 0) {
+       console.log("Overriding Categories with:", productCategories);
+       analysisData.marketing.product.categories = productCategories;
+    }
+    if (targetAge) {
+      console.log("Overriding Target Age with:", targetAge);
+      analysisData.marketing.target.ageRange = targetAge;
+    }
+    if (brandKeywords) {
+       console.log("Overriding Keywords with:", brandKeywords);
+       // Split comma-separated keywords if necessary, or just treat as one if schema allows.
+       // The prompt 'refine-prompt' expects English keywords for Mood Matching, 
+       // but user entered Korean keywords (likely). 
+       // We will append them to 'design.concept.description' or 'marketing.strategy.mood'.
+       // For now, let's put them in 'design.concept.keywords' as well, expecting mixed language usage is fine downstream.
+       const keywords = (brandKeywords as string).split(',').map((k: string) => k.trim());
+       analysisData.design.concept.keywords = keywords; 
+    }
+    // We don't explicitly store referenceUrl in the standard schema yet, 
+    // but we can log it or pass it if extended fields allow. 
+    // For now, the user request "This site's structure based..." implies it's for the NEXT step.
+    // If refine-prompt needs to know about it, we should add it to the schema.
+    // But simplified schema focuses on 3 key fields.
+    // Let's assume Reference URL is for human reference or future use.
 
     return NextResponse.json(analysisData);
 

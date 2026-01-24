@@ -8,76 +8,171 @@ import { useState } from "react";
 
 interface ChannelInputCardProps {
   channelUrl: string;
-  competitors: string[];
-  onChannelDataChange: (url: string, competitors: string[]) => void;
+  referenceUrl: string;
+  brandKeywords: string;
+  selectedCategories: string[];
+  selectedAge: string;
+  onChannelDataChange: (url: string, refUrl: string, keywords: string, categories: string[], age: string) => void;
   onAnalyze: () => void;
   isLoading: boolean;
 }
 
+const CATEGORIES = [
+  { id: 'HEALTH_FOOD', label: '건강식품' },
+  { id: 'COSMETICS', label: '화장품/뷰티' },
+  { id: 'FASHION', label: '패션/의류' },
+  { id: 'ELECTRONICS', label: '전자제품/디지털' },
+  { id: 'FOOD', label: '식품/음료' },
+  { id: 'LIVING', label: '리빙/홈데코' },
+  { id: 'PET', label: '반려동물' },
+  { id: 'GENERAL', label: '종합/기타' },
+];
+
+const AGE_GROUPS = [
+  { id: '10s', label: '10대' },
+  { id: '20-30s', label: '20-30대' },
+  { id: '40-50s', label: '40-50대' },
+  { id: '60+', label: '60대 이상' },
+];
+
 export function ChannelInputCard({
   channelUrl,
-  competitors,
+  referenceUrl,
+  brandKeywords,
+  selectedCategories,
+  selectedAge,
   onChannelDataChange,
   onAnalyze,
   isLoading
 }: ChannelInputCardProps) {
   const [localUrl, setLocalUrl] = useState(channelUrl);
-  const [competitorInput, setCompetitorInput] = useState("");
+  const [localRefUrl, setLocalRefUrl] = useState(referenceUrl);
+  const [localKeywords, setLocalKeywords] = useState(brandKeywords);
 
-  const handleUrlChange = (value: string) => {
-    setLocalUrl(value);
-    onChannelDataChange(value, competitors);
+  const handleChange = (newUrl: string, newRef: string, newKeys: string) => {
+    onChannelDataChange(newUrl, newRef, newKeys, selectedCategories, selectedAge);
   };
 
-  const addCompetitor = () => {
-    if (competitorInput && competitors.length < 3) {
-      onChannelDataChange(localUrl, [...competitors, competitorInput]);
-      setCompetitorInput("");
+  const handleCategoryToggle = (id: string) => {
+    let newCategories;
+    if (selectedCategories.includes(id)) {
+      newCategories = selectedCategories.filter(c => c !== id);
+    } else {
+      newCategories = [...selectedCategories, id];
     }
+    // Update parent
+    onChannelDataChange(localUrl, localRefUrl, localKeywords, newCategories, selectedAge);
+  };
+  
+  const handleAgeChange = (val: string) => {
+    onChannelDataChange(localUrl, localRefUrl, localKeywords, selectedCategories, val);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>채널 정보 입력</CardTitle>
+        <CardTitle>채널 정보 및 디자인 설정</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-8">
+        {/* 1. Basic Info */}
         <div className="grid gap-6 md:grid-cols-2">
+          {/* Channel URL */}
           <div className="space-y-2">
-            <Label htmlFor="channelUrl">유튜브 채널 URL</Label>
+            <Label htmlFor="channelUrl">유튜브 채널 URL <span className="text-red-500">*</span></Label>
             <Input
               id="channelUrl"
               placeholder="https://www.youtube.com/@channel"
               value={localUrl}
-              onChange={(e) => handleUrlChange(e.target.value)}
+              onChange={(e) => {
+                setLocalUrl(e.target.value);
+                handleChange(e.target.value, localRefUrl, localKeywords);
+              }}
             />
           </div>
 
+          {/* Reference URL */}
           <div className="space-y-2">
-            <Label>경쟁 채널 (Optional)</Label>
-            <div className="flex gap-2">
-              <Input 
-                placeholder="URL 입력" 
-                value={competitorInput}
-                onChange={(e) => setCompetitorInput(e.target.value)}
-              />
-              <Button variant="outline" onClick={addCompetitor} disabled={competitors.length >= 3}>추가</Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {competitors.map((url, i) => (
-                <div key={i} className="text-xs bg-slate-100 px-2 py-1 rounded">
-                  {url}
+            <Label>참고하고 싶은 쇼핑몰 URL (Optional)</Label>
+            <Input 
+              placeholder="https://example-mall.com (구조 참고용)" 
+              value={localRefUrl}
+              onChange={(e) => {
+                setLocalRefUrl(e.target.value);
+                handleChange(localUrl, e.target.value, localKeywords);
+              }}
+            />
+            <p className="text-[11px] text-slate-400">
+              * 입력하신 사이트의 레이아웃 구조를 참고하되, 브랜드 컬러를 입혀서 디자인합니다.
+            </p>
+          </div>
+
+          {/* Brand Keywords */}
+          <div className="space-y-2 md:col-span-2">
+             <Label>브랜드 키워드 (Optional)</Label>
+             <Input 
+               placeholder="예: 신뢰감, 전문성, 친근함 (콤마로 구분)" 
+               value={localKeywords}
+               onChange={(e) => {
+                 setLocalKeywords(e.target.value);
+                 handleChange(localUrl, localRefUrl, e.target.value);
+               }}
+             />
+          </div>
+        </div>
+
+        {/* 2. Category Selection (Multi-select) */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">판매 예정 상품 카테고리 <span className="text-red-500">*</span> <span className="text-xs font-normal text-slate-500">(중복 선택 가능)</span></Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {CATEGORIES.map((cat) => {
+              const isSelected = selectedCategories.includes(cat.id);
+              return (
+                <div 
+                  key={cat.id}
+                  onClick={() => handleCategoryToggle(cat.id)}
+                  className={`
+                    cursor-pointer rounded-lg border p-4 text-center transition-all hover:bg-slate-50 relative
+                    ${isSelected 
+                      ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-600 text-blue-700 font-bold' 
+                      : 'border-slate-200 text-slate-600'}
+                  `}
+                >
+                  {cat.label}
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600" />
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. Target Age Selection */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">타겟 연령층 <span className="text-red-500">*</span></Label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {AGE_GROUPS.map((age) => (
+              <div 
+                key={age.id}
+                onClick={() => handleAgeChange(age.id)}
+                className={`
+                  cursor-pointer rounded-lg border p-4 text-center transition-all hover:bg-slate-50
+                  ${selectedAge === age.id 
+                    ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-600 text-indigo-700 font-bold' 
+                    : 'border-slate-200 text-slate-600'}
+                `}
+              >
+                {age.label}
+              </div>
+            ))}
           </div>
         </div>
 
         <Button 
-          className="w-full" 
+          className="w-full h-12 text-lg" 
           size="lg" 
           onClick={onAnalyze} 
-          disabled={!localUrl || isLoading}
+          disabled={!localUrl || selectedCategories.length === 0 || !selectedAge || isLoading}
         >
           {isLoading ? "AI 분석 중... (약 10초)" : "분석 시작하기"}
         </Button>
