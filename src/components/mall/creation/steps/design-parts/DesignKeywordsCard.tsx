@@ -74,12 +74,6 @@ export function DesignKeywordsCard({ selectedKeywords, onKeywordsChange }: Desig
                     <span className="text-xs text-indigo-600/70 leading-tight">
                       {description.split("(")[0].trim()}
                     </span>
-                    <button 
-                      onClick={() => toggleKeyword(key)}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-gray-400 hover:text-red-500 font-bold"
-                    >
-                      삭제
-                    </button>
                   </div>
                 ))}
               </div>
