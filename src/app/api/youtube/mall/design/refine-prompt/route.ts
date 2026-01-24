@@ -1,270 +1,393 @@
-import { DEFAULT_ARCHETYPE, DESIGN_ARCHETYPES } from "@/services/mall/design-archetypes";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
 const genAI = new GoogleGenerativeAI(process.env.ANMOK_GEMINI_API_KEY!);
 
+/**
+ * Universal E-commerce Design Prompt Generator
+ */
+
+interface ColorSystem {
+  primary: string;
+  secondary: string;
+  background: { main: string; sub: string };
+  text: { title: string; body: string; disabled: string };
+  accent?: string;
+  tone: 'warm' | 'cool' | 'neutral';
+  saturation: 'low' | 'medium' | 'high';
+  palette?: string[];
+  useGradients?: boolean;
+  vintage?: boolean;
+  nature?: boolean;
+  border?: string;
+}
+
+interface TypographySystem {
+  fontFamily: string;
+  scale: 'compact' | 'standard' | 'comfortable';
+  weightRule: 'light' | 'standard' | 'bold';
+  headingWeight: number;
+  bodyWeight: number;
+  lineHeight: number;
+  letterSpacing: string;
+}
+
+interface ComponentSystem {
+  borderRadius: string;
+  buttonStyle: 'sharp' | 'rounded' | 'pill';
+  badgeStyle: 'minimal' | 'standard' | 'bold';
+  shadowIntensity: 'none' | 'subtle' | 'medium' | 'strong';
+  borderStyle: 'none' | 'thin' | 'standard' | 'thick';
+  usePatterns?: boolean;
+}
+
+interface SpacingSystem {
+  density: 'compact' | 'standard' | 'spacious';
+  whitespaceMultiplier: number;
+  sectionGap: number;
+  cardGap: number;
+  asymmetric?: boolean;
+}
+
+interface DesignSpec {
+  keywords: string[];
+  colors: ColorSystem;
+  typography: TypographySystem;
+  components: ComponentSystem;
+  spacing: SpacingSystem;
+}
+
+class DesignInterpreter {
+  public interpret(keywords: string[]): DesignSpec {
+    const baseSpec = this.getBaseSpec();
+    keywords.forEach(keyword => this.applyKeyword(keyword.toUpperCase().trim(), baseSpec));
+    return this.normalize(baseSpec);
+  }
+
+  private applyKeyword(keyword: string, spec: DesignSpec): void {
+    switch (keyword) {
+      case 'RETRO':
+        spec.colors.tone = 'warm';
+        spec.colors.saturation = 'medium';
+        spec.colors.vintage = true;
+        spec.components.borderRadius = '8px';
+        break;
+      case 'MINIMAL':
+        spec.colors.saturation = 'low';
+        spec.spacing.whitespaceMultiplier *= 1.2;
+        spec.components.borderRadius = '2px';
+        spec.components.shadowIntensity = 'none';
+        spec.components.borderStyle = 'none';
+        spec.typography.weightRule = 'light';
+        break;
+      case 'VIBRANT':
+        spec.colors.saturation = 'high';
+        spec.colors.useGradients = true;
+        spec.components.badgeStyle = 'bold';
+        break;
+      case 'LUXURY':
+        spec.colors.palette = ['black', 'white', 'gold'];
+        spec.spacing.whitespaceMultiplier *= 1.3;
+        spec.typography.headingWeight = 600;
+        spec.typography.fontFamily = 'Serif';
+        spec.components.borderStyle = 'thin';
+        break;
+      case 'MODERN':
+        spec.typography.fontFamily = 'Sans-serif';
+        spec.components.borderRadius = '4px';
+        spec.colors.tone = 'cool';
+        break;
+      case 'PLAYFUL':
+        spec.components.borderRadius = '16px';
+        spec.colors.tone = 'warm';
+        spec.components.badgeStyle = 'bold';
+        break;
+      case 'INDUSTRIAL':
+        spec.colors.palette = ['gray', 'dark-gray', 'black'];
+        spec.components.borderRadius = '0px';
+        spec.components.borderStyle = 'thick';
+        break;
+      case 'ORGANIC':
+        spec.colors.tone = 'warm';
+        spec.colors.nature = true;
+        spec.components.borderRadius = '12px';
+        break;
+      case 'GEOMETRIC':
+        spec.components.borderRadius = '0px';
+        spec.components.usePatterns = true;
+        break;
+      case 'ARTISTIC':
+        spec.colors.saturation = 'high';
+        spec.spacing.asymmetric = true;
+        break;
+      case 'PROFESSIONAL':
+        spec.colors.palette = ['navy', 'gray', 'white'];
+        spec.typography.headingWeight = 600;
+        spec.typography.fontFamily = 'Serif';
+        spec.components.buttonStyle = 'sharp';
+        break;
+      case 'CASUAL':
+        spec.components.borderRadius = '12px';
+        spec.spacing.whitespaceMultiplier *= 1.1;
+        spec.colors.tone = 'warm';
+        break;
+      case 'FRIENDLY':
+        spec.colors.tone = 'warm';
+        spec.components.borderRadius = '12px';
+        spec.typography.lineHeight = 1.6;
+        break;
+      case 'ENERGETIC':
+        spec.colors.saturation = 'high';
+        spec.colors.tone = 'warm';
+        spec.components.badgeStyle = 'bold';
+        break;
+      case 'CALM':
+        spec.colors.saturation = 'low';
+        spec.colors.tone = 'cool';
+        spec.spacing.whitespaceMultiplier *= 1.2;
+        break;
+      case 'BOLD':
+        spec.typography.headingWeight = 700;
+        spec.components.borderStyle = 'thick';
+        spec.components.badgeStyle = 'bold';
+        break;
+      case 'ELEGANT':
+        spec.typography.fontFamily = 'Serif';
+        spec.typography.weightRule = 'light';
+        spec.spacing.whitespaceMultiplier *= 1.25;
+        spec.colors.tone = 'neutral';
+        break;
+      case 'WARM':
+        spec.colors.tone = 'warm';
+        spec.typography.lineHeight = 1.6;
+        break;
+      case 'SIMPLE':
+        spec.spacing.density = 'spacious';
+        spec.components.borderStyle = 'thin';
+        break;
+      case 'DETAILED':
+        spec.spacing.density = 'compact';
+        spec.components.borderStyle = 'standard';
+        break;
+      case 'CLEAN':
+        spec.colors.saturation = 'low';
+        spec.spacing.whitespaceMultiplier *= 1.2;
+        spec.components.borderRadius = '2px';
+        spec.components.borderStyle = 'thin';
+        spec.typography.weightRule = 'light';
+        break;
+      case 'RICH':
+        spec.colors.saturation = 'medium';
+        spec.components.shadowIntensity = 'medium';
+        break;
+    }
+  }
+
+  private getBaseSpec(): DesignSpec {
+    return {
+      keywords: [],
+      colors: {
+        primary: '#333333',
+        secondary: '#666666',
+        background: { main: '#FFFFFF', sub: '#F8F8F8' },
+        text: { title: '#111111', body: '#666666', disabled: '#CCCCCC' },
+        tone: 'neutral',
+        saturation: 'medium'
+      },
+      typography: {
+        fontFamily: 'Sans-serif',
+        scale: 'standard',
+        weightRule: 'standard',
+        headingWeight: 500,
+        bodyWeight: 400,
+        lineHeight: 1.5,
+        letterSpacing: '0'
+      },
+      components: {
+        borderRadius: '8px',
+        buttonStyle: 'rounded',
+        badgeStyle: 'standard',
+        shadowIntensity: 'subtle',
+        borderStyle: 'standard'
+      },
+      spacing: {
+        density: 'standard',
+        whitespaceMultiplier: 1.0,
+        sectionGap: 80,
+        cardGap: 20
+      }
+    };
+  }
+
+  private normalize(spec: DesignSpec): DesignSpec {
+    spec.spacing.sectionGap = Math.round(80 * spec.spacing.whitespaceMultiplier);
+    spec.spacing.cardGap = Math.round(20 * spec.spacing.whitespaceMultiplier);
+    if (spec.typography.weightRule === 'light') {
+      spec.typography.headingWeight = Math.max(400, spec.typography.headingWeight - 100);
+      spec.typography.bodyWeight = Math.max(300, spec.typography.bodyWeight - 100);
+    } else if (spec.typography.weightRule === 'bold') {
+      spec.typography.headingWeight = Math.min(700, spec.typography.headingWeight + 100);
+      spec.typography.bodyWeight = Math.min(600, spec.typography.bodyWeight + 100);
+    }
+    return spec;
+  }
+}
+
+class PromptGenerator {
+  public generate(designSpec: DesignSpec, layoutBlocks: any[], pageType: string, brandInfo: any): string {
+    const sections = [
+      this.generateHeader(pageType),
+      this.generateLayoutSection(layoutBlocks),
+      this.generateDesignStyleSection(designSpec),
+      this.generateProductCardSection(designSpec),
+      this.generateColorSection(designSpec, brandInfo),
+      this.generateTypographySection(designSpec),
+      this.generateSpacingSection(designSpec),
+      this.generateComponentsSection(designSpec),
+      this.generateFooter(brandInfo)
+    ];
+    return sections.filter(Boolean).join('\n\n');
+  }
+
+  private generateHeader(pageType: string): string {
+    const isMobile = pageType?.includes('MOBILE');
+    return `Direct flat 2D screenshot of Korean e-commerce website.
+
+OUTPUT FORMAT:
+✓ ${isMobile ? '9:16 vertical (Mobile)' : '16:9 horizontal (PC desktop)'}
+✓ Content fills 100% to edges
+✓ No device mockup, frame, or margins
+✓ Looks like F11 fullscreen`;
+  }
+
+  private generateLayoutSection(layoutBlocks: any[]): string {
+    const blockDescriptions = layoutBlocks.map((block, i) => {
+      return `${i+1}. ${block.category.toUpperCase()}: ${block.type} (${this.getBlockDescription(block.type)})`;
+    }).join('\n');
+    return `LAYOUT STRUCTURE:
+The page follows this precise block sequence:
+
+${blockDescriptions}
+
+BLOCK TYPE GUIDES:
+- 'carousel-center': Centered slider with side peek effect
+- 'grid-4/5': High-density product grid
+- 'hero-grid': Large hero banner + immediate product grid
+- 'wide-slider': Full-bleed slider banner
+- 'product-hero': Detail page top section (Gallery + Info)`;
+  }
+
+  private generateDesignStyleSection(spec: DesignSpec): string {
+    return `DESIGN STYLE & MOOD:
+Keywords: ${spec.keywords.join(', ')}
+Visual Tone: Saturation ${spec.colors.saturation}, Tone ${spec.colors.tone}
+Treatment: Shadow ${spec.components.shadowIntensity}, Border ${spec.components.borderStyle}`;
+  }
+
+  private generateProductCardSection(spec: DesignSpec): string {
+    return `PRODUCT CARD DESIGN:
+- Image: WHITE background MANDATORY, 1:1 square ratio
+- Layout: Brand Name (12px), Product Name (14px), Price (16px Bold)
+- Style: Corner radius ${spec.components.borderRadius}, Shadow ${spec.components.shadowIntensity}`;
+  }
+
+  private generateColorSection(spec: DesignSpec, brandInfo: any): string {
+    const primary = brandInfo?.marketing?.design?.foundation?.colors?.primary || spec.colors.primary;
+    return `COLOR SYSTEM:
+- Background: ${spec.colors.background.main}
+- Text: ${spec.colors.text.title} (Title), ${spec.colors.text.body} (Body)
+- Brand Primary: ${primary} (Use for Buttons, CTA, Accents)`;
+  }
+
+  private generateTypographySection(spec: DesignSpec): string {
+    return `TYPOGRAPHY:
+- Font: ${spec.typography.fontFamily}
+- Heading Weight: ${spec.typography.headingWeight}, Body Weight: ${spec.typography.bodyWeight}
+- Korean Text: Density matching, clean sans-serif placeholder blocks`;
+  }
+
+  private generateSpacingSection(spec: DesignSpec): string {
+    return `SPACING:
+- Section Gap: ${spec.spacing.sectionGap}px
+- Card Gap: ${spec.spacing.cardGap}px
+- Side Padding: 40px (PC), 20px (Mobile)`;
+  }
+
+  private generateComponentsSection(spec: DesignSpec): string {
+    return `COMPONENTS:
+- Buttons: ${spec.components.buttonStyle} style, ${spec.components.borderRadius} radius
+- Badges: Minimal but bold (Sale/New/Best labels)`;
+  }
+
+  private generateFooter(brandInfo: any): string {
+    return `BRAND IDENTITY:
+Brand Name: ${brandInfo?.channelName || 'E-commerce Store'}
+Vibe: Professional Korean e-commerce, clean, trustworthy, and high-fidelity.`;
+  }
+
+  private getBlockDescription(type: string): string {
+    const descriptions: any = {
+      'carousel-center': 'Main banner slider with partial side slides visible',
+      'grid-2': '2-column large product display',
+      'grid-3': '3-column classic grid',
+      'grid-4': '4-column product display',
+      'grid-5': '5-column high density grid',
+      'product-hero': 'Main product details at the top',
+      'sticky-tabs': 'Sticky navigation bar',
+      'detail-body': 'Main long-form product description',
+      'wide-slider': 'Full-width edge-to-edge content slider',
+      'text-bar': 'Minimalist announcement line'
+    };
+    return descriptions[type] || 'Standard e-commerce section';
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const { analysisResult, referenceAnalysis, pageType } = await request.json();
+    const body = await request.json();
+    const { analysisResult, referenceAnalysis, pageType } = body;
 
-    // 1. High-Precision 2-Tier Mood Matching (Scoring System)
     const keywords = analysisResult?.design?.concept?.keywords || [];
-    const matchMood = (userKeys: string[]): string => {
-        const upperUserKeys = userKeys.map(k => k.toUpperCase());
-        const scores: Record<string, number> = {};
-        
-        Object.entries(DESIGN_ARCHETYPES).forEach(([moodKey, mood]) => {
-            let score = 0;
-            
-            // Tier 1: Primary Keyword Matching (Weight: 10)
-            mood.keywords.forEach(mk => {
-                if (upperUserKeys.some(uk => uk.includes(mk) || mk.includes(uk))) {
-                    score += 10;
-                }
-            });
-            
-            // Tier 2: Related Keyword Matching (Weight: 3)
-            mood.related_keywords.forEach(rk => {
-                if (upperUserKeys.some(uk => uk.includes(rk) || rk.includes(uk))) {
-                    score += 3;
-                }
-            });
-            
-            scores[moodKey] = score;
-        });
+    const interpreter = new DesignInterpreter();
+    const designSpec = interpreter.interpret(keywords);
+    designSpec.keywords = keywords;
 
-        // Sort by score and pick the winner
-        const sortedMoods = Object.entries(scores).sort(([, a], [, b]) => b - a);
-        const winner = sortedMoods[0];
-        console.log(`[Mood Matcher] Winner: ${winner[0]} (Score: ${winner[1]}) | Analysis Keys: ${keywords.join(', ')}`);
-        return winner[1] > 0 ? winner[0] : 'MINIMAL_CORPORATE';
-    };
-    
-    const moodKey = matchMood(keywords);
-    const archetype = DESIGN_ARCHETYPES[moodKey] || DEFAULT_ARCHETYPE;
-
-    // 2. Extract specific layout blocks for the prompt
     const shapeLayout = analysisResult?.design?.foundation?.shapeLayout;
     let rawBlocks = [];
     if (pageType?.includes('MAIN')) rawBlocks = shapeLayout?.mainBlocks || [];
     else if (pageType?.includes('LIST')) rawBlocks = Array.isArray(shapeLayout?.list) ? shapeLayout.list : [];
     else if (pageType?.includes('DETAIL')) rawBlocks = Array.isArray(shapeLayout?.detail) ? shapeLayout.detail : [];
 
-    const layoutBlocksDesc = rawBlocks.length > 0 
-      ? rawBlocks.map((b: any, i: number) => `${i+1}. ${b.category.toUpperCase()}: ${b.type}`).join('\n')
-      : "Standard layout (Header -> Hero -> Product Grid -> Footer)";
+    const generator = new PromptGenerator();
+    const technicalContext = generator.generate(designSpec, rawBlocks, pageType, analysisResult);
 
-    // 3. Build Expert Prompt with Full Brand DNA Synthesis
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const systemPrompt = `You are an expert in generating Korean e-commerce website designs.
+    const systemPrompt = `You are a professional Prompt Engineer for Imagen 4.
+Your task is to convert the following TECHNICAL DESIGN SPECIFICATION into a highly detailed, 
+vivid, and atmospheric prompt that Imagen 4 can understand.
 
-REFERENCE STYLE: Cafe24 Standard Template (Korean Standard)
-This is the layout used by 90% of Korean online malls (Nutrio, Kgm-mall, Sebasi, etc).
+━━━ CRITICAL INSTRUCTIONS ━━━
+1. ALWAYS maintain the requested LAYOUT STRUCTURE and BLOCK SEQUENCE.
+2. Focus on "Material Quality", "Lighting", and "Professional E-commerce Photography style".
+3. Describe the UI elements as if they are part of a real high-fidelity web surface.
+4. Keep the output under 1000 characters for optimal performance.
+5. NEVER include any introductory text or closing commentary.
 
-━━━ CRITICAL OUTPUT FORMAT ━━━
+━━━ TECHNICAL SPECIFICATION ━━━
+${technicalContext}
 
-MUST BE:
-✓ Direct flat 2D interface screenshot (NOT device mockup)
-✓ Content fills 100% to all four edges
-✓ ${pageType?.includes('MOBILE') ? '9:16 vertical aspect ratio (Mobile)' : '16:9 horizontal aspect ratio (PC desktop)'}
-✓ Looks like pressing F11 fullscreen on actual website
+RETURN ONLY THE REFINED PROMPT STRING.`;
 
-NEVER INCLUDE:
-✗ Phone/device mockup, screen frame, bezel
-✗ Hands, person, desk, background
-✗ Margins/padding around entire UI
-✗ 3D perspective, floating screen
-✗ Letterbox bars, vignette, outer shadows
-
-━━━ LAYOUT STRUCTURE (Follow strictly!) ━━━
-
-The page MUST follow this specific block sequence:
-${layoutBlocksDesc}
-
-VISUAL DEFINITIONS FOR BLOCK TYPES:
-- 'carousel-center': A banner slider where the the current slide is centered with a large image, and the edge of the previous and next slides are slightly visible on the left and right (peek effect).
-- 'grid-5' / 'grid-4': A product grid with exactly 5 or 4 columns.
-- 'magazine-3': Hero section with a modular 3-column editorial grid.
-- 'wide-slider': A full-bleed, edge-to-edge sliding banner.
-- 'hero-grid': A high-impact hero banner followed immediately by a product grid.
-- 'product-hero': The top of a product detail page with a large gallery on the left and product info/buy buttons on the right.
-- 'sticky-tabs': A navigation bar with text anchors (e.g., Description, Reviews, Q&A).
-- 'full-scroll': Immersive section where content fills the viewport.
-
-CORE COMPONENTS:
-1. HEADER: 80px (PC) or 60px (Mobile). Logo, Search, Cart.
-2. FOOTER: Company info, CS center, Social links at the bottom.
-
-━━━ PRODUCT CARD DESIGN (Critical!) ━━━
-
-Card Structure (240px width):
-┌──────────────┐
-│              │
-│   Product    │ ← 1:1 square or 3:4 vertical
-│   Image      │ ← WHITE background MANDATORY!
-│              │ ← Clean studio photography
-├──────────────┤
-│ 브랜드명      │ ← 12px, #666, Regular
-│ 상품명 최대   │ ← 14px, #333, Regular
-│ 두줄 표시    │ ← 2 lines max, ellipsis
-│ ₩26,600원    │ ← 16px, #000, Bold
-│ 20% ￦21,280 │ ← Discount (if applicable)
-└──────────────┘
-
-Card Style:
-- Background: White
-- Border: 1px solid #E8E8E8
-- Border radius: 8px
-- Padding: 16px
-- Gap between cards: 20px
-- Hover: shadow 0 4px 12px rgba(0,0,0,0.12)
-
-Product Image Requirements:
-- WHITE background (#FFFFFF) - MANDATORY!
-- Professional product photography
-- No shadows on product itself
-- Clean and sharp
-- No lifestyle/scene backgrounds
-
-Badge (if applicable):
-- Position: Top-left of image
-- Types:
-  * SALE: Red (#FF0000) bg, white text, "SALE" or "20%"
-  * BEST: Blue (#0066FF) bg, white text, "BEST"
-  * NEW: Green (#00CC66) bg, white text, "NEW"
-- Size: 40-50px
-- Border radius: 4px
-- Bold text
-
-━━━ COLOR SYSTEM ━━━
-
-Base Colors (90% of design):
-- Background: #FFFFFF (white)
-- Section BG: #F8F8F8 (very light gray)
-- Text Primary: #333333
-- Text Secondary: #666666
-- Borders: #E0E0E0
-
-Brand Colors (for this specific brand):
-- Primary: ${analysisResult?.design?.foundation?.colors?.primary || "#00A896"}  // Use for CTAs, buttons
-- Secondary: ${analysisResult?.design?.foundation?.colors?.secondary || "#05668D"}
-
-Accent Colors (fixed):
-- Sale: #FF0000 (red)
-- Discount: #FF6B00 (orange)
-- New: #00CC66 (green)
-- Best: #0066FF (blue)
-
-━━━ TYPOGRAPHY ━━━
-
-Korean Text Simulation:
-- Section titles: Bold text blocks (24-28px)
-- Product names: 2-line text blocks (14px)
-- Prices: "₩00,000원" format (16px bold)
-- Descriptions: Light gray blocks (13px)
-
-Strategy:
-- Show text as placeholder blocks
-- Focus on LAYOUT accuracy, not readable Korean
-- Simulate Korean text density (compact)
-
-Font Style:
-- Sans-serif throughout
-- Weights: Regular (400), Medium (500), Bold (700)
-- Line height: 1.4-1.6
-
-━━━ SPACING & RHYTHM ━━━
-
-Vertical:
-- Between sections: 80px
-- Section padding: 60px top/bottom
-- Card to card: 20px
-
-Horizontal:
-- Container: 1200px max-width, centered
-- Side padding: 40px from edges
-- Card gaps: 20px
-
-Grid:
-- Columns: 4-5 for products
-- Gutter: 20px
-- Consistent alignment
-
-━━━ DESIGN CHARACTERISTICS ━━━
-
-Style: Korean E-commerce Standard (Cafe24 template)
-- Clean organized layout
-- Section-based structure
-- White space generous but not excessive
-- Information hierarchy clear
-- Professional product photography
-
-NOT:
-- NOT fashion minimal (like Musinsa)
-- NOT ultra crowded (like Coupang)
-- BALANCE: Clean yet information-rich
-
-Photography Style:
-- All products: White background
-- Studio quality lighting
-- Consistent sizing
-- Professional trustworthy
-
-Layout Philosophy:
-- Section-based organization
-- Clear visual hierarchy
-- Easy navigation
-- Trust and clarity emphasized
-
-━━━ BRAND INTEGRATION ━━━
-
-Brand: ${analysisResult?.channelName}
-Strategy: ${analysisResult?.marketing?.strategy?.usp}
-Archteype: ${archetype.mood_name}
-Visuals: ${analysisResult?.design?.foundation?.colors?.primary} / ${archetype.visual_tone}
-
-Apply Brand:
-- Hero banner background: Brand color
-- CTA buttons: Brand color
-- Links hover: Brand color
-- Logo prominent
-
-Maintain:
-- Cafe24 standard layout
-- White product backgrounds
-- Professional photography
-- Section-based structure
-
-━━━ FINAL NOTES ━━━
-
-This is a standard Korean e-commerce homepage
-based on Cafe24 template system.
-
-References: 뉴트리오, 강기만몰, 세바시 스토어
-Style: Clean, organized, trustworthy
-Platform: Cafe24 standard template
-
-All products shown with white background.
-Clear section divisions with headers.
-Professional approachable design.
-
-RETURN ONLY THE FINAL PROMPT STRING.
-No preamble, explanation, or commentary.
-Keep the output concise (ideally under 1000 characters) for best image generation performance.
-Just the detailed Imagen prompt.`;
-
-    const userContext = `
-    Page Type: ${pageType}
-    Brand: ${analysisResult?.channelName}
-    Strategic Goal: Transform this DNA into a high-fidelity e-commerce surface.
-    `;
+    const userContext = `Brand: ${analysisResult?.channelName}\nValue Proposition: ${analysisResult?.marketing?.strategy?.usp}`;
 
     const result = await model.generateContent(systemPrompt + "\n\n" + userContext);
     const refinedPrompt = result.response.text().trim();
 
-    return NextResponse.json({ refinedPrompt, archetypeKey: archetype.style_key });
+    // Determine archetype key for reference
+    const archetypeKey = keywords[0] || 'STANDARD';
+
+    return NextResponse.json({ refinedPrompt, archetypeKey });
 
   } catch (error: any) {
     console.error("Prompt Refinement API Error:", error);
