@@ -21,13 +21,13 @@ export function DesignConceptCard({
   return (
     <Card className={isEditing ? "ring-2 ring-indigo-500/20" : ""}>
       <CardHeader className="bg-indigo-50/50 flex flex-row items-center justify-between space-y-0 py-3 px-6">
-        <CardTitle className="text-indigo-700 text-sm font-bold uppercase tracking-wider">Design Concept</CardTitle>
-        {isEditing && <span className="text-[10px] text-indigo-500 font-medium">EDIT MODE</span>}
+        <CardTitle className="text-indigo-700 text-sm font-bold uppercase tracking-wider">디자인 컨셉 (Design Concept)</CardTitle>
+        {isEditing && <span className="text-[10px] text-indigo-500 font-medium">수정 모드</span>}
       </CardHeader>
       <CardContent className="space-y-6 pt-6 bg-white">
         {/* Concept & Mood */}
         <div>
-          <h4 className="font-semibold mb-2 text-sm">Concept & Mood</h4>
+          <h4 className="font-semibold mb-2 text-sm">컨셉 및 분위기 (Concept & Mood)</h4>
           {isEditing ? (
             <>
               <Textarea 
@@ -64,7 +64,7 @@ export function DesignConceptCard({
 
         {/* Color Palette */}
         <div>
-          <h4 className="font-semibold mb-2 text-sm">Color Palette</h4>
+          <h4 className="font-semibold mb-2 text-sm">컬러 팔레트 (Color Palette)</h4>
           <div className="grid grid-cols-3 gap-4">
             {analysisResult.design?.foundation?.colors && Object.entries(analysisResult.design.foundation.colors).map(([key, value]) => (
               typeof value === 'string' && (
@@ -119,7 +119,7 @@ export function DesignConceptCard({
 
         {/* Mood & Imagery */}
         <div>
-          <h4 className="font-semibold mb-2 text-sm">Mood & Imagery</h4>
+          <h4 className="font-semibold mb-2 text-sm">무드 및 이미지 (Mood & Imagery)</h4>
           {isEditing ? (
             <Textarea 
               value={analysisResult.design?.mood?.imagery || ""} 

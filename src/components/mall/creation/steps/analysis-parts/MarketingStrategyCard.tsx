@@ -21,14 +21,16 @@ export function MarketingStrategyCard({
   return (
     <Card className={isEditing ? "ring-2 ring-blue-500/20" : ""}>
       <CardHeader className="bg-blue-50/50 flex flex-row items-center justify-between space-y-0 py-3 px-6">
-        <CardTitle className="text-blue-700 text-sm font-bold uppercase tracking-wider">Marketing Strategy</CardTitle>
-        {isEditing && <span className="text-[10px] text-blue-500 font-medium">EDIT MODE</span>}
+        <CardTitle className="text-blue-700 text-sm font-bold uppercase tracking-wider">마케팅 전략 (Marketing Strategy)</CardTitle>
+        {isEditing && <span className="text-[10px] text-blue-500 font-medium">수정 모드</span>}
       </CardHeader>
       <CardContent className="space-y-6 pt-6 bg-white">
         {/* Persona Section */}
-        <div>
-          <h4 className="font-semibold mb-2 text-sm">Persona</h4>
-          <div className="bg-slate-50 p-4 rounded-lg border space-y-3">
+        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+          <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
+            <span className="w-1 h-4 bg-blue-500 rounded-full inline-block"></span>
+            페르소나 (Persona)
+          </h4>
             {isEditing ? (
               <>
                 <Input 
@@ -64,11 +66,10 @@ export function MarketingStrategyCard({
               </>
             )}
           </div>
-        </div>
 
         {/* Target Audience Section (AI Inferred + Editable) */}
         <div>
-          <h4 className="font-semibold mb-2 text-sm">Target Audience</h4>
+          <h4 className="font-semibold mb-2 text-sm">타겟 오디언스 (Target Audience)</h4>
           <div className="space-y-3 bg-slate-50 p-4 rounded-lg border">
             {isEditing ? (
                <div className="space-y-2">
@@ -216,9 +217,72 @@ export function MarketingStrategyCard({
           </div>
         </div>
 
+        {/* Product Categories Section */}
+        <div>
+          <h4 className="font-semibold mb-2 text-sm">판매 예정 상품 (Product Categories)</h4>
+          <div className="bg-slate-50 p-4 rounded-lg border">
+            {isEditing ? (
+               <div className="grid grid-cols-2 gap-2">
+                 {[
+                    { id: 'HEALTH_FOOD', label: '건강식품' },
+                    { id: 'COSMETICS', label: '화장품/뷰티' },
+                    { id: 'FASHION', label: '패션/의류' },
+                    { id: 'ELECTRONICS', label: '전자제품/디지털' },
+                    { id: 'FOOD', label: '식품/음료' },
+                    { id: 'LIVING', label: '리빙/홈데코' },
+                    { id: 'PET', label: '반려동물' },
+                    { id: 'GENERAL', label: '종합/기타' },
+                 ].map((cat) => {
+                    const currentCats = analysisResult.marketing?.product?.categories || [];
+                    const isSelected = currentCats.includes(cat.id);
+                    return (
+                      <div 
+                        key={cat.id}
+                        onClick={() => {
+                           let newCats;
+                           if (isSelected) newCats = currentCats.filter((c: string) => c !== cat.id);
+                           else newCats = [...currentCats, cat.id];
+                           updateMarketing("product", { ...analysisResult.marketing?.product, categories: newCats });
+                        }}
+                        className={`
+                          cursor-pointer border p-2 rounded text-center text-xs transition-all relative bg-white
+                          ${isSelected 
+                            ? 'border-blue-600 text-blue-700 font-bold ring-1 ring-blue-600' 
+                            : 'border-slate-200 text-slate-500 hover:bg-slate-50'}
+                        `}
+                      >
+                        {cat.label}
+                      </div>
+                    );
+                 })}
+               </div>
+            ) : (
+               <div className="flex flex-wrap gap-2">
+                 {(analysisResult.marketing?.product?.categories || []).map((catId: string, i: number) => {
+                    const label = {
+                      'HEALTH_FOOD': '건강식품',
+                      'COSMETICS': '화장품/뷰티',
+                      'FASHION': '패션/의류',
+                      'ELECTRONICS': '전자제품/디지털',
+                      'FOOD': '식품/음료',
+                      'LIVING': '리빙/홈데코',
+                      'PET': '반려동물',
+                      'GENERAL': '종합/기타',
+                    }[catId] || catId;
+                    return (
+                      <span key={i} className="text-sm font-medium bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-full shadow-sm">
+                        {label}
+                      </span>
+                    );
+                 })}
+               </div>
+            )}
+          </div>
+        </div>
+
         {/* Strategy Section */}
         <div>
-          <h4 className="font-semibold mb-2 text-sm">Strategy & USP</h4>
+          <h4 className="font-semibold mb-2 text-sm">전략 및 USP (Strategy & USP)</h4>
           {isEditing ? (
             <Textarea 
               value={analysisResult.marketing?.strategy?.usp || ""} 
@@ -230,9 +294,9 @@ export function MarketingStrategyCard({
           )}
         </div>
 
-        {/* Brand Identity / Archetype */}
+        {/* Brand Identity */}
         <div>
-           <h4 className="font-semibold mb-2 text-sm">Brand Identity</h4>
+           <h4 className="font-semibold mb-2 text-sm">브랜드 정체성 (Brand Identity)</h4>
            <div className="space-y-3">
              <div className="bg-slate-50 p-3 rounded border">
                <span className="text-xs text-muted-foreground block mb-1">Brand Archetype</span>
@@ -267,7 +331,7 @@ export function MarketingStrategyCard({
 
         {/* Competitors List */}
         <div>
-          <h4 className="font-semibold mb-2 text-sm">Competitors</h4>
+          <h4 className="font-semibold mb-2 text-sm">경쟁사 (Competitors)</h4>
           <div className="space-y-2">
             {analysisResult.marketing?.strategy?.competitors?.map((comp: any, i: number) => (
               <div key={i} className="text-sm bg-gray-50 p-2 rounded flex justify-between items-center">

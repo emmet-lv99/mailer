@@ -82,12 +82,16 @@ export async function POST(request: Request) {
 
     // 3. Prompt Gemini (Multimodal)
     const prompt = `
-      You are an expert E-commerce Planner & Brand Director.
-      Analyze the following YouTube Channel information, Visuals (Banner, Profile, Thumbnails), and Audience Reactions (Comments).
-      Propose a comprehensive strategy for an Online Shop (Mall) for this creator.
-
-      [Channel Info]
-      Name: ${analysisContext.channelName}
+      You are an expert Brand Consultant and Mall Designer. 
+      Analyze the given YouTube channel and its videos to create a comprehensive Shopping Mall Strategy and Design Concept.
+      
+      [IMPORTANT] ALL OUTPUT MUST BE IN KOREAN (한국어).
+      
+      Input: 
+      - Channel URL: ${channelUrl}
+      - Reference URL: ${referenceUrl || "None"}
+      - Brand Keywords: ${brandKeywords || "None"} (Consider these if provided)
+      - Product Categories: ${productCategories?.join(", ") || "General"}
       Description: ${analysisContext.description}
       Keywords: ${analysisContext.keywords}
       
