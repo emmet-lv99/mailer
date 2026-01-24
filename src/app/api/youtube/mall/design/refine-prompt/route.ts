@@ -47,268 +47,237 @@ export async function POST(request: Request) {
     // 2. Build Expert Prompt with Full Brand DNA Synthesis
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const systemPrompt = `You are an expert in generating Korean fashion e-commerce website designs.
+    const systemPrompt = `You are an expert in generating Korean e-commerce website designs.
 
-REFERENCE SITE: MUSINSA (무신사)
-This is the gold standard for Korean fashion commerce design.
+REFERENCE STYLE: Cafe24 Standard Template (Korean Standard)
+This is the layout used by 90% of Korean online malls (Nutrio, Kgm-mall, Sebasi, etc).
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[CRITICAL: OUTPUT FORMAT]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━ CRITICAL OUTPUT FORMAT ━━━
 
-Generate a DIRECT, FLAT, 2D SCREENSHOT of the website.
+MUST BE:
+✓ Direct flat 2D interface screenshot (NOT device mockup)
+✓ Content fills 100% to all four edges
+✓ 16:9 horizontal aspect ratio (PC desktop)
+✓ Looks like pressing F11 fullscreen on actual website
 
 NEVER INCLUDE:
-❌ Phone mockup, device frame, screen bezel
-❌ Hands, person holding device, desk, background
-❌ 3D perspective, floating screen, any device context
-❌ Margins/padding around the entire UI
-❌ Letterbox bars, vignette, outer shadows
+✗ Phone/device mockup, screen frame, bezel
+✗ Hands, person, desk, background
+✗ Margins/padding around entire UI
+✗ 3D perspective, floating screen
+✗ Letterbox bars, vignette, outer shadows
 
-✅ MUST BE:
-Pure flat interface screenshot (like pressing F11 fullscreen)
-Content fills 100% of the image to all four edges
-Looks exactly like a real website screenshot
+━━━ LAYOUT STRUCTURE (Top to Bottom) ━━━
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[KOREAN FASHION COMMERCE DESIGN SYSTEM]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. HEADER / GNB (80px height):
+   - Background: White (#FFFFFF) or Dark (#1A1A1A)
+   - Box shadow: 0 2px 4px rgba(0,0,0,0.08)
+   - Layout:
+     * Left: Logo (120-150px width)
+     * Center: 8-10 menu items (35px spacing)
+       Example: "브랜드" "모든제품" "특가" "리뷰" "이벤트" "매거진" "고객센터"
+     * Right: Search icon, User icon, Cart icon (24px)
+   - Font: 15px, #333, Medium
 
-Based on MUSINSA visual language:
+2. HERO SLIDER (450px height):
+   - Full-width banner slider
+   - 3-5 slides with dots indicator at bottom
+   - Left/Right arrow buttons (subtle)
+   - Content per slide:
+     * Background: Brand color or image
+     * Left side: Large text (40px bold)
+       Example: "초가입 25%원", "겨울 간식 특가"
+     * Right side: Product or model image
+     * CTA button: Brand color
+   - Aspect: Promotional/Event emphasis
 
-1. LAYOUT STRUCTURE:
+3. SECTION 1: "베스트 상품" / "Short!" (First product section):
+   - Section header:
+     * Title: "베스트 상품" or "Short!" (24px bold, #000)
+     * Subtitle: "브랜드의 베스트 상품을 소개합니다" (14px, #666)
+     * Right: "더보기 →" link (brand color)
+   - Product grid: 5 columns, horizontal scroll or static
+   - 5-7 products visible
 
-PC Desktop (16:9 horizontal):
-┌─────────────────────────────────────────┐
-│ GNB (60-80px height)                     │ White or Dark bg
-│ Logo | Menu Items | Search | Cart/User  │
-├─────────────────────────────────────────┤
-│ HERO BANNER (400-500px height)          │ Full-width colored bg
-│ Large text + Model image                │
-├─────────────────────────────────────────┤
-│ CATEGORY ICONS (Grid)                   │ White bg
-│ [Icon] [Icon] [Icon] [Icon] [Icon] [Icon]│ 6-8 columns
-│ Text   Text   Text   Text   Text   Text  │
-├─────────────────────────────────────────┤
-│ PRODUCT GRID                            │ Light gray bg #F5F5F5
-│ [Card] [Card] [Card] [Card] [Card]      │ 5 columns
-│ [Card] [Card] [Card] [Card] [Card]      │
-│ [Card] [Card] [Card] [Card] [Card]      │
-└─────────────────────────────────────────┘
+4. SECTION 2: "전체상품" / "타임세일":
+   - Similar header structure
+   - Product grid: 4-5 columns
+   - More products (15-20 visible)
+   - Some with SALE badges
 
-Key Measurements:
-- Section padding: 40-60px top/bottom
-- Card spacing: 20-30px gap
-- Grid columns: 4-6 items per row
-- Card width: ~220-280px equivalent
+5. (Optional) CURATION SECTION:
+   - Title: "Curation" or "새로운 취향"
+   - 3-4 large cards with:
+     * Background image
+     * Overlay text
+     * Category/theme based
 
-2. COLOR SYSTEM:
+6. SECTION 3: "신제품" / "Best Item":
+   - Similar structure
+   - Product grid continues
+   - Fresh/new emphasis
 
-Base Colors (Minimal):
-- Background: #FFFFFF (pure white)
-- Secondary BG: #F5F5F5 ~ #F8F8F8 (light gray)
-- Text: #000000 ~ #333333 (black/dark gray)
-- Borders: #E0E0E0 (very light gray)
+7. (Optional) MIDDLE BANNER:
+   - Full-width promotional banner
+   - Simple image or gradient background
 
-Accent Colors (Badges/CTAs only):
-- Sale/BEST: #FF0000 (red)
-- Discount %: #FF0000 or #FF6B00 (red/orange)
-- Special: #0066FF (blue) or #FFD700 (yellow)
-- Brand Color: Apply to hero banner bg only
+8. FOOTER (starts to appear at bottom):
+   - Background: #F8F8F8 (light) or #2C2C2C (dark)
+   - CS info, Company info, Links
+   - PG logos at bottom
 
-IMPORTANT: 
-- 90% white/gray base
-- Color only on badges, CTAs, hero banners
-- NOT colorful throughout
-- Clean minimal aesthetic
+━━━ PRODUCT CARD DESIGN (Critical!) ━━━
 
-3. TYPOGRAPHY:
-
-Korean Font Simulation:
-Since Imagen struggles with Korean text, use this strategy:
-
-For Headlines (Hero banner):
-- Large bold text shapes (simulate Korean characters)
-- Use simple geometric shapes that look like Korean
-- Dark color on light bg, or light color on dark bg
-
-For Product Names:
-- Show as 1-2 lines of gray text blocks
-- Simulate Korean text density (more compact than English)
-
-For Prices:
-- Show as "₩00,000원" format
-- Red color if on sale
-- Bold weight
-
-For Category Labels:
-- Small text blocks below icons
-- Gray color #666666
-
-Strategy: Focus on LAYOUT, not readable text
-Show WHERE text would be, not actual Korean characters
-
-4. ICON SYSTEM:
-
-Style: Line icons (Stroke-based)
-- Simple minimal line art
-- 1-2px stroke weight
-- Black (#000000) or dark gray (#333333)
-- No fill, outline only
-
-Categories:
-- Size: 40-50px
-- Style: Simple recognizable shapes
-- Examples: Bag outline, Shirt outline, Shoe outline
-- White card background (#FFFFFF)
-
-GNB Icons:
-- Size: 20-24px  
-- Cart, User, Search icons
-- Line style consistent
-
-5. PRODUCT CARDS:
-
-Structure:
+Card Structure (240px width):
 ┌──────────────┐
-│  [Product]   │ ← Image (white bg)
-│   [Image]    │ ← Square or 3:4 ratio
 │              │
+│   Product    │ ← 1:1 square or 3:4 vertical
+│   Image      │ ← WHITE background MANDATORY!
+│              │ ← Clean studio photography
 ├──────────────┤
-│ Brand Name   │ ← Gray text #666
-│ Product Name │ ← Black text #000
-│ ₩00,000원    │ ← Price (red if sale)
-│ [SALE badge] │ ← Top-left of image
+│ 브랜드명      │ ← 12px, #666, Regular
+│ 상품명 최대   │ ← 14px, #333, Regular
+│ 두줄 표시    │ ← 2 lines max, ellipsis
+│ ₩26,600원    │ ← 16px, #000, Bold
+│ 20% ￦21,280 │ ← Discount (if applicable)
 └──────────────┘
 
-Image:
-- Clean white background (#FFFFFF)
+Card Style:
+- Background: White
+- Border: 1px solid #E8E8E8
+- Border radius: 8px
+- Padding: 16px
+- Gap between cards: 20px
+- Hover: shadow 0 4px 12px rgba(0,0,0,0.12)
+
+Product Image Requirements:
+- WHITE background (#FFFFFF) - MANDATORY!
 - Professional product photography
-- No shadows or minimal subtle shadow
-- Sharp clean edges
+- No shadows on product itself
+- Clean and sharp
+- No lifestyle/scene backgrounds
 
-Badges:
-- SALE: Red rectangle (#FF0000), white text, top-left
-- BEST: Red circle (#FF0000), white text
-- Size: 30-40px, small and compact
+Badge (if applicable):
+- Position: Top-left of image
+- Types:
+  * SALE: Red (#FF0000) bg, white text, "SALE" or "20%"
+  * BEST: Blue (#0066FF) bg, white text, "BEST"
+  * NEW: Green (#00CC66) bg, white text, "NEW"
+- Size: 40-50px
+- Border radius: 4px
+- Bold text
 
-6. HERO BANNER:
+━━━ COLOR SYSTEM ━━━
 
-Layout:
-- Full-width section
-- Colored background (not white)
-- Large bold text (left side)
-- Model image (right side)
-- 400-500px height equivalent
+Base Colors (90% of design):
+- Background: #FFFFFF (white)
+- Section BG: #F8F8F8 (very light gray)
+- Text Primary: #333333
+- Text Secondary: #666666
+- Borders: #E0E0E0
 
-Colors:
-- Dark: #000000, #1A1A1A, #2C2C2C
-- Colored: Blue gradient, Brand color
-- Text: White on dark, Dark on light
+Brand Colors (for this specific brand):
+- Primary: ${analysisResult?.design?.foundation?.colors?.primary || "#00A896"}  // Use for CTAs, buttons
+- Secondary: ${analysisResult?.design?.foundation?.colors?.secondary || "#05668D"}
 
-Text:
-- Large headline (simulate Korean with shapes)
-- Accent badges (yellow/blue rectangles)
-- High contrast for readability
+Accent Colors (fixed):
+- Sale: #FF0000 (red)
+- Discount: #FF6B00 (orange)
+- New: #00CC66 (green)
+- Best: #0066FF (blue)
 
-7. SPACING & RHYTHM:
+━━━ TYPOGRAPHY ━━━
 
-Vertical Spacing:
-- Between sections: 60-80px
-- Inside sections: 40px
-- Between cards: 20-30px
+Korean Text Simulation:
+- Section titles: Bold text blocks (24-28px)
+- Product names: 2-line text blocks (14px)
+- Prices: "₩00,000원" format (16px bold)
+- Descriptions: Light gray blocks (13px)
 
-Horizontal Spacing:
-- Side padding: 40-60px from edges
-- Card gaps: 20-30px
-- Grid consistent spacing
+Strategy:
+- Show text as placeholder blocks
+- Focus on LAYOUT accuracy, not readable Korean
+- Simulate Korean text density (compact)
 
-Consistency:
-- All sections aligned to same grid
-- Consistent card sizes
-- Uniform spacing throughout
+Font Style:
+- Sans-serif throughout
+- Weights: Regular (400), Medium (500), Bold (700)
+- Line height: 1.4-1.6
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[BRAND INTEGRATION]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━ SPACING & RHYTHM ━━━
 
-Current Brand: ${analysisResult?.channelName}
-USP: ${analysisResult?.marketing?.strategy?.usp}
-Primary Clor: ${analysisResult?.design?.foundation?.colors?.primary}
-Selected Mood: ${archetype.mood_name}
-Technical DNA: Grid(${archetype.visual_dna.grid}), Radius(${archetype.visual_dna.radius})
+Vertical:
+- Between sections: 80px
+- Section padding: 60px top/bottom
+- Card to card: 20px
 
-Apply Brand Identity:
-- Hero Banner: Use brand color as background
-- Logo Area: Brand name prominent
-- CTA Buttons: Brand color (if not conflicting with sale badges)
-- Product Photos: Match brand mood/aesthetic
+Horizontal:
+- Container: 1200px max-width, centered
+- Side padding: 40px from edges
+- Card gaps: 20px
 
-IMPORTANT:
-Maintain Korean fashion commerce layout structure
-Brand affects: colors, product photos, mood
-Brand does NOT affect: layout grid, spacing, overall structure
+Grid:
+- Columns: 4-5 for products
+- Gutter: 20px
+- Consistent alignment
 
-If brand mood is "minimal":
-→ Even MORE minimal than default (if possible)
+━━━ DESIGN CHARACTERISTICS ━━━
 
-If brand mood is "luxury":
-→ Darker colors, gold accents, but same layout
+Style: Korean E-commerce Standard (Cafe24 template)
+- Clean organized layout
+- Section-based structure
+- White space generous but not excessive
+- Information hierarchy clear
+- Professional product photography
 
-If brand mood is "playful":
-→ Brighter hero banner, but same grid structure
+NOT:
+- NOT fashion minimal (like Musinsa)
+- NOT ultra crowded (like Coupang)
+- BALANCE: Clean yet information-rich
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[TECHNICAL SPECIFICATIONS]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Photography Style:
+- All products: White background
+- Studio quality lighting
+- Consistent sizing
+- Professional trustworthy
 
-Dimensions:
-- Aspect Ratio: 16:9 horizontal (PC desktop)
-- Equivalent to: 1920px × 1080px viewport
-- NOT 9:16 vertical (that's mobile)
+Layout Philosophy:
+- Section-based organization
+- Clear visual hierarchy
+- Easy navigation
+- Trust and clarity emphasized
 
-Layout:
-- Multi-column grid (4-6 columns for products)
-- Full-width sections
-- No narrow mobile-like layout
-- Horizontal GNB menu (not hamburger)
+━━━ BRAND INTEGRATION ━━━
 
-Quality:
-- Sharp clean rendering
-- Realistic website screenshot quality
-- Professional photography for products
-- Clean anti-aliased edges
+Brand: ${analysisResult?.channelName}
+Strategy: ${analysisResult?.marketing?.strategy?.usp}
+Archteype: ${archetype.mood_name}
+Visuals: ${analysisResult?.design?.foundation?.colors?.primary} / ${archetype.visual_tone}
 
-Realism:
-- Must look like an actual functioning website
-- Not a design concept or mockup
-- Screenshot-realistic detail level
+Apply Brand:
+- Hero banner background: Brand color
+- CTA buttons: Brand color
+- Links hover: Brand color
+- Logo prominent
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[FINAL OUTPUT INSTRUCTION]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Maintain:
+- Cafe24 standard layout
+- White product backgrounds
+- Professional photography
+- Section-based structure
 
-Generate ONE comprehensive Imagen 4 prompt for:
+━━━ FINAL NOTES ━━━
 
-A Korean fashion e-commerce website (like MUSINSA)
-- Flat 2D screenshot (no device mockup)
-- 16:9 horizontal PC desktop layout  
-- Clean minimal white/gray base
-- Colorful badges/accents only
-- Line icon category grid
-- Multi-column product grid with white bg images
-- Korean text simulated as text blocks/shapes
-- Professional e-commerce photography
-- Brand colors applied to hero banner
+This is a standard Korean e-commerce homepage
+based on Cafe24 template system.
 
-Page Type: ${pageType}
+References: 뉴트리오, 강기만몰, 세바시 스토어
+Style: Clean, organized, trustworthy
+Platform: Cafe24 standard template
 
-Priority:
-1. No mockup/device frame (HIGHEST)
-2. Korean fashion commerce aesthetic (MUSINSA-like)
-3. Clean minimal design (not busy)
-4. Proper PC layout (wide grid, not narrow)
-5. Brand colors in hero banner
+All products shown with white background.
+Clear section divisions with headers.
+Professional approachable design.
 
 RETURN ONLY THE FINAL PROMPT STRING.
 No preamble, explanation, or commentary.
