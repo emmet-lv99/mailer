@@ -105,9 +105,10 @@ export async function POST(request: Request) {
       Generate a JSON object matching the following structure ONLY.
       - **LANGUAGE**: "target.ageRange" and "mood.imagery" MUST be in **KOREAN (한국어)**.
       - **KEYWORDS**: "design.concept.keywords" MUST be in **ENGLISH (ALL CAPS)**.
-      - **VOCABULARY**: Prioritize selecting from these specific technical styles:
-        [MINIMAL, BRUTALIST, SCANDINAVIAN, JAPANESE, CORPORATE, SWISS,
-         VINTAGE, RETRO, ORGANIC, NATURAL, LUXE, PREMIUM, PLAYFUL, STREETWEAR]
+      - **VOCABULARY**: Select 3-5 keywords from these design styles & moods:
+        [MINIMAL, MODERN, BOLD, TYPOGRAPHY, VINTAGE, RETRO, ORGANIC, NATURAL, 
+         KITSCH, POP, INDUSTRIAL, ELEGANT, LUXURY, CASUAL, SPORTY, GRUNGE, 
+         ETHEREAL, MONOCHROME, PASTEL, VIBRANT, WARM, COZY, CHIC]
 
       [IMPORTANT] Follow this analysis order strictly to ensure consistency:
       1. ANALYZE TARGET AUDIENCE (Age, Gender, Interests) first based on visuals and comments.
