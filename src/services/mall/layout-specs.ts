@@ -384,7 +384,7 @@ export const VIDEO_BLOCKS: Record<string, any> = {
     id: 'feed-scroll',
     name: 'Feed Scroll',
     nameKo: '피드 스크롤',
-    category: 'shorts',
+    category: 'video',
     description: 'Vertical video feed',
     descriptionKo: '세로형 비디오 피드 (숏츠/릴스)',
     
@@ -430,7 +430,7 @@ VIDEO CARDS (180-200px × 320-355px, 9:16 ratio):
     id: 'full-width-video',
     name: 'Full Width Video',
     nameKo: '풀 와이드 비디오',
-    category: 'video-product',
+    category: 'video',
     description: 'Cinematic product showcase',
     descriptionKo: '시네마틱 제품 쇼케이스',
     
@@ -451,7 +451,7 @@ Video Player:
     id: 'split-video',
     name: 'Split Video',
     nameKo: '스플릿 비디오',
-    category: 'video-product',
+    category: 'video',
     description: 'Video with product details',
     descriptionKo: '비디오 + 제품 상세 정보',
     
@@ -462,24 +462,6 @@ Video: 16:9 ratio, 12px radius, Center Play Button (64px circle)
 Content (Right):
 - Headline: 28-32px bold, Description: 16px, Features: Bullet list with ✓ icons
 - Price: 24px bold, CTA Button: 240px wide, 52px height
-`
-  },
-
-  /**
-   * STORY GRID - 인스타그램 스토리 스타일 그리드
-   */
-  'story-grid': {
-    id: 'story-grid',
-    name: 'Story Grid',
-    nameKo: '스토리 그리드',
-    category: 'shorts',
-    description: 'Instagram story-style grid layout',
-    descriptionKo: 'Instagram 스토리 스타일 그리드',
-    
-    promptTemplate: `
-STORY GRID - INSTAGRAM STYLE GRID:
-Grid: 1280px max-width, 6 columns, 2 rows, Gap 16px
-Video Cards: 187px × 332px (9:16), 12px radius, Center 48px play button, Title below
 `
   }
 };
