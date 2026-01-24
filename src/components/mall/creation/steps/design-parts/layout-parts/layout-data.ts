@@ -32,7 +32,9 @@ export const radiuses = [
   ];
   
   export const productListLayouts = [
+    { name: "Grid 5-Column", value: "grid-5", desc: "Maximum density for desktop" },
     { name: "Grid 4-Column", value: "grid-4", desc: "Standard high-density grid" },
+    { name: "Grid 3-Column", value: "grid-3", desc: "Balanced visibility" },
     { name: "Grid 2-Column", value: "grid-2", desc: "Large thumbnails for impact" },
     { name: "Scroll (Horizontal)", value: "scroll-h", desc: "Swipeable product list" },
   ];

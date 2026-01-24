@@ -30,12 +30,24 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     const handleRemove = () => onRemove(block.id);
     const getName = (layouts: any[], value: string) => layouts.find(l => l.value === value)?.name || value;
 
+    // Helper to check for full-width types
+    const isFullWidth = [
+        'wide-slider', 'full-scroll', 'image-strap', 'full-video', 'full-image'
+    ].includes(block.type);
+
+    const baseClasses = cn(
+        "relative group shrink-0 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2",
+        isFullWidth ? "-mx-2 w-[calc(100%+16px)] rounded-none" : "w-full rounded-xl"
+    );
+
     if (block.category === 'top-banner') {
         return (
             <div className={cn(
-                "w-full bg-pink-500/20 border border-pink-500/30 rounded-md flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
-                "h-8 hover:ring-2 hover:ring-pink-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
+                baseClasses,
+                "flex items-center justify-center border border-pink-500/30",
+                "h-8 bg-pink-500/20 hover:ring-2 hover:ring-pink-500 hover:ring-offset-2 hover:ring-offset-slate-900",
+                !isFullWidth && "rounded-md"
+            )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
                 <span className="text-[9px] text-pink-300 font-bold uppercase tracking-widest">{block.type}</span>
                 <RemoveButton onClick={handleRemove} />
             </div>
@@ -46,9 +58,10 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
         const isSlider = block.type === 'wide-slider';
         return (
             <div className={cn(
-                "w-full bg-indigo-500/20 border border-indigo-500/30 rounded-xl flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
-                "h-32 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
+                baseClasses,
+                "flex items-center justify-center border border-indigo-500/30",
+                "h-32 bg-indigo-500/20 hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+            )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
                 {isSlider ? (
                      <div className="flex w-full h-full p-2 gap-2 overflow-hidden">
                         <div className="flex-1 bg-indigo-400/20 rounded-lg flex items-center justify-center">
@@ -69,9 +82,10 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     if (block.category === 'sub') {
         return (
             <div className={cn(
-                "w-full bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
-                "h-12 hover:ring-2 hover:ring-orange-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
+                baseClasses,
+                "flex items-center justify-center border border-orange-500/30",
+                "h-12 bg-orange-500/20 hover:ring-2 hover:ring-orange-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+            )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
                 {block.type === 'grid-2-banner' ? (
                     <div className="grid grid-cols-2 w-full h-full gap-2 p-1">
                         <div className="bg-orange-500/30 rounded-md" />
@@ -99,14 +113,23 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     }
 
     if (block.category === 'product-list') {
+        const isScroll = block.type === 'scroll-h';
+        const cols = block.type === 'grid-5' ? 5 : block.type === 'grid-3' ? 3 : block.type === 'grid-2' ? 2 : 4;
+        
         return (
             <div className={cn(
-                "w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0",
-                "hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
-                <div className={cn("grid gap-2", block.type === 'scroll-h' ? "flex overflow-hidden" : "grid-cols-4")}>
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={cn("bg-emerald-500/20 rounded-md", block.type === 'scroll-h' ? "w-16 h-16 shrink-0 aspect-square" : "aspect-square")} />
+                baseClasses,
+                "p-2 border border-emerald-500/20",
+                "bg-emerald-500/10 hover:ring-2 hover:ring-emerald-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+            )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
+                <div className={cn("grid gap-2", 
+                    isScroll ? "flex overflow-hidden" : 
+                    cols === 5 ? "grid-cols-5" : 
+                    cols === 3 ? "grid-cols-3" : 
+                    cols === 2 ? "grid-cols-2" : "grid-cols-4"
+                )}>
+                    {[1, 2, 3, 4, 5].slice(0, isScroll ? 5 : cols).map(i => (
+                        <div key={i} className={cn("bg-emerald-500/20 rounded-md", isScroll ? "w-16 h-16 shrink-0 aspect-square" : "aspect-square")} />
                     ))}
                 </div>
                 <RemoveButton onClick={handleRemove} />
@@ -117,9 +140,10 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
     if (block.category === 'category-product') {
         return (
             <div className={cn(
-                "w-full bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0 space-y-2",
-                "hover:ring-2 hover:ring-cyan-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
+                baseClasses,
+                "p-2 space-y-2 border border-cyan-500/20",
+                "bg-cyan-500/10 hover:ring-2 hover:ring-cyan-500 hover:ring-offset-2 hover:ring-offset-slate-900"
+            )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
                 {block.type === 'magazine-3' ? (
                     <div className="grid grid-cols-3 gap-2">
                         {[1,2,3].map(i => (
