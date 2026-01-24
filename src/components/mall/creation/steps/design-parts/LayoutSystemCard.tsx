@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layout } from "lucide-react";
 
 interface LayoutSystemCardProps {
@@ -102,59 +103,105 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
           </div>
         </div>
 
-        {/* Page Specific Layouts */}
-        <div className="space-y-4">
+        {/* Page Specific Layouts - Refactored to Tabs */}
+        <div className="space-y-2">
           <Label className="text-[10px] text-indigo-500 uppercase font-black tracking-widest">Page Specific Patterns</Label>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-semibold">메인 페이지 (Main)</Label>
-              <Select value={layout.main} onValueChange={(val) => onLayoutChange("main", val)}>
-                <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
-                  <SelectValue placeholder="메인 레이아웃 선택" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {mainLayouts.map((m) => (
-                    <SelectItem key={m.value} value={m.value} className="rounded-lg">
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <Tabs defaultValue="main" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100/50 p-1 rounded-xl h-10">
+              <TabsTrigger 
+                value="main" 
+                className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm"
+              >
+                메인
+              </TabsTrigger>
+              <TabsTrigger 
+                value="list" 
+                className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm"
+              >
+                리스트
+              </TabsTrigger>
+              <TabsTrigger 
+                value="detail" 
+                className="rounded-lg text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm"
+              >
+                상세
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="mt-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
+              <TabsContent value="main" className="mt-0">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                     <Label className="text-xs font-bold text-gray-700">메인 페이지 구조</Label>
+                     <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Hero / Event / Display</span>
+                  </div>
+                  <Select value={layout.main} onValueChange={(val) => onLayoutChange("main", val)}>
+                    <SelectTrigger className="rounded-xl border-gray-200 h-11 bg-white">
+                      <SelectValue placeholder="메인 레이아웃 선택" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {mainLayouts.map((m) => (
+                        <SelectItem key={m.value} value={m.value} className="rounded-lg text-xs">
+                          {m.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground pl-1">
+                    쇼핑몰의 첫인상을 결정하는 메인 페이지의 전체적인 구조를 정의합니다.
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="list" className="mt-0">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                     <Label className="text-xs font-bold text-gray-700">상품 리스트 구조</Label>
+                     <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Grid / Filter / Pagination</span>
+                  </div>
+                  <Select value={layout.list} onValueChange={(val) => onLayoutChange("list", val)}>
+                    <SelectTrigger className="rounded-xl border-gray-200 h-11 bg-white">
+                      <SelectValue placeholder="리스트 선택" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {listLayouts.map((l) => (
+                        <SelectItem key={l.value} value={l.value} className="rounded-lg text-xs">
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground pl-1">
+                    카테고리 및 상품 목록 화면에서의 상품 진열 방식을 선택합니다.
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="detail" className="mt-0">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                     <Label className="text-xs font-bold text-gray-700">상품 상세 구조</Label>
+                     <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Gallery / Info / Review</span>
+                  </div>
+                  <Select value={layout.detail} onValueChange={(val) => onLayoutChange("detail", val)}>
+                    <SelectTrigger className="rounded-xl border-gray-200 h-11 bg-white">
+                      <SelectValue placeholder="상세 선택" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {detailLayouts.map((d) => (
+                        <SelectItem key={d.value} value={d.value} className="rounded-lg text-xs">
+                          {d.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground pl-1">
+                    개별 상품의 이미지와 정보를 고객에게 전달하는 레이아웃입니다.
+                  </p>
+                </div>
+              </TabsContent>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold">리스트 (Listing)</Label>
-                <Select value={layout.list} onValueChange={(val) => onLayoutChange("list", val)}>
-                  <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
-                    <SelectValue placeholder="리스트 선택" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {listLayouts.map((l) => (
-                      <SelectItem key={l.value} value={l.value} className="rounded-lg">
-                        {l.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold">상세 (Detail)</Label>
-                <Select value={layout.detail} onValueChange={(val) => onLayoutChange("detail", val)}>
-                  <SelectTrigger className="rounded-xl border-gray-100 h-11 bg-gray-50/50">
-                    <SelectValue placeholder="상세 선택" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {detailLayouts.map((d) => (
-                      <SelectItem key={d.value} value={d.value} className="rounded-lg">
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+          </Tabs>
         </div>
 
         {/* Layout Visualizer Blueprint */}
