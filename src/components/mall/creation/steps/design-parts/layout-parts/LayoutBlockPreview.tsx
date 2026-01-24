@@ -203,27 +203,51 @@ export function LayoutBlockPreview({ block, borderRadius, onRemove }: LayoutBloc
 
     // List Page Blocks
     if (block.category === 'list') {
-        const isGrid3 = block.type === 'grid-3';
-        const isGrid2 = block.type === 'grid-2';
+        const isBanner = block.type === 'banner';
+        const cols = block.type === 'grid-5' ? 5 : block.type === 'grid-4' ? 4 : block.type === 'grid-3' ? 3 : block.type === 'grid-2' ? 2 : 1;
         
         return (
             <div className={cn(
-               "w-full bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0 flex flex-col gap-2",
+               baseClasses,
+               "bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 relative group shrink-0 flex flex-col gap-2",
                "hover:ring-2 hover:ring-blue-500 hover:ring-offset-2 hover:ring-offset-slate-900"
-            )} style={{ borderRadius }}>
+            )} style={{ borderRadius: isFullWidth ? '0px' : borderRadius }}>
                  <div className="flex justify-between items-center mb-1">
                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">{getName(listLayouts, block.type)}</span>
                     <RemoveButton onClick={handleRemove} />
                  </div>
                  
-                 <div className={cn("grid gap-2", isGrid3 ? "grid-cols-3" : isGrid2 ? "grid-cols-2" : "grid-cols-1")}>
-                    {[1,2,3].slice(0, isGrid2 ? 2 : 3).map(i => (
-                      <div key={i} className="aspect-[3/4] bg-blue-500/20 rounded-md flex flex-col gap-1 p-1">
-                          <div className="flex-1 bg-blue-500/10 rounded-sm" />
-                          <div className="h-1 bg-blue-500/20 w-2/3 rounded-sm" />
-                      </div>
-                    ))}
-                 </div>
+                 {isBanner ? (
+                    <div className="w-full h-24 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/10">
+                        <span className="text-xs text-blue-300 font-bold">BANNER AREA</span>
+                    </div>
+                 ) : (
+                    <div className={cn("grid gap-2", 
+                        cols === 5 ? "grid-cols-5" : 
+                        cols === 4 ? "grid-cols-4" : 
+                        cols === 3 ? "grid-cols-3" : 
+                        cols === 2 ? "grid-cols-2" : "grid-cols-1"
+                    )}>
+                        {[1, 2, 3, 4, 5].slice(0, cols === 1 ? 2 : cols).map(i => (
+                          <div key={i} className={cn("bg-blue-500/20 rounded-md p-1", cols === 1 ? "flex gap-2 h-16" : "aspect-[3/4] flex flex-col gap-1")}>
+                              {cols === 1 ? (
+                                  <>
+                                    <div className="h-full aspect-square bg-blue-500/10 rounded-sm" />
+                                    <div className="flex-1 flex flex-col gap-1 justify-center">
+                                         <div className="h-2 w-3/4 bg-blue-500/20 rounded-full" />
+                                         <div className="h-2 w-1/2 bg-blue-500/10 rounded-full" />
+                                    </div>
+                                  </>
+                              ) : (
+                                  <>
+                                    <div className="flex-1 bg-blue-500/10 rounded-sm" />
+                                    <div className="h-1 bg-blue-500/20 w-2/3 rounded-sm" />
+                                  </>
+                              )}
+                          </div>
+                        ))}
+                    </div>
+                 )}
             </div>
         );
     }

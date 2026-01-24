@@ -59,10 +59,13 @@ export const radiuses = [
   ];
   
   export const listLayouts = [
+    { name: "Grid 5-Column", value: "grid-5", desc: "Maximum density" },
+    { name: "Grid 4-Column", value: "grid-4", desc: "High density grid" },
     { name: "Grid 3-Column", value: "grid-3", desc: "Standard e-commerce balance" },
     { name: "Grid 2-Column", value: "grid-2", desc: "Larger images for visual impact" },
     { name: "List View (Wide)", value: "list-wide", desc: "Detailed information per row" },
     { name: "Masonry", value: "masonry", desc: "Dynamic, pinterest-style grid" },
+    { name: "Banner", value: "banner", desc: "Full-width promotional banner" },
   ];
   
   export const detailLayouts = [
