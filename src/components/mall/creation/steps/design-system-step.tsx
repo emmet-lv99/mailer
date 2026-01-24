@@ -58,7 +58,7 @@ export function DesignSystemStep({ onNext, onBack }: DesignSystemStepProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[500px]">
+      <div className="grid grid-cols-1 gap-8">
         <DesignKeywordsCard 
           selectedKeywords={design.concept.keywords || []}
           onKeywordsChange={(keywords) => updateDesign("concept", { ...design.concept, keywords })}
