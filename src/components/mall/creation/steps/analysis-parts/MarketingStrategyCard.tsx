@@ -221,6 +221,30 @@ export function MarketingStrategyCard({
                  </div>
                )}
              </div>
+
+             {/* [New] Brand Identity Keywords */}
+             <div className="mt-3">
+                <Label className="text-[10px] text-gray-500 uppercase">Brand Keywords (콤마로 구분)</Label>
+                {isEditing ? (
+                  <Input 
+                    value={analysisResult.marketing?.strategy?.brandKeywords?.join(", ") || ""} 
+                    onChange={(e) => updateMarketing("strategy", { 
+                      ...analysisResult.marketing?.strategy, 
+                      brandKeywords: e.target.value.split(",").map((s: string) => s.trim()) 
+                    })}
+                    className="mt-1"
+                    placeholder="브랜드의 성격(예: 친근한, 유머러스한)을 입력하세요."
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {analysisResult.marketing?.strategy?.brandKeywords?.map((keyword: string, i: number) => (
+                      <span key={i} className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
+                        #{keyword}
+                      </span>
+                    ))}
+                  </div>
+                )}
+             </div>
            </div>
         </div>
 

@@ -194,6 +194,7 @@ export async function POST(request: Request) {
           // 2. Strategy (Must align with Target)
           "strategy": { 
             "usp": "Strategy description... (Must explicitly mention the Target Gender/Age identified in _reasoning)", 
+            "brandKeywords": string[], // [CRITICAL] 3-5 keywords representing the channel's BRAND SOUL (e.g. Humorous, Relatable, Cozy)
             "mood": "Standard Mood",
             "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
             "brandArchetype": { "primary": "Creator", "secondary": "Everyman", "mixReason": "Standard" },
@@ -214,10 +215,10 @@ export async function POST(request: Request) {
              "keyFeatures": [] 
           }
         },
-        // 2. Design (Focused on 3 Key Fields)
+        // 2. Design (Visual style derived from Brand soul)
         "design": {
           "concept": { 
-             "keywords": string[], // [CRITICAL] Derive 3-5 Brand/Design Keywords from the channel's identity (e.g. MINIMAL, PLAYFUL, RETRO)
+             "keywords": string[], // [CRITICAL] Derive 3-5 VISUAL STYLE keywords from the brand soul (e.g. KITSCH, VIBRANT, MINIMAL)
              "description": string 
           },
           "foundation": {
@@ -262,14 +263,9 @@ export async function POST(request: Request) {
     // productCategories removed
     // targetAge Removed. AI infers it.
     if (brandKeywords) {
-       console.log("Overriding Keywords with:", brandKeywords);
-       // Split comma-separated keywords if necessary, or just treat as one if schema allows.
-       // The prompt 'refine-prompt' expects English keywords for Mood Matching, 
-       // but user entered Korean keywords (likely). 
-       // We will append them to 'design.concept.description' or 'marketing.strategy.mood'.
-       // For now, let's put them in 'design.concept.keywords' as well, expecting mixed language usage is fine downstream.
+       console.log("Overriding Brand Keywords with:", brandKeywords);
        const keywords = (brandKeywords as string).split(',').map((k: string) => k.trim());
-       analysisData.design.concept.keywords = keywords; 
+       analysisData.marketing.strategy.brandKeywords = keywords; 
     }
     // We don't explicitly store referenceUrl in the standard schema yet, 
     // but we can log it or pass it if extended fields allow. 

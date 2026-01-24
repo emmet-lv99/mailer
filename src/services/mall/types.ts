@@ -36,6 +36,7 @@ export interface MarketingSpec {
       plan: string;
       success: string;
     };
+    brandKeywords: string[];
     competitors: {
       name: string;
       reason: string;

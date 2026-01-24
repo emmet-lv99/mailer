@@ -40,9 +40,9 @@ export function DesignConceptCard({
             <p className="text-sm text-gray-700 leading-relaxed mb-3">{analysisResult.design?.concept?.description}</p>
           )}
 
-           {/* Brand Keywords (Moved from Input) */}
+           {/* Design Keywords (Visual Style) */}
            <div className="mt-4">
-               <Label className="text-[10px] text-gray-500 uppercase">Brand Keywords (콤마로 구분)</Label>
+               <Label className="text-[10px] text-gray-500 uppercase">디자인 키워드 (Design Keywords)</Label>
                {isEditing ? (
                  <Input 
                    value={analysisResult.design?.concept?.keywords?.join(", ") || ""} 
