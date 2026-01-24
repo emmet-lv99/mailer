@@ -62,7 +62,8 @@ export interface DesignSpec {
       text: { title: string; body: string; disabled: string };
     };
     typography: {
-      fontFamily: string;
+      displayFontFamily: string;
+      bodyFontFamily: string;
       scale: string;
       weightRule: string;
     };

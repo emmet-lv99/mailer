@@ -65,9 +65,11 @@ export function DesignSystemStep({ onNext, onBack }: DesignSystemStepProps) {
         />
         
         <FontSystemCard 
-          fontFamily={design.foundation.typography.fontFamily}
+          displayFontFamily={design.foundation.typography.displayFontFamily}
+          bodyFontFamily={design.foundation.typography.bodyFontFamily}
           weightRule={design.foundation.typography.weightRule}
-          onFontChange={(font) => updateFoundation("typography", { ...design.foundation.typography, fontFamily: font })}
+          onDisplayFontChange={(font) => updateFoundation("typography", { ...design.foundation.typography, displayFontFamily: font })}
+          onBodyFontChange={(font) => updateFoundation("typography", { ...design.foundation.typography, bodyFontFamily: font })}
           onWeightChange={(weight) => updateFoundation("typography", { ...design.foundation.typography, weightRule: weight })}
         />
 
