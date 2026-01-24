@@ -110,41 +110,44 @@ export async function POST(request: Request) {
          KITSCH, POP, INDUSTRIAL, ELEGANT, LUXURY, CASUAL, SPORTY, GRUNGE, 
          ETHEREAL, MONOCHROME, PASTEL, VIBRANT, WARM, COZY, CHIC]
 
-      [IMPORTANT] Follow this analysis order strictly to ensure consistency:
-      1. ANALYZE TARGET AUDIENCE (Age, Gender, Interests) first based on visuals and comments.
-      2. DEFINE STRATEGY (USP, SWOT) based on the target.
-      3. CREATE PERSONA that EXACTLY MATCHES the analyzed Target Audience (Same Gender/Age).
-      4. RECOMMEND PRODUCT CATEGORIES based on the persona and strategy.
+      [IMPORTANT] LOGICAL CONSISTENCY RULES:
+      1. **Target Audience Analysis**: Determine Age/Gender from visual cues (people in thumbnails, comments).
+      2. **Strategy Alignment**: The 'Strategy' description MUST explicitly mention the same Age/Gender identified in step 1.
+      3. **Persona Consistency**: The Persona's gender and age range MUST be a subset of the Target Audience.
+         - IF Target Gender is 'MALE', Persona MUST be Male.
+         - IF Target Gender is 'FEMALE', Persona MUST be Female.
+         - IF Target Gender is 'ALL', pick the most dominant segment.
+      4. **Product Recommendation**: Products recommended must be relevant to this specific Persona.
 
       [Output JSON Structure]
       {
         "channelName": string,
         "marketing": {
-          // 1. Target Audience (The Foundation)
+          // 1. Target Audience
           "target": { 
-             "ageRange": "20-30", // [CRITICAL] Infer range (e.g. "10-20", "20-30", "30-40")
-             "gender": "FEMALE", // [CRITICAL] 'MALE', 'FEMALE', 'ALL' - MUST match visual evidence
+             "ageRange": "20-30", 
+             "gender": "FEMALE", // [CRITICAL] MALE, FEMALE, or ALL. This sets the rule for Persona.
              "interests": [] 
           },
-          // 2. Strategy
+          // 2. Strategy (Must align with Target)
           "strategy": { 
-            "usp": "Standard Strategy", 
+            "usp": "Strategy description... (Must cater to the identified Target)", 
             "mood": "Standard Mood",
             "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
             "brandArchetype": { "primary": "Creator", "secondary": "Everyman", "mixReason": "Standard" },
-            "storyBrand": { "hero": "", "problem": "", "guide": "", "plan": "", "success": "" },
+            "storyBrand": { "hero": "Target Audience", "problem": "", "guide": "Brand", "plan": "", "success": "" },
             "competitors": []
           },
-          // 3. Persona (Derived from Target)
+          // 3. Persona (Derived directly from Target)
           "persona": { 
             "name": "Name", 
-            "oneLiner": "Description (MUST match Target Gender/Age)", 
+            "oneLiner": "Description (MUST match Target Gender/Age. E.g. '20s Female...')", 
             "needs": [], 
             "painPoints": [] 
           },
-          // 4. Product Categories (Recommendation)
+          // 4. Product Categories
           "product": { 
-             "categories": string[], // [CRITICAL] Recommend 1-3 best categories from: ['HEALTH_FOOD', 'COSMETICS', 'FASHION', 'ELECTRONICS', 'FOOD', 'LIVING', 'PET', 'GENERAL']
+             "categories": string[], 
              "priceRange": "medium", 
              "keyFeatures": [] 
           }
