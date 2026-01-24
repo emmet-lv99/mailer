@@ -66,50 +66,7 @@ export function MarketingStrategyCard({
           </div>
         </div>
 
-        {/* Target Audience Section */}
-        <div>
-          <h4 className="font-semibold mb-2 text-sm">Target Audience</h4>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            {isEditing ? (
-              <>
-                <div>
-                  <Label className="text-[10px]">연령대</Label>
-                  <Input 
-                    value={analysisResult.marketing?.target?.ageRange || ""} 
-                    onChange={(e) => updateMarketing("target", { ...analysisResult.marketing?.target, ageRange: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="text-[10px]">성별</Label>
-                  <Input 
-                    value={analysisResult.marketing?.target?.gender || ""} 
-                    onChange={(e) => updateMarketing("target", { ...analysisResult.marketing?.target, gender: e.target.value })}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="flex gap-2">
-                <span className="text-sm border px-3 py-1 rounded-full bg-slate-50">{analysisResult.marketing?.target?.ageRange}</span>
-                <span className="text-sm border px-3 py-1 rounded-full bg-slate-50">{analysisResult.marketing?.target?.gender}</span>
-              </div>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-[10px] text-gray-400">주요 관심사 {isEditing && "(콤마로 구분)"}</Label>
-            {isEditing ? (
-              <Input 
-                value={analysisResult.marketing?.target?.interests?.join(", ") || ""} 
-                onChange={(e) => updateMarketing("target", { ...analysisResult.marketing?.target, interests: e.target.value.split(",").map((s: string) => s.trim()) })}
-              />
-            ) : (
-              <div className="flex gap-2 flex-wrap">
-                {analysisResult.marketing?.target?.interests?.map((interest: any, i: number) => (
-                  <span key={i} className="text-xs bg-slate-100 px-3 py-1 rounded-full">{interest}</span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Target Audience Section Removed by User Request */}
 
         {/* Strategy Section */}
         <div>

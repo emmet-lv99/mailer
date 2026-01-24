@@ -11,8 +11,8 @@ interface ChannelInputCardProps {
   referenceUrl: string;
   brandKeywords: string;
   selectedCategories: string[];
-  selectedAge: string;
-  onChannelDataChange: (url: string, refUrl: string, keywords: string, categories: string[], age: string) => void;
+  selectedAges: string[]; // [Updated] Array
+  onChannelDataChange: (url: string, refUrl: string, keywords: string, categories: string[], ages: string[]) => void;
   onAnalyze: () => void;
   isLoading: boolean;
 }
@@ -40,7 +40,7 @@ export function ChannelInputCard({
   referenceUrl,
   brandKeywords,
   selectedCategories,
-  selectedAge,
+  selectedAges,
   onChannelDataChange,
   onAnalyze,
   isLoading
@@ -50,7 +50,7 @@ export function ChannelInputCard({
   const [localKeywords, setLocalKeywords] = useState(brandKeywords);
 
   const handleChange = (newUrl: string, newRef: string, newKeys: string) => {
-    onChannelDataChange(newUrl, newRef, newKeys, selectedCategories, selectedAge);
+    onChannelDataChange(newUrl, newRef, newKeys, selectedCategories, selectedAges);
   };
 
   const handleCategoryToggle = (id: string) => {
@@ -60,12 +60,17 @@ export function ChannelInputCard({
     } else {
       newCategories = [...selectedCategories, id];
     }
-    // Update parent
-    onChannelDataChange(localUrl, localRefUrl, localKeywords, newCategories, selectedAge);
+    onChannelDataChange(localUrl, localRefUrl, localKeywords, newCategories, selectedAges);
   };
   
-  const handleAgeChange = (val: string) => {
-    onChannelDataChange(localUrl, localRefUrl, localKeywords, selectedCategories, val);
+  const handleAgeToggle = (id: string) => {
+    let newAges;
+    if (selectedAges.includes(id)) {
+      newAges = selectedAges.filter(a => a !== id);
+    } else {
+      newAges = [...selectedAges, id];
+    }
+    onChannelDataChange(localUrl, localRefUrl, localKeywords, selectedCategories, newAges);
   };
 
   return (
@@ -147,24 +152,30 @@ export function ChannelInputCard({
           </div>
         </div>
 
-        {/* 3. Target Age Selection */}
+        {/* 3. Target Age Selection (Multi-select) */}
         <div className="space-y-3">
-          <Label className="text-base font-semibold">타겟 연령층 <span className="text-red-500">*</span></Label>
+          <Label className="text-base font-semibold">타겟 연령층 <span className="text-red-500">*</span> <span className="text-xs font-normal text-slate-500">(중복 선택 가능)</span></Label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {AGE_GROUPS.map((age) => (
-              <div 
-                key={age.id}
-                onClick={() => handleAgeChange(age.id)}
-                className={`
-                  cursor-pointer rounded-lg border p-4 text-center transition-all hover:bg-slate-50
-                  ${selectedAge === age.id 
-                    ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-600 text-indigo-700 font-bold' 
-                    : 'border-slate-200 text-slate-600'}
-                `}
-              >
-                {age.label}
-              </div>
-            ))}
+            {AGE_GROUPS.map((age) => {
+              const isSelected = selectedAges.includes(age.id);
+              return (
+                 <div 
+                  key={age.id}
+                  onClick={() => handleAgeToggle(age.id)}
+                  className={`
+                    cursor-pointer rounded-lg border p-4 text-center transition-all hover:bg-slate-50 relative
+                    ${isSelected 
+                      ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-600 text-indigo-700 font-bold' 
+                      : 'border-slate-200 text-slate-600'}
+                  `}
+                >
+                  {age.label}
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-600" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -172,7 +183,7 @@ export function ChannelInputCard({
           className="w-full h-12 text-lg" 
           size="lg" 
           onClick={onAnalyze} 
-          disabled={!localUrl || selectedCategories.length === 0 || !selectedAge || isLoading}
+          disabled={!localUrl || selectedCategories.length === 0 || selectedAges.length === 0 || isLoading}
         >
           {isLoading ? "AI 분석 중... (약 10초)" : "분석 시작하기"}
         </Button>

@@ -35,7 +35,7 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
 
   // New State for Selectors
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedAge, setSelectedAge] = useState<string>("");
+  const [selectedAges, setSelectedAges] = useState<string[]>([]); // [Updated] Array
   const [referenceUrl, setReferenceUrl] = useState<string>("");
   const [brandKeywords, setBrandKeywords] = useState<string>("");
 
@@ -49,8 +49,8 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
         body: JSON.stringify({ 
            channelUrl, 
            // competitors removed
-           productCategories: selectedCategories, // Array
-           targetAge: selectedAge,
+           productCategories: selectedCategories, 
+           targetAge: selectedAges, // Array
            referenceUrl,
            brandKeywords
         }),
@@ -78,8 +78,8 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
        toast.error("상품 카테고리를 하나 이상 선택해주세요.");
        return;
     }
-    if (!selectedAge) {
-      toast.error("타겟 연령층을 선택해주세요.");
+    if (selectedAges.length === 0) {
+      toast.error("타겟 연령층을 하나 이상 선택해주세요.");
       return;
    }
 
@@ -151,13 +151,13 @@ export function ChannelAnalysisStep({ onNext }: ChannelAnalysisStepProps) {
         referenceUrl={referenceUrl}
         brandKeywords={brandKeywords}
         selectedCategories={selectedCategories}
-        selectedAge={selectedAge}
-        onChannelDataChange={(url, refUrl, keywords, cats, age) => {
+        selectedAges={selectedAges}
+        onChannelDataChange={(url, refUrl, keywords, cats, ages) => {
            setChannelData(url, []); // Clear competitors
            setReferenceUrl(refUrl);
            setBrandKeywords(keywords);
            setSelectedCategories(cats);
-           setSelectedAge(age);
+           setSelectedAges(ages);
         }}
         onAnalyze={handleAnalyzeWithCheck}
         isLoading={isLoading}

@@ -176,9 +176,12 @@ export async function POST(request: Request) {
        console.log("Overriding Categories with:", productCategories);
        analysisData.marketing.product.categories = productCategories;
     }
-    if (targetAge) {
+    if (targetAge && targetAge.length > 0) {
+      // Logic expects comma separated string or single string if multiple ages selected
       console.log("Overriding Target Age with:", targetAge);
-      analysisData.marketing.target.ageRange = targetAge;
+      // If targetAge is array, join it. If string (legacy), leave it.
+      const ageRange = Array.isArray(targetAge) ? targetAge.join(", ") : targetAge;
+      analysisData.marketing.target.ageRange = ageRange;
     }
     if (brandKeywords) {
        console.log("Overriding Keywords with:", brandKeywords);
