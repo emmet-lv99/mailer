@@ -91,12 +91,12 @@ export async function POST(request: Request) {
         
         const searchPrompt = `
         Search for the YouTube channel "${channelInfo.title}" (Korean: ${channelInfo.title}).
-        Find information about:
-        1. Main Subscriber Demographics (Gender, Age)
-        2. Key Content Themes (e.g. Army, Dating, Comedy)
-        3. Recent Controversies or Changes in public opinion (e.g. 2024 issues)
+        Specifically investigate:
+        1. **Gender Ratio**: Is the subscriber base mostly Male or Female? (Search for "남녀 성비", "시청자 비율")
+        2. **Core Age Group**: Which age group is most active?
+        3. **Content Themes**: Does it deal with Army/Military (군대), Gaming, or Beauty?
         
-        Summarize the findings in one paragraph (Korean).
+        Summarize the demographics clearly (e.g., "Male dominated", "Female dominated", or "Balanced").
         `;
         
         const searchResult = await researchModel.generateContent(searchPrompt);
@@ -123,16 +123,33 @@ export async function POST(request: Request) {
       Description: ${analysisContext.description}
       Keywords: ${analysisContext.keywords}
       
-      ${searchContext}
+      [Data Source 1: External Reputation (Google Search)]
+      ${searchContext || "No search data available."}
+
+      [Data Source 2: Content Strategy (Video History)]
+      Recent 50 Videos: ${JSON.stringify(analysisContext.recentVideos)}
       
-      [Content Context]
-      Recent Videos: ${JSON.stringify(analysisContext.recentVideos)}
-      
-      [Visual Context]
+      [Data Source 3: Audience Engagement (Comments)]
+      Recent Comments: "
+      ${analysisContext.topComments}
+      "
+
+      [Data Source 4: Visual Identity (Images)]
       I have provided the Channel Banner, Profile Icon, and recent Video Thumbnails. 
-      Analyze the branding consistency, color usage, and visual identity from these images.
       
-      [Task]
+      [Analysis Protocol]
+      1. **Search Phase**: First, look at [Data Source 1] to understand the channel's public perception, controversies, and general demographic consensus.
+      2. **Content Phase**: Analyze [Data Source 2] to identify recurrent themes.
+      3. **Engagement Phase**: Check [Data Source 3] to see *who* is actually talking.
+      4. **Visual Phase**: Finally, look at [Data Source 4].
+
+      [Demographic Heuristics]
+      - **Army/Military (군대)**, Gaming, Cars, Sports -> **Strongly bias towards MALE**.
+      - Beauty, Fashion, Diet, Vlog, Parenting -> **Strongly bias towards FEMALE**.
+      - Sketch Comedy -> Can be mixed, but if it involves "Soldiers" or "Military", it is MALE.
+      - **Controversy Check**: If there is a "Military Mockery" controversy, the core audience is likely MALE (who are angry).
+
+      [Task Guidelines]
       Generate a JSON object matching the following structure ONLY.
       - **LANGUAGE**: "target.ageRange" and "mood.imagery" MUST be in **KOREAN (한국어)**.
       - **KEYWORDS**: "design.concept.keywords" MUST be in **ENGLISH (ALL CAPS)**.
@@ -142,10 +159,11 @@ export async function POST(request: Request) {
          ETHEREAL, MONOCHROME, PASTEL, VIBRANT, WARM, COZY, CHIC]
 
       [IMPORTANT] LOGICAL CONSISTENCY RULES:
-      1. **STEP 1: REASONING**: Fill the \`_reasoning\` field first. Explicitly state the observed Age & Gender from visuals.
-         - E.g., "The thumbnails show mostly men in their 30s. Therefore Target is MALE_30s."
-         - If ambiguous, default to "ALL" but be consistent.
-      2. **STEP 2: EXECUTION**: Use the decisions from \`_reasoning\` to fill \`target.gender\` and \`target.ageRange\`.
+      1. **STEP 1: REASONING**: Fill the \`_reasoning\` field first. 
+         - Synthesize ALL 4 Data Sources.
+         - *Critical*: If [Search] says "Male dominated" but [Visuals] look generic, Trust [Search] & [Comments] for demographics.
+         - Explicitly state: "Search indicates X, Content shows Y, Comments suggest Z. Therefore final verdict is W."
+      2. **STEP 2: EXECUTION**: Fill \`target.gender\` and \`target.ageRange\` based on the verdict.
       3. **STEP 3: ALIGNMENT**: 
          - \`marketing.strategy\` text MUST mention the same gender/age.
          - \`marketing.persona\` MUST have the same gender/age.
