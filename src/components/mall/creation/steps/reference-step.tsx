@@ -165,7 +165,7 @@ export function ReferenceStep({ onNext, onBack }: ReferenceStepProps) {
         </Card>
 
         {/* 2. Analysis Action */}
-        <div className="flex justify-center">
+        <div className="flex flex-col gap-3 justify-center items-center">
           <Button 
              size="lg" 
              onClick={handleAnalyze} 
@@ -181,6 +181,18 @@ export function ReferenceStep({ onNext, onBack }: ReferenceStepProps) {
                <><Sparkles className="mr-2 w-5 h-5" /> 레퍼런스 스타일 분석 시작</>
             )}
           </Button>
+          
+          {/* Skip Option */}
+          {!referenceAnalysis && (
+            <div className="text-center">
+              <button 
+                onClick={() => onNext()}
+                className="text-sm text-slate-400 hover:text-slate-600 underline underline-offset-4 transition-colors"
+              >
+                레퍼런스 없이 Cafe24 표준 스타일로 시작하기 &rarr;
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 3. Analysis Result */}
