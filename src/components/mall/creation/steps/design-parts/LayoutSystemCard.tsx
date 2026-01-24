@@ -73,7 +73,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             </div>
          </div>
          
-         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar px-2 relative">
+         <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar p-2 relative">
            {type === 'main' && (
              <div className="space-y-3 min-h-[200px] flex flex-col justify-center">
                {(!layout.main || layout.main === 'none') && (!layout.mainSub || layout.mainSub === 'none') && (
