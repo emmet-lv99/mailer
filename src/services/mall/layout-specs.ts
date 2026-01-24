@@ -34,6 +34,113 @@ export const FEW_SHOT_EXAMPLES = [
   }
 ];
 
+/**
+ * MAIN & HERO BLOCKS - Layout Block Definitions
+ */
+
+export const MAIN_BLOCKS: Record<string, LayoutBlockSpec> = {
+  
+  /**
+   * CAROUSEL CENTER - 측면 피크 좌우 슬라이더
+   */
+  'carousel-center': {
+    id: 'carousel-center',
+    name: 'Carousel Center',
+    nameKo: '캐러셀 센터',
+    category: 'main',
+    description: 'Centered slider with side peek effect',
+    descriptionKo: '중앙 집중식 측면 피크 슬라이더',
+    visualStructure: `
+┌─────────────────────────────────────────────────────────┐
+│ [Peek-L]      [   Main Center Banner 1280px   ]   [Peek-R] │
+└─────────────────────────────────────────────────────────┘
+`,
+    specifications: {
+      width: '1280px',
+      aspectRatio: '21:9',
+      peek: '15%'
+    },
+    promptTemplate: `
+MAIN HERO CAROUSEL - CENTERED WITH SIDE PEEK:
+Structure:
+- Banner: 1280px wide (centered) main banner, visible partially on both sides (side peek).
+- Navigation: Floating Pagination dots at bottom center, Subtle left/right arrow buttons.
+- Content: Headline (48-64px bold), Description (18px), Brand Logo overlay.
+- Quality: Studio photography, cinematic depth of field, high-fidelity materials.
+`,
+    useCases: ['브랜드 비주얼 강조', '이벤트 프로모션']
+  },
+  
+  /**
+   * HERO GRID - 에디토리얼 스타일 매거진 그리드
+   */
+  'hero-grid': {
+    id: 'hero-grid',
+    name: 'Hero Grid',
+    nameKo: '히어로 그리드',
+    category: 'main',
+    description: 'Editorial hero with product grid links',
+    descriptionKo: '에디토리얼 히어로 + 제품 링크 그리드',
+    visualStructure: `
+┌───────────────┬───────────────┐
+│               │   [Small 1]   │
+│    [Hero]     ├───────────────┤
+│    Vertical   │   [Small 2]   │
+└───────────────┴───────────────┘
+`,
+    specifications: {
+      split: '60/40',
+      heroWidth: '768px'
+    },
+    promptTemplate: `
+HERO GRID - EDITORIAL MAGAZINE STYLE:
+Layout:
+- Left (60%): Large vertical hero banner (768px wide).
+- Right (40%): 2×2 mini-grid of product category links or featured items.
+- Typography: Bold brutalist or elegant serif headings overlapping images.
+`,
+    useCases: ['에디토리얼 느낌 강조', '카테고리 퀵 서비스']
+  }
+};
+
+/**
+ * DETAIL PAGE BLOCKS
+ */
+export const DETAIL_BLOCKS: Record<string, LayoutBlockSpec> = {
+  /**
+   * PRODUCT HERO - 제품 상세페이지 상단 (Gallery + Info)
+   */
+  'product-hero': {
+    id: 'product-hero',
+    name: 'Product Hero',
+    nameKo: '제품 히어로',
+    category: 'detail',
+    description: 'Main product details at the top',
+    descriptionKo: '상세페이지 상단 (제품 갤러리/정보)',
+    visualStructure: `
+┌───────────────┬───────────────┐
+│   [Gallery]   │    [Metadata] │
+│     640px     │     640px     │
+└───────────────┴───────────────┘
+`,
+    specifications: {
+      galleryWidth: '640px',
+      infoWidth: '640px'
+    },
+    promptTemplate: `
+PRODUCT DETAIL HERO - GALLERY & METADATA:
+Layout: 2-column split (50/50).
+Left (Gallery): 1:1 Large product image (640px) + Horizontal thumbnail strip below.
+Right (Metadata): 
+- Header: Brand Name (14px), Product Title (32px bold).
+- Price: 24px bold black, Discount % badge.
+- Options: Color/Size chips with selected state.
+- Actions: Large Buy Now (Black) & Cart (White) buttons.
+`,
+    useCases: ['상세 페이지 상단 고정 사양']
+  }
+};
+
 export const PRODUCT_LIST_BLOCKS: Record<string, LayoutBlockSpec> = {
   
   /**
@@ -394,9 +501,29 @@ export const VIDEO_KEYWORD_ADAPTATIONS: Record<string, any> = {
   LUXURY: { borderRadius: '0px', playButtonStyle: 'Elegant, refined' }
 };
 
+export function generateMainBlockPrompt(
+  blockType: string,
+  designKeywords: string[],
+  archetypeGuidance?: string
+): string {
+  const block = MAIN_BLOCKS[blockType] || DETAIL_BLOCKS[blockType];
+  if (!block) return '';
+  
+  const adaptation = getVideoKeywordAdaptation(designKeywords);
+  let prompt = block.promptTemplate;
+  
+  prompt += `\n\n━━━ DESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}) ━━━`;
+  prompt += `\n- Corner Geometry: ${adaptation.borderRadius} corner radius`;
+  if (archetypeGuidance) prompt += `\n- Archetype Guidance: ${archetypeGuidance}`;
+  prompt += `\n${VISUAL_FIDELITY_RULES}`;
+  
+  return prompt;
+}
+
 export function generateVideoPrompt(
   blockType: string,
-  designKeywords: string[]
+  designKeywords: string[],
+  archetypeGuidance?: string
 ): string {
   const block = VIDEO_BLOCKS[blockType];
   if (!block) return '';
@@ -407,6 +534,7 @@ export function generateVideoPrompt(
   prompt += `\n\n━━━ DESIGN ADAPTATIONS (Keywords: ${designKeywords.join(', ')}) ━━━`;
   prompt += `\n- Corner Geometry: ${adaptation.borderRadius} corner radius`;
   prompt += `\n- Interaction: ${adaptation.playButtonStyle} Play Button with subtle glow`;
+  if (archetypeGuidance) prompt += `\n- Archetype Guidance: ${archetypeGuidance}`;
   prompt += `\n${VISUAL_FIDELITY_RULES}`;
   
   return prompt;
@@ -424,7 +552,8 @@ function getVideoKeywordAdaptation(keywords: string[]) {
 
 export function generateProductListPrompt(
   gridType: 'grid-5' | 'grid-4' | 'grid-3' | 'grid-2',
-  designKeywords: string[]
+  designKeywords: string[],
+  archetypeGuidance?: string
 ): string {
   const block = PRODUCT_LIST_BLOCKS[gridType];
   const adaptation = getProductListKeywordAdaptation(designKeywords);
@@ -436,6 +565,7 @@ export function generateProductListPrompt(
   prompt += `\n- Atmosphere: Shadow intensity ${adaptation.shadow}, Hover elevation ${adaptation.hoverShadow}`;
   if (adaptation.spacing) prompt += `\n- Verticality: ${adaptation.spacing}`;
   if (adaptation.hoverTransform) prompt += `\n- Dynamics: ${adaptation.hoverTransform}`;
+  if (archetypeGuidance) prompt += `\n- Archetype Guidance: ${archetypeGuidance}`;
   prompt += `\n${VISUAL_FIDELITY_RULES}`;
   
   return prompt;

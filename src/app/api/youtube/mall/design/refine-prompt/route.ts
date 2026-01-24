@@ -1,4 +1,5 @@
-import { FEW_SHOT_EXAMPLES, generateProductListPrompt, generateVideoPrompt, VISUAL_FIDELITY_RULES } from "@/services/mall/layout-specs";
+import { DESIGN_ARCHETYPES } from "@/services/mall/design-archetypes";
+import { FEW_SHOT_EXAMPLES, generateMainBlockPrompt, generateProductListPrompt, generateVideoPrompt, VISUAL_FIDELITY_RULES } from "@/services/mall/layout-specs";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -235,12 +236,14 @@ class DesignInterpreter {
 }
 
 class PromptGenerator {
-  public generate(designSpec: DesignSpec, layoutBlocks: any[], pageType: string, brandInfo: any): string {
+  public generate(designSpec: DesignSpec, layoutBlocks: any[], pageType: string, brandInfo: any, archetypeKey?: string): string {
+    const archetype = archetypeKey ? DESIGN_ARCHETYPES[archetypeKey] : null;
+
     const sections = [
       this.generateHeader(pageType),
       this.generateLayoutSection(layoutBlocks),
       this.generateDesignStyleSection(designSpec),
-      this.generateContentSection(designSpec, layoutBlocks),
+      this.generateContentSection(designSpec, layoutBlocks, archetype),
       this.generateColorSection(designSpec, brandInfo),
       this.generateTypographySection(designSpec),
       this.generateSpacingSection(designSpec),
@@ -284,18 +287,26 @@ Visual Tone: Saturation ${spec.colors.saturation}, Tone ${spec.colors.tone}
 Treatment: Shadow ${spec.components.shadowIntensity}, Border ${spec.components.borderStyle}`;
   }
 
-  private generateContentSection(spec: DesignSpec, layoutBlocks: any[]): string {
+  private generateContentSection(spec: DesignSpec, layoutBlocks: any[], archetype?: any): string {
     const gridBlock = layoutBlocks.find(b => b.category === 'product-list' && ['grid-5', 'grid-4', 'grid-3', 'grid-2'].includes(b.type));
     const videoBlock = layoutBlocks.find(b => (b.category === 'shorts' || b.category === 'video-product') && ['feed-scroll', 'full-width-video', 'split-video', 'story-grid'].includes(b.type));
+    const mainBlock = layoutBlocks.find(b => (b.category === 'main' || b.category === 'detail') && ['carousel-center', 'hero-grid', 'product-hero'].includes(b.type));
     
     let contentSectionValue = '';
 
+    const productGuidance = archetype?.section_guidance?.product_grid || "";
+    const heroGuidance = archetype?.section_guidance?.hero || "";
+
+    if (mainBlock) {
+      contentSectionValue += `MAIN HERO & KEY SECTION SPECIFICATIONS:\n${generateMainBlockPrompt(mainBlock.type, spec.keywords, heroGuidance)}\n\n`;
+    }
+
     if (gridBlock) {
-      contentSectionValue += `PRODUCT CARD & GRID SPECIFICATIONS:\n${generateProductListPrompt(gridBlock.type as any, spec.keywords)}\n\n`;
+      contentSectionValue += `PRODUCT CARD & GRID SPECIFICATIONS:\n${generateProductListPrompt(gridBlock.type as any, spec.keywords, productGuidance)}\n\n`;
     }
 
     if (videoBlock) {
-      contentSectionValue += `VIDEO CONTENT SPECIFICATIONS:\n${generateVideoPrompt(videoBlock.type as any, spec.keywords)}\n\n`;
+      contentSectionValue += `VIDEO CONTENT SPECIFICATIONS:\n${generateVideoPrompt(videoBlock.type as any, spec.keywords, heroGuidance)}\n\n`;
     }
 
     if (!contentSectionValue) {
@@ -375,8 +386,11 @@ export async function POST(request: Request) {
     else if (pageType?.includes('LIST')) rawBlocks = Array.isArray(shapeLayout?.list) ? shapeLayout.list : [];
     else if (pageType?.includes('DETAIL')) rawBlocks = Array.isArray(shapeLayout?.detail) ? shapeLayout.detail : [];
 
+    // Determine archetype key early
+    const archetypeKey = keywords[0] || 'STANDARD';
+
     const generator = new PromptGenerator();
-    const technicalContext = generator.generate(designSpec, rawBlocks, pageType, analysisResult);
+    const technicalContext = generator.generate(designSpec, rawBlocks, pageType, analysisResult, archetypeKey);
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
@@ -406,9 +420,6 @@ RETURN ONLY THE REFINED PROMPT STRING.`;
 
     const result = await model.generateContent(systemPrompt + "\n\n" + userContext);
     const refinedPrompt = result.response.text().trim();
-
-    // Determine archetype key for reference
-    const archetypeKey = keywords[0] || 'STANDARD';
 
     return NextResponse.json({ refinedPrompt, archetypeKey });
 
