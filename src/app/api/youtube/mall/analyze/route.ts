@@ -109,22 +109,23 @@ export async function POST(request: Request) {
         [MINIMAL, BRUTALIST, SCANDINAVIAN, JAPANESE, CORPORATE, SWISS,
          VINTAGE, RETRO, ORGANIC, NATURAL, LUXE, PREMIUM, PLAYFUL, STREETWEAR]
 
-      Structure:
+      [IMPORTANT] Follow this analysis order strictly to ensure consistency:
+      1. ANALYZE TARGET AUDIENCE (Age, Gender, Interests) first based on visuals and comments.
+      2. DEFINE STRATEGY (USP, SWOT) based on the target.
+      3. CREATE PERSONA that EXACTLY MATCHES the analyzed Target Audience (Same Gender/Age).
+      4. RECOMMEND PRODUCT CATEGORIES based on the persona and strategy.
+
+      [Output JSON Structure]
       {
         "channelName": string,
-        // 1. Marketing
         "marketing": {
+          // 1. Target Audience (The Foundation)
           "target": { 
              "ageRange": "20-30", // [CRITICAL] Infer range (e.g. "10-20", "20-30", "30-40")
-             "gender": "FEMALE", // [CRITICAL] 'MALE', 'FEMALE', 'ALL'
+             "gender": "FEMALE", // [CRITICAL] 'MALE', 'FEMALE', 'ALL' - MUST match visual evidence
              "interests": [] 
           },
-          "persona": { "name": "Name", "oneLiner": "Description", "needs": [], "painPoints": [] },
-          "product": { 
-             "categories": string[], // [CRITICAL] Recommend 1-3 best categories from: ['HEALTH_FOOD', 'COSMETICS', 'FASHION', 'ELECTRONICS', 'FOOD', 'LIVING', 'PET', 'GENERAL']
-             "priceRange": "medium", 
-             "keyFeatures": [] 
-          },
+          // 2. Strategy
           "strategy": { 
             "usp": "Standard Strategy", 
             "mood": "Standard Mood",
@@ -132,8 +133,20 @@ export async function POST(request: Request) {
             "brandArchetype": { "primary": "Creator", "secondary": "Everyman", "mixReason": "Standard" },
             "storyBrand": { "hero": "", "problem": "", "guide": "", "plan": "", "success": "" },
             "competitors": []
+          },
+          // 3. Persona (Derived from Target)
+          "persona": { 
+            "name": "Name", 
+            "oneLiner": "Description (MUST match Target Gender/Age)", 
+            "needs": [], 
+            "painPoints": [] 
+          },
+          // 4. Product Categories (Recommendation)
+          "product": { 
+             "categories": string[], // [CRITICAL] Recommend 1-3 best categories from: ['HEALTH_FOOD', 'COSMETICS', 'FASHION', 'ELECTRONICS', 'FOOD', 'LIVING', 'PET', 'GENERAL']
+             "priceRange": "medium", 
+             "keyFeatures": [] 
           }
-          // "structure" removed
         },
         // 2. Design (Focused on 3 Key Fields)
         "design": {

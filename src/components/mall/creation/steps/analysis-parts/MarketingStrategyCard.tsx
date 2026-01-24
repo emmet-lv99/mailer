@@ -25,48 +25,6 @@ export function MarketingStrategyCard({
         {isEditing && <span className="text-[10px] text-blue-500 font-medium">수정 모드</span>}
       </CardHeader>
       <CardContent className="space-y-6 pt-6 bg-white">
-        {/* Persona Section */}
-        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-          <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
-            <span className="w-1 h-4 bg-blue-500 rounded-full inline-block"></span>
-            페르소나 (Persona)
-          </h4>
-            {isEditing ? (
-              <>
-                <Input 
-                  value={analysisResult.marketing?.persona?.name || ""} 
-                  onChange={(e) => updateMarketing("persona", { ...analysisResult.marketing?.persona, name: e.target.value })}
-                  placeholder="페르소나 이름"
-                  className="font-bold text-lg"
-                />
-                <Input 
-                  value={analysisResult.marketing?.persona?.oneLiner || ""} 
-                  onChange={(e) => updateMarketing("persona", { ...analysisResult.marketing?.persona, oneLiner: e.target.value })}
-                  placeholder="한 줄 설명"
-                  className="italic"
-                />
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-gray-400">Needs (콤마로 구분)</Label>
-                  <Input 
-                    value={analysisResult.marketing?.persona?.needs?.join(", ") || ""} 
-                    onChange={(e) => updateMarketing("persona", { ...analysisResult.marketing?.persona, needs: e.target.value.split(",").map((s: string) => s.trim()) })}
-                    placeholder="구독자 니즈"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="font-medium text-lg">"{analysisResult.marketing?.persona?.name}"</p>
-                <p className="text-muted-foreground italic mb-2 text-sm">{analysisResult.marketing?.persona?.oneLiner}</p>
-                <div className="flex flex-wrap gap-2">
-                  {analysisResult.marketing?.persona?.needs?.map((need: any, i: number) => (
-                    <span key={i} className="text-[11px] bg-blue-100 text-blue-700 px-2 py-1 rounded-md font-medium">{need}</span>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
         {/* Target Audience Section (AI Inferred + Editable) */}
         <div>
           <h4 className="font-semibold mb-2 text-sm">타겟 오디언스 (Target Audience)</h4>
@@ -217,69 +175,6 @@ export function MarketingStrategyCard({
           </div>
         </div>
 
-        {/* Product Categories Section */}
-        <div>
-          <h4 className="font-semibold mb-2 text-sm">판매 추천 카테고리 (Recommended Product Categories)</h4>
-          <div className="bg-slate-50 p-4 rounded-lg border">
-            {isEditing ? (
-               <div className="grid grid-cols-2 gap-2">
-                 {[
-                    { id: 'HEALTH_FOOD', label: '건강식품' },
-                    { id: 'COSMETICS', label: '화장품/뷰티' },
-                    { id: 'FASHION', label: '패션/의류' },
-                    { id: 'ELECTRONICS', label: '전자제품/디지털' },
-                    { id: 'FOOD', label: '식품/음료' },
-                    { id: 'LIVING', label: '리빙/홈데코' },
-                    { id: 'PET', label: '반려동물' },
-                    { id: 'GENERAL', label: '종합/기타' },
-                 ].map((cat) => {
-                    const currentCats = analysisResult.marketing?.product?.categories || [];
-                    const isSelected = currentCats.includes(cat.id);
-                    return (
-                      <div 
-                        key={cat.id}
-                        onClick={() => {
-                           let newCats;
-                           if (isSelected) newCats = currentCats.filter((c: string) => c !== cat.id);
-                           else newCats = [...currentCats, cat.id];
-                           updateMarketing("product", { ...analysisResult.marketing?.product, categories: newCats });
-                        }}
-                        className={`
-                          cursor-pointer border p-2 rounded text-center text-xs transition-all relative bg-white
-                          ${isSelected 
-                            ? 'border-blue-600 text-blue-700 font-bold ring-1 ring-blue-600' 
-                            : 'border-slate-200 text-slate-500 hover:bg-slate-50'}
-                        `}
-                      >
-                        {cat.label}
-                      </div>
-                    );
-                 })}
-               </div>
-            ) : (
-               <div className="flex flex-wrap gap-2">
-                 {(analysisResult.marketing?.product?.categories || []).map((catId: string, i: number) => {
-                    const label = {
-                      'HEALTH_FOOD': '건강식품',
-                      'COSMETICS': '화장품/뷰티',
-                      'FASHION': '패션/의류',
-                      'ELECTRONICS': '전자제품/디지털',
-                      'FOOD': '식품/음료',
-                      'LIVING': '리빙/홈데코',
-                      'PET': '반려동물',
-                      'GENERAL': '종합/기타',
-                    }[catId] || catId;
-                    return (
-                      <span key={i} className="text-sm font-medium bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-full shadow-sm">
-                        {label}
-                      </span>
-                    );
-                 })}
-               </div>
-            )}
-          </div>
-        </div>
-
         {/* Strategy Section */}
         <div>
           <h4 className="font-semibold mb-2 text-sm">전략 및 USP (Strategy & USP)</h4>
@@ -339,6 +234,111 @@ export function MarketingStrategyCard({
                 <span className="text-xs text-gray-500 truncate max-w-[150px]">{comp.reason}</span>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Persona Section (Moved) */}
+        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+          <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
+            <span className="w-1 h-4 bg-blue-500 rounded-full inline-block"></span>
+            페르소나 (Persona)
+          </h4>
+            {isEditing ? (
+              <>
+                <Input 
+                  value={analysisResult.marketing?.persona?.name || ""} 
+                  onChange={(e) => updateMarketing("persona", { ...analysisResult.marketing?.persona, name: e.target.value })}
+                  placeholder="페르소나 이름"
+                  className="font-bold text-lg"
+                />
+                <Input 
+                  value={analysisResult.marketing?.persona?.oneLiner || ""} 
+                  onChange={(e) => updateMarketing("persona", { ...analysisResult.marketing?.persona, oneLiner: e.target.value })}
+                  placeholder="한 줄 설명"
+                  className="italic"
+                />
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-gray-400">Needs (콤마로 구분)</Label>
+                  <Input 
+                    value={analysisResult.marketing?.persona?.needs?.join(", ") || ""} 
+                    onChange={(e) => updateMarketing("persona", { ...analysisResult.marketing?.persona, needs: e.target.value.split(",").map((s: string) => s.trim()) })}
+                    placeholder="구독자 니즈"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="font-medium text-lg">"{analysisResult.marketing?.persona?.name}"</p>
+                <p className="text-muted-foreground italic mb-2 text-sm">{analysisResult.marketing?.persona?.oneLiner}</p>
+                <div className="flex flex-wrap gap-2">
+                  {analysisResult.marketing?.persona?.needs?.map((need: any, i: number) => (
+                    <span key={i} className="text-[11px] bg-blue-100 text-blue-700 px-2 py-1 rounded-md font-medium">{need}</span>
+                  ))}
+                </div>
+              </>
+            )}
+        </div>
+
+        {/* Product Categories Section (Moved) */}
+        <div>
+          <h4 className="font-semibold mb-2 text-sm">판매 추천 카테고리 (Recommended Product Categories)</h4>
+          <div className="bg-slate-50 p-4 rounded-lg border">
+            {isEditing ? (
+               <div className="grid grid-cols-2 gap-2">
+                 {[
+                    { id: 'HEALTH_FOOD', label: '건강식품' },
+                    { id: 'COSMETICS', label: '화장품/뷰티' },
+                    { id: 'FASHION', label: '패션/의류' },
+                    { id: 'ELECTRONICS', label: '전자제품/디지털' },
+                    { id: 'FOOD', label: '식품/음료' },
+                    { id: 'LIVING', label: '리빙/홈데코' },
+                    { id: 'PET', label: '반려동물' },
+                    { id: 'GENERAL', label: '종합/기타' },
+                 ].map((cat) => {
+                    const currentCats = analysisResult.marketing?.product?.categories || [];
+                    const isSelected = currentCats.includes(cat.id);
+                    return (
+                      <div 
+                        key={cat.id}
+                        onClick={() => {
+                           let newCats;
+                           if (isSelected) newCats = currentCats.filter((c: string) => c !== cat.id);
+                           else newCats = [...currentCats, cat.id];
+                           updateMarketing("product", { ...analysisResult.marketing?.product, categories: newCats });
+                        }}
+                        className={`
+                          cursor-pointer border p-2 rounded text-center text-xs transition-all relative bg-white
+                          ${isSelected 
+                            ? 'border-blue-600 text-blue-700 font-bold ring-1 ring-blue-600' 
+                            : 'border-slate-200 text-slate-500 hover:bg-slate-50'}
+                        `}
+                      >
+                        {cat.label}
+                      </div>
+                    );
+                 })}
+               </div>
+            ) : (
+               <div className="flex flex-wrap gap-2">
+                 {(analysisResult.marketing?.product?.categories || []).map((catId: string, i: number) => {
+                    const label = {
+                      'HEALTH_FOOD': '건강식품',
+                      'COSMETICS': '화장품/뷰티',
+                      'FASHION': '패션/의류',
+                      'ELECTRONICS': '전자제품/디지털',
+                      'FOOD': '식품/음료',
+                      'LIVING': '리빙/홈데코',
+                      'PET': '반려동물',
+                      'GENERAL': '종합/기타',
+                    }[catId] || catId;
+                    return (
+                      <span key={i} className="text-sm font-medium bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-full shadow-sm">
+                        {label}
+                      </span>
+                    );
+                 })}
+               </div>
+            )}
           </div>
         </div>
       </CardContent>
