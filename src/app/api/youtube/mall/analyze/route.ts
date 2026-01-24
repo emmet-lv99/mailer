@@ -125,13 +125,13 @@ export async function POST(request: Request) {
             "brandArchetype": { "primary": "Creator", "secondary": "Everyman", "mixReason": "Standard" },
             "storyBrand": { "hero": "", "problem": "", "guide": "", "plan": "", "success": "" },
             "competitors": []
-          },
-          "structure": { "gnb": [], "mainLayout": [] }
+          }
+          // "structure" removed
         },
-        // 2. Design (Focused on 3 Key Fields)
+        // 2. Design (Simplified)
         "design": {
           "concept": { 
-             "keywords": string[], // [CRITICAL] 3-5 English Keywords (e.g. MINIMAL, PLAYFUL)
+             // "keywords" removed
              "description": string 
           },
           "foundation": {
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
             "typography": { "fontFamily": "Noto Sans KR", "scale": "standard", "weightRule": "standard" },
             "shapeLayout": { "borderRadius": "8px", "spacing": "comfortable", "grid": "cafe24-standard" }
           },
-          "components": { "buttons": "standard", "cards": "standard", "inputForm": "standard", "gnbFooter": "standard" },
+          // "components" removed
           "mood": { "imagery": string, "graphicMotifs": "standard", "iconography": "standard" }
         }
       }

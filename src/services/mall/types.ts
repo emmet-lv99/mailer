@@ -41,7 +41,8 @@ export interface MarketingSpec {
       reason: string;
     }[];
   };
-  structure: {
+  // structure removed from UI
+  structure?: {
     gnb: string[];
     mainLayout: string[];
   };
@@ -49,7 +50,7 @@ export interface MarketingSpec {
 
 export interface DesignSpec {
   concept: {
-    keywords: string[];
+    keywords?: string[]; // keywords removed from UI
     description: string;
   };
   foundation: {
@@ -70,7 +71,8 @@ export interface DesignSpec {
       grid: string;
     };
   };
-  components: {
+  // components removed from UI
+  components?: {
     buttons: string;
     cards: string;
     inputForm: string;
