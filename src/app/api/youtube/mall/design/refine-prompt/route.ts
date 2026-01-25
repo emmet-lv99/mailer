@@ -295,17 +295,10 @@ OUTPUT FORMAT:
   }
 
   private generateLayoutSection(layoutBlocks: any[]): string {
-    const blockDescriptions = layoutBlocks.map((block, i) => {
-      return `${i+1}. ${block.category.toUpperCase()}: ${block.type} (${this.getBlockDescription(block.type)})`;
+    const blockDescriptions = layoutBlocks.map((block) => {
+      // Remove numbering to prevent list bias
+      return `[Visual Block: ${block.category.toUpperCase()} - ${this.getBlockDescription(block.type)}]`;
     }).join('\n');
-    return `LAYOUT STRUCTURE:
-The page follows this precise block sequence:
-
-${blockDescriptions}
-
-BLOCK TYPE GUIDES:
-- 'carousel-center': Centered slider with side peek effect
-- 'grid-4/5/3/2': Product presentation grids (See Product Card Section)
 - 'hero-grid': Large hero banner + immediate product grid
 - 'product-hero': Detail page top section (Gallery + Info)`;
   }
@@ -429,14 +422,18 @@ Your task is to convert the following TECHNICAL DESIGN SPECIFICATION into a high
 vivid, and atmospheric prompt that Imagen 4 can use to create a world-class e-commerce design.
 
 ━━━ CRITICAL INSTRUCTIONS ━━━
-1. ROLE: You are a World-Class Design Director and Prompt Engineer for Imagen 4.
-2. FORMAT: Write a unified, cinematic narrative in professional English prose. 
-3. NO LISTS: Do not use bullet points or simple keyword strings. Weave every technical specification and layout detail into a fluid, evocative design brief.
-4. TOTAL SYNTHESIS: You MUST integrate 100% of the provided technical context—ASCII structures, pixel values, Archetype DNA, and Keyword definitions—into the narrative.
-5. ATMOSPHERE: Use advanced technical vocabulary for lighting (HDR, diffused soft-box, ray-tracing), materials (anti-aliased edges, macro-textures), and UI fidelity (crystalline, 8K, high-precision).
-6. STYLE GUIDE: The FEW-SHOT EXAMPLES below are your MANDATORY standard for prose quality, technical depth, and length. Match or exceed their descriptive richness.
-7. Stay under 1500 characters. RETURN ONLY THE REFINED PROMPT STRING.
-8. NEVER include any introductory meta-text (e.g., "Here is the prompt").
+1. ROLE: You are a Visionary Design Director crafting a mood board description for a high-end magazine feature.
+2. OUTPUT GOAL: A single, immersive paragraph that makes the reader *feel* the design. 
+3. UNBREAKABLE RULES:
+   - NO LISTS, NO BULLETS, NO NUMBERS.
+   - NO SEQUENCING WORDS: Do not use "followed by", "then", "repeats", "below this", "next section".
+   - NO TECHNICAL JARGON: Do not say "grid-4", "promotion-bar", "1px border". Instead say "a dense, elegant tapestry of products", "a slender announcement ribbon", "delicate hairline framing".
+4. SYNTHESIS: Melt the technical specs (size, radius, color) into the description. 
+   - BAD: "Cards are 280x420px with 8px radius."
+   - GOOD: "Tall, gracefully rounded product cards impose a gentle rhythm across the canvas."
+5. ATMOSPHERE: Prioritize lighting, texture, and emotion. The site must feel "alive" (8K, ray-traced, volumetric).
+6. LENGTH: 1000-1500 characters of pure prose.
+7. REFER TO FEW-SHOTS: They demonstrate exactly how to hide the structure behind the art.
 
 ${VISUAL_FIDELITY_RULES}
 
