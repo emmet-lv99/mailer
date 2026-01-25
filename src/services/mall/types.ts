@@ -59,6 +59,11 @@ export interface DesignSpec {
   concept: {
     keywords?: string[]; // keywords removed from UI
     description: string;
+    mockupStyles?: { // [Refactor] Support multiple style categories
+      product: string;
+      hero: string;
+      thumbnail: string;
+    };
   };
   foundation: {
     colors: {

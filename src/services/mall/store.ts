@@ -16,7 +16,14 @@ interface MallState {
   referenceImages: string[];
   referenceAnalysis: DesignSpec | null;
 
-  // Step 3: Design Generation [NEW]
+  // Step 3: Mockup Styles [Updated]
+  mockupStyles: {
+    product: string;
+    hero: string;
+    thumbnail: string;
+  };
+
+  // Step 4: Design Generation [Updated Index]
   designVariants: Record<string, string[]>; // { 'MAIN_PC': [...], 'DETAIL_PC': [...] }
   selectedDesigns: Record<string, string>; // { 'MAIN_PC': 'base64...', ... }
   generationStatus: 'idle' | 'generating' | 'completed';
@@ -29,6 +36,7 @@ interface MallState {
   setAnalysisResult: (result: MallProjectAnalysis) => void;
   setReferenceImages: (images: string[]) => void;
   setReferenceAnalysis: (result: DesignSpec) => void;
+  setMockupStyle: (category: 'product' | 'hero' | 'thumbnail', styleId: string) => void; // [Updated]
   updateAnalysisResult: (data: Partial<MallProjectAnalysis>) => void; // [NEW] Edit mode support
   updateReferenceAnalysis: (data: Partial<DesignSpec>) => void;
   setDesignVariants: (step: string, images: string[]) => void;
@@ -53,6 +61,13 @@ export const useMallStore = create<MallState>((set, get) => ({
   referenceAnalysis: null,
 
   // Step 3
+  mockupStyles: {
+    product: 'studio-clean',
+    hero: 'product-focused',
+    thumbnail: 'review-authentic'
+  },
+
+  // Step 4
   designVariants: {},
   selectedDesigns: {},
   generationStatus: 'idle',
@@ -72,6 +87,9 @@ export const useMallStore = create<MallState>((set, get) => ({
 
   setReferenceImages: (images) => set({ referenceImages: images }),
   setReferenceAnalysis: (result) => set({ referenceAnalysis: result }),
+  setMockupStyle: (category, styleId) => set((state) => ({ 
+    mockupStyles: { ...state.mockupStyles, [category]: styleId } 
+  })),
 
   updateAnalysisResult: (data) => set((state) => ({
     analysisResult: state.analysisResult 
@@ -110,6 +128,12 @@ export const useMallStore = create<MallState>((set, get) => ({
         marketing: project.marketing_analysis,
         design: project.design_analysis,
       },
+      // Load mockupStyles from design analysis
+      mockupStyles: project.design_analysis?.concept?.mockupStyles || {
+        product: 'studio-clean',
+        hero: 'product-focused',
+        thumbnail: 'review-authentic'
+      },
       referenceAnalysis: project.reference_analysis,
       // Note: referenceImages are local-only previews
       referenceImages: [], 
@@ -117,13 +141,22 @@ export const useMallStore = create<MallState>((set, get) => ({
   },
 
   save: async () => {
-    const { projectId, channelUrl, competitors, analysisResult, referenceAnalysis } = get();
+    const { projectId, channelUrl, competitors, analysisResult, referenceAnalysis, mockupStyles } = get();
     
     // Validation
     if (!channelUrl) {
       toast.error("저장할 데이터가 없습니다.");
       return;
     }
+
+    // Inject mockupStyles into design analysis
+    const designAnalysis = analysisResult?.design ? {
+      ...analysisResult.design,
+      concept: {
+        ...analysisResult.design.concept,
+        mockupStyles: mockupStyles
+      }
+    } : undefined;
 
     try {
       toast.info("프로젝트 저장 중...");
@@ -133,7 +166,7 @@ export const useMallStore = create<MallState>((set, get) => ({
         competitorUrls: competitors,
         channelName: analysisResult?.channelName,
         marketingAnalysis: analysisResult?.marketing,
-        designAnalysis: analysisResult?.design,
+        designAnalysis: designAnalysis,
         referenceAnalysis: referenceAnalysis || undefined,
       });
 

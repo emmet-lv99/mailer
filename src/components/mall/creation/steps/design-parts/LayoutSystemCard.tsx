@@ -5,6 +5,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutBlock } from "@/services/mall/types";
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { Layout } from "lucide-react";
 import * as React from "react";
 
@@ -12,10 +27,12 @@ import * as React from "react";
 import {
   categoryProductLayouts,
   detailLayouts,
-  listLayouts,
+  footerLayouts,
+  headerLayouts,
   mainLayouts,
   productListLayouts,
   radiuses,
+  sectionHeaderLayouts,
   spacingRules,
   subBannerLayouts,
   topBannerLayouts,
@@ -37,7 +54,16 @@ interface LayoutSystemCardProps {
 }
 
 export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardProps) {
-  const [activeMainCategory, setActiveMainCategory] = React.useState<LayoutBlock['category']>('hero');
+  const [activeMainCategory, setActiveMainCategory] = React.useState<LayoutBlock['category']>('top-banner');
+  const [activeListCategory, setActiveListCategory] = React.useState<string>('product-list');
+  const [activeDetailCategory, setActiveDetailCategory] = React.useState<string>('top-banner');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Convert legacy string data to empty array or single block if needed (Migration logic helper)
   const getBlocks = (field: 'mainBlocks' | 'list' | 'detail'): LayoutBlock[] => {
@@ -47,16 +73,22 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     return [];
   };
 
-  const getLayoutList = (category?: string) => {
+  const getLayoutList = (category?: string, tabName?: string) => {
     switch(category) {
+      case 'header': return headerLayouts;
       case 'top-banner': return topBannerLayouts;
       case 'hero': return mainLayouts;
       case 'sub': return subBannerLayouts;
       case 'product-list': return productListLayouts;
       case 'category-product': return categoryProductLayouts;
       case 'shorts': return videoLayouts;
-      case 'list': return listLayouts;
       case 'detail': return detailLayouts;
+      case 'footer': return footerLayouts;
+      case 'section-header': 
+        if (tabName === 'detail') {
+          return sectionHeaderLayouts.filter(l => l.value !== 'section-header-category');
+        }
+        return sectionHeaderLayouts;
       default: return mainLayouts;
     }
   };
@@ -76,6 +108,18 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
     onLayoutChange(field, currentBlocks.filter(b => b.id !== blockId));
   };
 
+  const handleDragEnd = (event: DragEndEvent, field: 'mainBlocks' | 'list' | 'detail') => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const currentBlocks = getBlocks(field);
+      const oldIndex = currentBlocks.findIndex((block) => block.id === active.id);
+      const newIndex = currentBlocks.findIndex((block) => block.id === over.id);
+
+      onLayoutChange(field, arrayMove(currentBlocks, oldIndex, newIndex));
+    }
+  };
+
   const renderBlueprint = (type: 'main' | 'list' | 'detail') => {
     const field = type === 'main' ? 'mainBlocks' : type;
     const blocks = getBlocks(field as any);
@@ -89,25 +133,37 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
             </div>
          </div>
          
+          
          <div className="space-y-3 flex-1 p-2 relative">
-             <div className="space-y-3 min-h-[200px] flex flex-col">
-               {(blocks.length === 0) && (
-                  <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2 py-20">
-                    <Layout className="w-8 h-8" />
-                     <span className="text-xs font-medium">Select a block to add</span>
-                  </div>
-               )}
+             <DndContext 
+               sensors={sensors}
+               collisionDetection={closestCenter}
+               onDragEnd={(event) => handleDragEnd(event, field as any)}
+             >
+               <SortableContext 
+                 items={blocks.map((b: LayoutBlock) => b.id)}
+                 strategy={verticalListSortingStrategy}
+               >
+                 <div className="space-y-3 min-h-[200px] flex flex-col">
+                   {(blocks.length === 0) && (
+                      <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2 py-20">
+                        <Layout className="w-8 h-8" />
+                         <span className="text-xs font-medium">Select a block to add</span>
+                      </div>
+                   )}
 
-               {blocks.map((block) => (
-                 <React.Fragment key={block.id}>
-                    <LayoutBlockPreview 
-                        block={block} 
-                        borderRadius={layout.borderRadius} 
-                        onRemove={(id) => handleRemoveBlock(field as any, id)} 
-                    />
-                 </React.Fragment>
-               ))}
-             </div>
+                   {blocks.map((block) => (
+                     <React.Fragment key={block.id}>
+                        <LayoutBlockPreview 
+                            block={block} 
+                            borderRadius={layout.borderRadius} 
+                            onRemove={(id) => handleRemoveBlock(field as any, id)} 
+                        />
+                     </React.Fragment>
+                   ))}
+                 </div>
+               </SortableContext>
+             </DndContext>
          </div>
       </div>
     );
@@ -180,20 +236,23 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                          <SelectTrigger className="rounded-xl border-gray-200 h-10 bg-white shadow-sm">
                            <SelectValue />
                          </SelectTrigger>
-                         <SelectContent className="rounded-xl h-[300px]">
-                           <SelectItem value="top-banner">Top Banner (상단 띠배너)</SelectItem>
-                           <SelectItem value="hero">Hero Banner (메인 배너)</SelectItem>
-                           <SelectItem value="sub">Sub Banner (서브 배너)</SelectItem>
-                           <SelectItem value="product-list">Product List (상품 리스트)</SelectItem>
-                           <SelectItem value="category-product">Category Product (카테고리 상품)</SelectItem>
-                           <SelectItem value="shorts">Video (비디오)</SelectItem>
-                         </SelectContent>
+                          <SelectContent className="rounded-xl h-[300px]">
+                             <SelectItem value="top-banner">Top Banner (상단 띠배너)</SelectItem>
+                             <SelectItem value="header">Header (공통 헤더)</SelectItem>
+                             <SelectItem value="footer">Footer (공통 푸터)</SelectItem>
+                             <SelectItem value="section-header">Section Header (섹션 헤더)</SelectItem>
+                             <SelectItem value="hero">Hero Banner (메인 배너)</SelectItem>
+                            <SelectItem value="sub">Sub Banner (서브 배너)</SelectItem>
+                            <SelectItem value="product-list">Product List (상품 리스트)</SelectItem>
+                            <SelectItem value="category-product">Category Product (카테고리 상품)</SelectItem>
+                            <SelectItem value="shorts">Video (비디오)</SelectItem>
+                          </SelectContent>
                        </Select>
                     </div>
 
                     {/* Block Items List */}
                     <LayoutOptionList 
-                        items={getLayoutList(activeMainCategory)} 
+                        items={getLayoutList(activeMainCategory, 'main')} 
                         mode="add"
                         existingBlocks={getBlocks('mainBlocks')}
                         onSelect={(type) => handleAddBlock('mainBlocks', activeMainCategory, type)}
@@ -207,26 +266,52 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
                </div>
             </TabsContent>
 
-            {['list', 'detail'].map((tab) => (
-              <TabsContent key={tab} value={tab} className="mt-0">
-                <div className="grid grid-cols-12 gap-6 items-start">
-                  {/* Left: Block Items Selection */}
-                  <div className="col-span-5 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar sticky top-0 h-[600px]">
-                    <LayoutOptionList 
-                        items={getLayoutList(tab)}
-                        mode="add"
-                        existingBlocks={getBlocks(tab as any)}
-                        onSelect={(type) => handleAddBlock(tab as any, tab, type)}
-                    />
-                  </div>
+            {['list', 'detail'].map((tab) => {
+              const activeCategory = tab === 'list' ? activeListCategory : activeDetailCategory;
+              const setActiveCategory = tab === 'list' ? setActiveListCategory : setActiveDetailCategory;
 
-                  {/* Right: Preview Visualization */}
-                  <div className="col-span-7">
-                    {renderBlueprint(tab as any)}
+              return (
+                <TabsContent key={tab} value={tab} className="mt-0">
+                  <div className="grid grid-cols-12 gap-6 items-start">
+                    {/* Left: Block Items Selection */}
+                    <div className="col-span-5 flex flex-col gap-4 sticky top-0 h-[600px]">
+                      {/* Category Selector */}
+                      <div className="space-y-1.5 flex-shrink-0">
+                        <Label className="text-xs text-muted-foreground font-semibold">편집 대상 Component</Label>
+                        <Select value={activeCategory} onValueChange={(val: any) => setActiveCategory(val)}>
+                          <SelectTrigger className="rounded-xl border-gray-200 h-10 bg-white shadow-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                             <SelectItem value="top-banner">Top Banner (상단 띠배너)</SelectItem>
+                             <SelectItem value="header">Header (공통 헤더)</SelectItem>
+                             <SelectItem value="footer">Footer (공통 푸터)</SelectItem>
+                             {tab !== 'detail' && <SelectItem value="section-header">Section Header (섹션 헤더)</SelectItem>}
+                             {tab === 'list' ? (
+                               <SelectItem value="product-list">Product List (상품 리스트)</SelectItem>
+                             ) : (
+                               <SelectItem value="detail">Detail Blocks (상세 전용)</SelectItem>
+                             )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <LayoutOptionList 
+                          items={getLayoutList(activeCategory, tab)}
+                          mode="add"
+                          existingBlocks={getBlocks(tab as any)}
+                          onSelect={(type) => handleAddBlock(tab as any, activeCategory, type)}
+                      />
+                    </div>
+
+                    {/* Right: Preview Visualization */}
+                    <div className="col-span-7">
+                      {renderBlueprint(tab as any)}
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
-            ))}
+                </TabsContent>
+              );
+            })}
           </Tabs>
         </div>
       </CardContent>

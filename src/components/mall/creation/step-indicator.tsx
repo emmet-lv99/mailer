@@ -8,9 +8,9 @@ interface StepIndicatorProps {
 const steps = [
   { id: 1, label: "채널 분석" },
   { id: 2, label: "디자인 시스템" },
-  { id: 3, label: "레퍼런스" },
-  { id: 4, label: "프롬프트 엔진" },
-  { id: 5, label: "시안 제작" },
+  { id: 3, label: "목업 스타일" },
+  { id: 4, label: "레퍼런스" },
+  { id: 5, label: "프롬프트 엔진" },
 ];
 
 export function StepIndicator({ currentStep }: StepIndicatorProps) {

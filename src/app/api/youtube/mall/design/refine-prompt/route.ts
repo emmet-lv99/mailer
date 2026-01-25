@@ -1,6 +1,6 @@
 import { DESIGN_ARCHETYPES } from "@/services/mall/design-archetypes";
 import { STANDARD_DESIGN_KEYWORDS } from "@/services/mall/design-keywords";
-import { FEW_SHOT_EXAMPLES, generateMainBlockPrompt, generateProductListPrompt, generateVideoPrompt, VISUAL_FIDELITY_RULES } from "@/services/mall/layout-specs";
+import { FEW_SHOT_EXAMPLES, generateMainBlockPrompt, generateProductListPrompt, generateVideoPrompt, VISUAL_FIDELITY_RULES } from "@/services/mall/layout";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -299,8 +299,8 @@ OUTPUT FORMAT:
       // Remove numbering to prevent list bias
       return `[Visual Block: ${block.category.toUpperCase()} - ${this.getBlockDescription(block.type)}]`;
     }).join('\n');
-- 'hero-grid': Large hero banner + immediate product grid
-- 'product-hero': Detail page top section (Gallery + Info)`;
+
+    return `INTENDED VISUAL FLOW (Synthesize this into a seamless journey, DO NOT list these steps):\n${blockDescriptions}`;
   }
 
   private generateDesignStyleSection(spec: DesignSpec): string {
@@ -314,11 +314,16 @@ Treatment: Shadow ${spec.components.shadowIntensity}, Border ${spec.components.b
     const gridBlock = layoutBlocks.find(b => b.category === 'product-list' && ['grid-5', 'grid-4', 'grid-3', 'grid-2'].includes(b.type));
     const videoBlock = layoutBlocks.find(b => (b.category === 'shorts' || b.category === 'video-product') && ['feed-scroll', 'full-width-video', 'split-video', 'story-grid'].includes(b.type));
     const mainBlock = layoutBlocks.find(b => (b.category === 'main' || b.category === 'detail') && ['carousel-center', 'hero-grid', 'product-hero'].includes(b.type));
+    const headerBlock = layoutBlocks.find(b => b.category === 'header' || b.category === 'top-banner');
     
     let contentSectionValue = '';
 
     const productGuidance = archetype?.section_guidance?.product_grid || "";
     const heroGuidance = archetype?.section_guidance?.hero || "";
+
+    if (headerBlock) {
+      contentSectionValue += `NAVIGATION & HEADER SPECIFICATIONS:\n${generateMainBlockPrompt(headerBlock.type, spec.keywords, heroGuidance)}\n\n`;
+    }
 
     if (mainBlock) {
       contentSectionValue += `MAIN HERO & KEY SECTION SPECIFICATIONS:\n${generateMainBlockPrompt(mainBlock.type, spec.keywords, heroGuidance)}\n\n`;
@@ -387,7 +392,9 @@ Vibe: Professional Korean e-commerce, clean, trustworthy, and high-fidelity.`;
       'sticky-tabs': 'Sticky navigation bar',
       'detail-body': 'Main long-form product description',
       'text-bar': 'Minimalist announcement line',
-      'image-strap': 'Full-width immersive image banner'
+      'image-strap': 'Full-width immersive image banner',
+      'side-nav-header': 'Logo left with inline navigation menu',
+      'stacked-center-header': 'Centered logo with spanning bottom navigation'
     };
     return descriptions[type] || 'Standard e-commerce section';
   }

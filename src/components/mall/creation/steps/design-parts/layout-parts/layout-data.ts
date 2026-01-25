@@ -1,3 +1,8 @@
+export const headerLayouts = [
+  { name: "Side-Nav Header", value: "side-nav-header", desc: "Logo left, inline navigation" },
+  { name: "Stacked-Center Header", value: "stacked-center-header", desc: "Logo centered, bottom nav" },
+];
+
 export const radiuses = [
     { name: "Sharp (0px)", value: "0px" },
     { name: "Subtle (4px)", value: "4px" },
@@ -23,12 +28,10 @@ export const radiuses = [
   ];
   
   export const subBannerLayouts = [
-    { name: "Text Ticker", value: "text-ticker", desc: "Animated scrolling text line" },
     { name: "Full Screen", value: "image-strap", desc: "Full-width decorative image" },
     { name: "Promotion Bar", value: "promotion-bar", desc: "Simple notification area" },
     { name: "Grid 2-Banner", value: "grid-2-banner", desc: "Two side-by-side promo banners" },
-    { name: "Coupon Banner", value: "coupon-banner", desc: "Special offer/coupon focus" },
-    { name: "Text/Image Split", value: "text-image-split", desc: "Half text, half image layout" },
+    { name: "Grid 3-Banner", value: "grid-3-banner", desc: "Three side-by-side promo banners" },
   ];
   
   export const productListLayouts = [
@@ -53,21 +56,18 @@ export const radiuses = [
     { name: "Split Video", value: "split-video", desc: "Video with product details" },
   ];
   
-  export const listLayouts = [
-    { name: "Grid 5-Column", value: "grid-5", desc: "Maximum density" },
-    { name: "Grid 4-Column", value: "grid-4", desc: "High density grid" },
-    { name: "Grid 3-Column", value: "grid-3", desc: "Standard e-commerce balance" },
-    { name: "Grid 2-Column", value: "grid-2", desc: "Larger images for visual impact" },
-    { name: "List View (Wide)", value: "list-wide", desc: "Detailed information per row" },
-    { name: "Masonry", value: "masonry", desc: "Dynamic, pinterest-style grid" },
-    { name: "Banner", value: "banner", desc: "Full-width promotional banner" },
-  ];
   
   export const detailLayouts = [
     { name: "Product Hero (Commerce)", value: "product-hero", desc: "Main product info & gallery" },
     { name: "Sticky Tabs", value: "sticky-tabs", desc: "Navigation anchor tabs" },
     { name: "Detail Body", value: "detail-body", desc: "Long-form description area" },
-    { name: "Review Board", value: "review-board", desc: "Customer Q&A and reviews" },
-    { name: "Split View (Standard)", value: "split-view", desc: "Fixed image, scrolling details" },
-    { name: "Vertical Stack", value: "vertical-stack", desc: "Sequential content flow" },
+  ];
+  
+  export const footerLayouts = [
+    { name: "Standard Footer", value: "standard-footer", desc: "Logo, Info, and Links" },
+  ];
+
+  export const sectionHeaderLayouts = [
+    { name: "Centered Header", value: "section-header-center", desc: "Title over Description" },
+    { name: "Header with Categories", value: "section-header-category", desc: "Title over Categories" },
   ];
