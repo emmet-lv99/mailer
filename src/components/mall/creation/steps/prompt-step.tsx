@@ -16,13 +16,13 @@ interface PromptStepProps {
 }
 
 export function PromptStep({ onNext, onBack }: PromptStepProps) {
-  const { 
-    analysisResult, 
-    referenceAnalysis, 
-    refinedPrompts, 
-    setRefinedPrompt,
-    setStep
-  } = useMallStore();
+  const analysisResult = useMallStore(state => state.analysisResult);
+  const referenceAnalysis = useMallStore(state => state.referenceAnalysis);
+  const refinedPrompts = useMallStore(state => state.refinedPrompts);
+  const setRefinedPrompt = useMallStore(state => state.setRefinedPrompt);
+  
+  // Debug log to trace store updates
+  console.log('[PromptStep] Render - refinedPrompts:', refinedPrompts);
 
   const [currentStepId, setCurrentStepId] = useState<StepID>('MAIN_PC');
   const [isRefining, setIsRefining] = useState(false);
@@ -59,6 +59,8 @@ export function PromptStep({ onNext, onBack }: PromptStepProps) {
       const { refinedPrompt } = await response.json();
       
       setRefinedPrompt(currentStepId, refinedPrompt);
+      console.log('[PromptStep] Updated store with:', refinedPrompt);
+      
       if (!completedSteps.includes(currentStepId)) {
         setCompletedSteps(prev => [...prev, currentStepId]);
       }

@@ -25,12 +25,12 @@ export const VISUAL_FIDELITY_RULES = `
 
 export const FEW_SHOT_EXAMPLES = [
   {
-    type: 'Luxury Fashion',
-    prompt: 'Hyper-realistic direct 2D screenshot of a luxury fashion mall. Minimalism, extensive whitespace, serif typography (#111111). Header with centered logo. Hero banner featuring a high-end leather bag with soft cinematic lighting. 3-column product grid with zero borders, delicate 1px dividers, high-resolution studio photography on pure white backgrounds.'
+    type: 'Luxury Boutique (High-Prose Narrative)',
+    prompt: `A hyper-realistic direct 2D screenshot of a world-class luxury boutique website for PC desktop. The aesthetic is defined by an uncompromising "Minimalist Prestige" DNA, utilizing extensive white space and a sophisticated palette of deep charcoal (#111111) and muted ivory. The typography exudes authority, featuring "Bodoni" serif headings with generous letter-spacing. At the summit, a slender 80px header anchors a perfectly centered, fine-lined brand insignia. The centerpiece is a cinematic "Carousel Center" hero banner; a 1280px wide masterwork showcasing a high-end leather tote under multi-point gallery lighting, with side-peek fragments of the next visual narrative. Below, a crystalline 3-column product grid unfolds (380x570px cards), where each item is framed by a delicate 0.5px silver divider. Product photography is breathtakingly sharp, rendered on pure #FFFFFF backgrounds with ray-traced reflections on hardware. The interface is polished with 8K clarity, anti-aliased UI edges, and HDR brilliance to ensure a premium interactive experience.`
   },
   {
-    type: 'Modern Tech',
-    prompt: 'Clean modern electronics store UI. Sans-serif "Inter" font, bold headings, sharp 8px corner radii. Vibrant accent colors for CTA (#007AFF). 4-column product grid with subtle elevation shadows. Detailed specs visible on hover. 16:9 cinematic product video preview centered.'
+    type: 'Modern Tech & Gaming (Technical Cinema)',
+    prompt: `A high-octane, tech-forward 2D homepage capture for a flagship electronics store, rendered in 16:9 PC widescreen. The visual DNA is "Aero-Dynamic Brutalist," utilizing sharp 0px corners and a dark-mode core (#0F0F0F) punctuated by vibrant cyan accent gradients. Bold "Inter" sans-serif headers command attention at 64px. The layout transitions from a stunning full-width cinematic video showcase—featuring explosive product macro shots—into a high-density "Grid 5-Column" product matrix. Each 220x340px product card is a high-fidelity artifact, featuring a subtle 1px neon-glow border and a deep elevation shadow. Interactive elements like "Pill-style" CTA buttons pulse with a soft HDR bloom. The entire UI is rendered with 8K precision, capturing the micro-textures of metallic finishes and the soft diffusion of multi-point studio lighting across the interface, reminiscent of a professional high-end gaming console's dashboard.`
   }
 ];
 

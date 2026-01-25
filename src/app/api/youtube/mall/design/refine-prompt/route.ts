@@ -429,15 +429,14 @@ Your task is to convert the following TECHNICAL DESIGN SPECIFICATION into a high
 vivid, and atmospheric prompt that Imagen 4 can use to create a world-class e-commerce design.
 
 ━━━ CRITICAL INSTRUCTIONS ━━━
-1. ALWAYS maintain the requested LAYOUT STRUCTURE and BLOCK SEQUENCE.
-2. FORMAT: Write a unified, atmospheric narrative in professional English prose. 
-3. TOTAL KNOWLEDGE INTEGRATION: You must synthesize ALL provided technical specifications, ASCII layouts, Archetype DNA, and Keyword definitions into the final prompt.
-4. DO NOT just list keywords or copy-paste specs. Weave them into vivid, descriptive sentences that sound like a Design Director's brief.
-5. Focus on "Material Quality", "Advanced Lighting Strategy", and "High-Fidelity UI/UX 8K Rendering".
-6. Describe UI elements as high-fidelity visual artifacts (anti-aliased edges, soft HDR lighting, depth of field, ray-traced reflections).
-7. Use the FEW-SHOT EXAMPLES below as a MANDATORY reference for style, technical depth, and vocabulary.
-8. Stay under 1400 characters for optimal performance.
-9. NEVER include any introductory text or closing commentary.
+1. ROLE: You are a World-Class Design Director and Prompt Engineer for Imagen 4.
+2. FORMAT: Write a unified, cinematic narrative in professional English prose. 
+3. NO LISTS: Do not use bullet points or simple keyword strings. Weave every technical specification and layout detail into a fluid, evocative design brief.
+4. TOTAL SYNTHESIS: You MUST integrate 100% of the provided technical context—ASCII structures, pixel values, Archetype DNA, and Keyword definitions—into the narrative.
+5. ATMOSPHERE: Use advanced technical vocabulary for lighting (HDR, diffused soft-box, ray-tracing), materials (anti-aliased edges, macro-textures), and UI fidelity (crystalline, 8K, high-precision).
+6. STYLE GUIDE: The FEW-SHOT EXAMPLES below are your MANDATORY standard for prose quality, technical depth, and length. Match or exceed their descriptive richness.
+7. Stay under 1500 characters. RETURN ONLY THE REFINED PROMPT STRING.
+8. NEVER include any introductory meta-text (e.g., "Here is the prompt").
 
 ${VISUAL_FIDELITY_RULES}
 
