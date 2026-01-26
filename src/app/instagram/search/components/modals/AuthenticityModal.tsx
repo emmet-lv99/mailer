@@ -1,4 +1,5 @@
-import { X } from "lucide-react";
+import { Info, X } from "lucide-react";
+import { useState } from "react";
 
 interface AuthenticityModalProps {
     onClose: () => void;
@@ -7,13 +8,15 @@ interface AuthenticityModalProps {
 }
 
 export function AuthenticityModal({ onClose, authenticityScore, authDetails }: AuthenticityModalProps) {
+    const [showInfo, setShowInfo] = useState(false);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" onClick={onClose}>
             <div className="relative w-full max-w-[400px] bg-white/95 p-4 animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center justify-center text-center border-2 border-green-100 rounded-xl shadow-lg" onClick={(e) => e.stopPropagation()}>
             <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-2 right-2 text-gray-500 hover:text-gray-900"><X className="w-5 h-5" /></button>
             <h4 className="text-base font-bold text-green-900 mb-2">신뢰도 점수 분석</h4>
             
-            <div className="space-y-4 w-full px-1 overflow-y-auto max-h-[80%] hide-scrollbar">
+            <div className="space-y-4 w-full px-1 pt-2 overflow-y-auto max-h-[80vh] hide-scrollbar relative">
                 {/* 1. Comment Ratio Visual */}
                 <div className="text-left">
                     <div className="flex justify-between text-xs mb-1 items-center">
@@ -40,7 +43,7 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                                     </div>
                                 ))}
                                 <div className="absolute top-0.5 w-1 h-3.5 bg-black rounded-full shadow z-10" style={{ left: `${getPos(val)}%` }}>
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap">
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
                                         실측값: {val.toFixed(2)}%
                                     </div>
                                 </div>
@@ -60,13 +63,29 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                                 {Math.round((authDetails.viewScore / 20) * 100)}% (+{authDetails.viewScore}/20점)
                             </span>
                         ) : (
-                            <span className="text-gray-400 font-medium flex items-center gap-1 group relative cursor-help">
-                                - (측정 불가)
-                                <span className="text-[10px] bg-gray-100 rounded-full w-3.5 h-3.5 flex items-center justify-center font-serif">i</span>
-                                <span className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-gray-800 text-white text-[9px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed font-normal">
-                                    릴스 게시물이 없어 조회수 비율을 측정할 수 없습니다. 이는 페널티가 아니며, 댓글 비율만으로 신뢰도를 평가합니다.
-                                </span>
-                            </span>
+                            <div className="relative">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setShowInfo(!showInfo); }}
+                                    className="text-gray-400 font-medium flex items-center gap-1 hover:text-gray-600 transition-colors"
+                                >
+                                    - (측정 불가)
+                                    <Info className="w-3.5 h-3.5" />
+                                </button>
+                                
+                                {showInfo && (
+                                    <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-slate-800 text-white text-[11px] rounded-lg shadow-2xl z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                        <div className="flex justify-between items-start gap-2 mb-1">
+                                            <p className="leading-relaxed font-normal flex-1">
+                                                릴스 게시물이 없어 조회수 비율을 측정할 수 없습니다. 이는 페널티가 아니며, 댓글 비율만으로 신뢰도를 평가합니다.
+                                            </p>
+                                            <button onClick={(e) => { e.stopPropagation(); setShowInfo(false); }} className="text-slate-400 hover:text-white shrink-0">
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                        <div className="absolute -bottom-1 right-3 w-2 h-2 bg-slate-800 rotate-45"></div>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                     {authDetails?.viewScore !== null && (() => {
@@ -84,7 +103,7 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                                     </div>
                                 ))}
                                 <div className="absolute top-0.5 w-1 h-3.5 bg-black rounded-full shadow z-10" style={{ left: `${getPos(val)}%` }}>
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap">
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
                                         실측값: {val.toFixed(3)}
                                     </div>
                                 </div>
@@ -129,3 +148,4 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
         </div>
     );
 }
+
