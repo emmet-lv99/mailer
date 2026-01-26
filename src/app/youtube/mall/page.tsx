@@ -1,18 +1,15 @@
-"use client";
-
 import { StepIndicator } from "@/components/mall/creation/step-indicator";
 import { ChannelAnalysisStep } from "@/components/mall/creation/steps/channel-analysis-step";
-import { LayoutDesignStep } from "@/components/mall/creation/steps/layout-design-step"; // Step 3 [NEW]
-import { LayoutStep } from "@/components/mall/creation/steps/layout-step"; // Step 2
-import { PromptStep } from "@/components/mall/creation/steps/prompt-step"; // Step 4
+import { LayoutDesignStep } from "@/components/mall/creation/steps/layout-design-step";
+import { LayoutStep } from "@/components/mall/creation/steps/layout-step";
+import { PromptStep } from "@/components/mall/creation/steps/prompt-step";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function MallPage() {
+function MallContent() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get("id");
   
-  // Default step 1, or load from saved state (TODO)
   const [currentStep, setCurrentStep] = useState(1);
 
   // Resume logic (Mock)
@@ -37,5 +34,13 @@ export default function MallPage() {
         {currentStep === 4 && <PromptStep onNext={nextStep} onBack={prevStep} />}
       </div>
     </div>
+  );
+}
+
+export default function MallPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-10 px-4">Loading...</div>}>
+      <MallContent />
+    </Suspense>
   );
 }
