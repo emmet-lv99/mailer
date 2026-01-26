@@ -133,57 +133,110 @@ export const AUTHENTICITY_CRITERIA: Record<string, {
     'Mega':  { comment: { excellent: 0.3, good: 0.1, normal: 0.03 }, view: { excellent: 2.0, good: 0.5, normal: 0.3 }, fakeThreshold: 0.03 }
 };
 
-export const calculateAuthenticity = (user: InstagramUser) => {
+// Authenticity Result Interface
+export interface AuthenticityResult {
+  authenticityScore: number;  // 0-100
+  isFake: boolean;
+  reason: string;
+  measuredMetrics: string[];
+  details: {
+    commentScore: number | null;
+    viewScore: number | null;
+    consistencyScore: number | null;
+    commentRatio: number;
+    viewRatio: number;
+    er: { feedER: number; reelsER: number };
+    consistencyRatio: number | null;
+    criteria: any;
+  };
+}
+
+export const calculateAuthenticity = (user: InstagramUser): AuthenticityResult => {
     const tier = getAccountTier(user.followers_count);
-    const { feedER, reelsER, avgCommentsPerPost, avgReelsViews } = getEngagementMetrics(user);
     const criteria = AUTHENTICITY_CRITERIA[tier] || AUTHENTICITY_CRITERIA['Nano'];
-
-    // 1. Comment Ratio Score
-    const commentRatio = (avgCommentsPerPost / user.followers_count) * 100;
     
+    const feedPosts = (user.recent_posts || []).filter((p: any) => p.productType !== 'clips');
+    const reelsPosts = (user.recent_posts || []).filter((p: any) => p.productType === 'clips');
+    
+    const hasFeed = feedPosts.length > 0;
+    const hasReels = reelsPosts.length > 0;
+    
+    const { feedER, reelsER } = getEngagementMetrics(user);
+    
+    // 1. Comment Ratio (Feed 기준)
     let commentScore = 0;
-    if (commentRatio >= criteria.comment.excellent) commentScore = 40;
-    else if (commentRatio >= criteria.comment.good) commentScore = 30;
-    else if (commentRatio >= criteria.comment.normal) commentScore = 15;
-
-    // 2. View Ratio Score
-    const viewRatio = avgReelsViews / user.followers_count;
-
-    let viewScore = 0;
-    if (viewRatio >= criteria.view.excellent) viewScore = 40;
-    else if (viewRatio >= criteria.view.good) viewScore = 30;
-    else if (viewRatio >= criteria.view.normal) viewScore = 15;
-
-    // 3. Consistency Score
-    let consistencyScore = 0;
-    if (reelsER === 0 && feedER === 0) {
-        consistencyScore = 0; 
-    } else if (reelsER === 0 || feedER === 0) {
-        consistencyScore = 0; 
-    } else {
-        const consistency = Math.abs(reelsER - feedER) / Math.max(reelsER, feedER);
-        if (consistency <= 0.3) consistencyScore = 20;
-        else if (consistency <= 0.7) consistencyScore = 10;
-        else consistencyScore = 0;
+    let commentRatioVal = 0;
+    if (hasFeed) {
+        const totalComments = feedPosts.reduce((sum, p) => sum + (p.comments || 0), 0);
+        const totalLikes = feedPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
+        commentRatioVal = totalLikes > 0 ? totalComments / totalLikes : 0;
+        
+        if (commentRatioVal >= 0.05) commentScore = 20;
+        else if (commentRatioVal >= 0.03) commentScore = 15;
+        else if (commentRatioVal >= 0.01) commentScore = 10;
+        else commentScore = 0;
     }
+    
+    let authenticityScore = 0;
+    let viewScore: number | null = null;
+    let consistencyScore: number | null = null;
+    let viewRatioVal = 0;
+    let consistencyRatio: number | null = null;
+    let reason = '';
+    const measuredMetrics: string[] = ['Comment Ratio'];
 
-    // Total Score
-    const authenticityScore = commentScore + viewScore + consistencyScore;
+    if (!hasReels) {
+        // [CASE 1] 릴스 없음: Comment만 100% 가중
+        authenticityScore = Math.round((commentScore / 20) * 100);
+        reason = '피드만 분석 (릴스 없음)';
+    } else {
+        // [CASE 2] 릴스 있음: 모두 측정 (Feed + Reels)
+        measuredMetrics.push('View Ratio');
+        measuredMetrics.push('Consistency');
+        
+        // 2. View Ratio (Reels 기준)
+        const totalViews = reelsPosts.reduce((sum, p) => sum + (p.views || 0), 0);
+        const totalLikes = reelsPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
+        viewRatioVal = totalViews > 0 ? totalLikes / totalViews : 0;
+        
+        if (viewRatioVal >= 0.03) viewScore = 20;
+        else if (viewRatioVal >= 0.02) viewScore = 15;
+        else if (viewRatioVal >= 0.01) viewScore = 10;
+        else viewScore = 0;
 
-    // 4. Fake Follower Check
-    const isFake = commentRatio < criteria.fakeThreshold;
+        // 3. Consistency
+        if (feedER > 0 && reelsER > 0) {
+            const diff = Math.abs(feedER - reelsER);
+            const maxER = Math.max(feedER, reelsER);
+            consistencyRatio = diff / maxER;
+            
+            if (consistencyRatio <= 0.3) consistencyScore = 20;
+            else if (consistencyRatio <= 0.7) consistencyScore = 10;
+            else consistencyScore = 0;
+        } else {
+            consistencyScore = 0;
+        }
+
+        authenticityScore = Math.round(((commentScore + (viewScore ?? 0) + (consistencyScore ?? 0)) / 60) * 100);
+        reason = '완전 분석 (피드+릴스)';
+    }
+    
+    const isFake = authenticityScore < 40;
 
     return { 
         authenticityScore, 
         isFake,
+        reason,
+        measuredMetrics,
         details: {
             commentScore,
             viewScore,
             consistencyScore,
-            commentRatio,
-            viewRatio,
+            commentRatio: commentRatioVal * 100,
+            viewRatio: viewRatioVal,
             er: { feedER, reelsER },
-            criteria // Return criteria for UI display
+            consistencyRatio,
+            criteria
         }
     };
 };
@@ -294,15 +347,16 @@ export const getNormalizedActivityScore = (user: InstagramUser): number => {
 };
 
 // 4. Normalized Component Scores (Comment/View) from Authenticity (scaled to 100)
-// Authenticity internal max scores were: Comment=40, View=40. We need 0-100.
+// Authenticity internal max scores are now: Comment=20, View=20. We need 0-100.
 export const getNormalizedAuthComponents = (user: InstagramUser) => {
-    const { details } = calculateAuthenticity(user);
-    // Comment Score: max 40 -> 100 (multiply by 2.5)
-    // View Score: max 40 -> 100 (multiply by 2.5)
+    const result = calculateAuthenticity(user);
+    const { details } = result;
+    // Comment Score: max 20 -> 100 (multiply by 5)
+    // View Score: max 20 -> 100 (multiply by 5)
     return {
-        commentScoreNorm: (details.commentScore || 0) * 2.5,
-        viewScoreNorm: (details.viewScore || 0) * 2.5,
-        authenticityScore: details.commentScore + details.viewScore + details.consistencyScore // Max 100 already
+        commentScoreNorm: (details.commentScore ?? 0) * 5,
+        viewScoreNorm: (details.viewScore ?? 0) * 5,
+        authenticityScore: result.authenticityScore // Already normalized to 0-100
     };
 };
 

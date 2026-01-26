@@ -277,20 +277,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid users data" }, { status: 400 });
     }
 
-    // Fetch analysis limit
+    // Fetch analysis limit and system prompt from DB
     let analysisLimit = 10;
+    let systemPrompt = BRUTAL_ANALYST_SYSTEM_PROMPT; // Default fallback
+    
+    // Validate promptType
+    const validPromptType = (promptType === 'INSTA' || promptType === 'INSTA_TARGET') ? promptType : 'INSTA';
+
     try {
-      const settingRes = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'insta_analysis_limit')
-        .single();
+      // Parallel fetch for Settings and Prompt
+      const [settingRes, promptRes] = await Promise.all([
+        supabase.from('settings').select('value').eq('key', 'insta_analysis_limit').single(),
+        supabase.from('prompts').select('content').eq('prompt_type', validPromptType).eq('is_default', true).single()
+      ]);
       
       if (settingRes.data?.value) {
         analysisLimit = parseInt(settingRes.data.value, 10) || 10;
       }
+      
+      if (promptRes.data?.content) {
+        systemPrompt = promptRes.data.content;
+        console.log(`[DB Prompt] Using prompt from database for type: ${validPromptType}`);
+      } else {
+        console.log(`[DB Prompt] No DB prompt found, using hardcoded fallback`);
+      }
     } catch (e) {
-      console.warn("Failed to fetch settings", e);
+      console.warn("Failed to fetch settings/prompt from DB, using defaults", e);
     }
 
     // Initialize Gemini Model
@@ -388,7 +400,7 @@ export async function POST(req: Request) {
 
         try {
           // Call Gemini Vision with brutal system prompt
-          const fullPrompt = `${BRUTAL_ANALYST_SYSTEM_PROMPT}\n\n---\n\n${userPrompt}`;
+          const fullPrompt = `${systemPrompt}\n\n---\n\n${userPrompt}`;
           const result = await model.generateContent([fullPrompt, ...imageParts]);
           const response = await result.response;
           const text = response.text();
