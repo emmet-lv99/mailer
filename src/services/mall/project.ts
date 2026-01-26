@@ -12,15 +12,6 @@ export interface SaveProjectParams {
 }
 
 export const saveProject = async (params: SaveProjectParams) => {
-  const { 
-    id, 
-    youtubeChannelUrl, 
-    competitorUrls, 
-    channelName,
-    marketingAnalysis, 
-    designAnalysis, 
-    referenceAnalysis 
-  } = params;
 
   // Use our Server API which handles NextAuth -> Supabase User mapping
   const response = await fetch("/api/mall/projects/save", {

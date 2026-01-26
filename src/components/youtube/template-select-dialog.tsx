@@ -32,15 +32,6 @@ export function TemplateSelectDialog({ open, onOpenChange, onSelect }: TemplateS
   const [headerTemplateId, setHeaderTemplateId] = useState<number | null>(null);
   const [footerTemplateId, setFooterTemplateId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      fetchTemplates();
-      // 다이얼로그 열릴 때마다 선택 초기화
-      setHeaderTemplateId(null);
-      setFooterTemplateId(null);
-    }
-  }, [open]);
-
   const fetchTemplates = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -53,6 +44,18 @@ export function TemplateSelectDialog({ open, onOpenChange, onSelect }: TemplateS
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (open) {
+      // Only fetch if empty to prevent loops, or implement proper abort controller if needed
+      if (templates.length === 0) {
+        fetchTemplates();
+      }
+      // 다이얼로그 열릴 때마다 선택 초기화
+      setHeaderTemplateId(null);
+      setFooterTemplateId(null);
+    }
+  }, [open]);
 
   const headerTemplates = templates.filter(t => t.position === 'top');
   const footerTemplates = templates.filter(t => t.position === 'bottom');

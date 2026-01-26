@@ -331,6 +331,7 @@ export function TemplateManager() {
                                 <div className="border border-dashed rounded-lg p-4 text-center hover:bg-accent/50 transition">
                                   {block.url ? (
                                       <div className="relative inline-block group/preview">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={block.url} alt="Preview" className="max-h-40 object-contain rounded border bg-white" />
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition rounded text-white text-xs cursor-pointer" 
                                              onClick={() => document.getElementById(`file-${block.id}`)?.click()}>

@@ -63,73 +63,14 @@ export async function POST(req: Request) {
         send("progress", { current: processed, total, message: `[${processed}/${total}] ${channelName} 분석 중...` });
 
         try {
-          // Prepare Prompt
-          // Replace variables
-          // We assume channel object has keys matching variables + extra info
-          // Actually, basic replacement:
+          // Prepare Prompt: Replace variables (Basic + Extended if available)
           let finalPrompt = promptContent
             .replace(/{{channelName}}/g, channelName)
             .replace(/{{subscribers}}/g, subscribers)
-            .replace(/{{description}}/g, channel.description || "") // If we have description? CSV usually doesn't have it unless scraped.
-            // In original index.js, we fetched data from YouTube API.
-            // WAIT! The original script fetched YouTube Data API to get channel info (name, description, recent videos).
-            // But here, the input CSV might only have IDs?
-            // User said: "유튜브 채널 ID 리스트를 업로드".
-            // So we NEED YouTube Data API Key as well?
-            // "1. 고유 api키 입력 기능" -> User put Gemini Key.
-            // Does user have YouTube API Key?
-            // In `index.js`, we used `YOUTUBE_API_KEY` from .env.
-            // The web app needs this key too.
-            // If the CSV ONLY has IDs, we must fetch details.
-            // OR if the CSV has all details (name, subs, etc), we skip fetching.
-            // Let's assume input CSV has `channelId` column.
-            
-            // CRITICAL: We need YouTube API Key to fetch channel details if input is just ID.
-            // If input CSV has `channelName`, `subscribers` columns, maybe we skip fetching?
-            // User flow: "유튜브 채널 ID 리스트 파일" -> implies just IDs?
-            // Let's check `index.js`. It fetches data using `googleapis`.
-            
-            // START STOPPING. I need to ask user or add YouTube API Key configuration.
-            // Original `index.js` had `YOUTUBE_API_KEY`.
-            // User added Gemini Key in settings.
-            // User didn't add YouTube Key in settings yet.
-            
-            // I should handle this.
-            // Option 1: Ask user to add YouTube Key in settings.
-            // Option 2: Hardcode it (bad).
-            // Option 3: Assume input CSV has columns `channelName`, `subscribers` etc.
-            
-            // Let's assume we need to fetch data.
-            // I will first check if I can just use Gemini to browse? No, Gemini 2.0 Flash is text-to-text here mostly.
-            
-            // I will update the code to use JUST Gemini if the prompt doesn't strictly require external data, 
-            // OR I will ask the user.
-            // Wait, previous `index.js` logic was:
-            // 1. Get ID from CSV.
-            // 2. Fetch Channel Info (Name, Subs, Desc, Videos) from YouTube API.
-            // 3. Feed to Gemini.
-            
-            // So YouTube API is essential.
-            
-            // I'll assume for now I should generate email based on available CSV columns if YouTube Key is missing.
-            // But if YouTube Key is present (in .env.local?), I use it.
-            // It's safer to ask user to provide it in Settings.
-            
-            // However, to keep momentum, I'll proceed with the assumption that input CSV has columns. 
-            // BUT wait, `file-dropzone` parses CSV.
-            // I should look at `input.csv` content if possible.
-            // Step 336 Output: `[1/113] 처리 중: UC2fsxQr6Hcx1enORxXgKpxQ ...` -> This looks like ID.
-            
-            // I will add YouTube Data API Key to Settings Page logic in next refactor.
-            // For now, I'll assume the user might have put it in `.env.local` or I can read it from server env.
-            // I'll check `.env` in `index.js`.
-            // API Key removed for security
-            // I can copy this to `.env.local` of the web app.
-            
-            // I will proactively read `YOUTUBE_API_KEY` from process.env (server side).
-            // So if I set it in `.env.local`, it works.
-        
+            .replace(/{{description}}/g, channel.description || "");
+
           // Use renamed env var to avoid conflicts
+          // I will proactive read `YOUTUBE_API_KEY` from process.env (server side).
           const youtubeKey = (process.env.ANMOK_YOUTUBE_API_KEY || "").trim();
           let channelData = { ...channel, channelName, subscribers };
 
