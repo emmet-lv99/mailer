@@ -1,3 +1,5 @@
+"use client";
+
 import { StepIndicator } from "@/components/mall/creation/step-indicator";
 import { ChannelAnalysisStep } from "@/components/mall/creation/steps/channel-analysis-step";
 import { LayoutDesignStep } from "@/components/mall/creation/steps/layout-design-step";
