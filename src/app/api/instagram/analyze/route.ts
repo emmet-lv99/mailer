@@ -4,6 +4,7 @@ import {
   calculateAuthenticity,
   calculateCampaignSuitability,
   calculateEngagementRate,
+  getAccountAge,
   getAccountGrade,
   getAccountTier,
   getAverageUploadCycle,
@@ -143,6 +144,7 @@ ${commentsText || '(댓글 없음)'}`;
 - ER: ${metrics.engagementRate.toFixed(2)}% (등급: ${metrics.erGrade || '미산정'})
 - 진정성: ${metrics.authenticityScore}/100 ${metrics.isFake ? '⚠️ 가짜 의심' : ''}
 - 활동성: ${metrics.isActive ? '활성' : '비활성'} (업로드 주기: ${metrics.avgUploadCycle !== null ? metrics.avgUploadCycle + '일' : '측정불가'})
+- 데이터 기간: ${metrics.age?.label || '미측정'} (수집된 최초 게시물 기준)
 - 시장 기준: ${metrics.marketSuitable ? '충족' : '미달'}
 
 캠페인 적합도:
@@ -339,7 +341,8 @@ export async function POST(req: Request) {
           isActive,
           avgUploadCycle,
           marketSuitable,
-          campaignSuitability
+          campaignSuitability,
+          age: getAccountAge(user)
         };
 
         // Prepare posts data

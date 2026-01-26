@@ -305,6 +305,37 @@ export const isMarketSuitable = (user: InstagramUser, avgInterval: number | null
     return avgInterval <= 14;  // 14일 이내
 };
 
+/**
+ * 계정 나이 분석 (수집된 게시물 중 가장 오래된 날짜 기준)
+ */
+export const getAccountAge = (user: InstagramUser) => {
+    if (!user.recent_posts || user.recent_posts.length === 0) {
+        return { days: 0, months: 0, label: '데이터 없음', oldestDate: null };
+    }
+
+    const timestamps = user.recent_posts.map(p => new Date(p.timestamp).getTime());
+    const oldestTimestamp = Math.min(...timestamps);
+    const oldestDate = new Date(oldestTimestamp);
+    
+    const diffMs = Date.now() - oldestTimestamp;
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const months = Math.floor(days / 30);
+
+    let label = `${days}일 전`;
+    if (months >= 12) {
+        label = `${Math.floor(months / 12)}년 ${months % 12}개월 전`;
+    } else if (months >= 1) {
+        label = `${months}개월 전`;
+    }
+
+    return {
+        days,
+        months,
+        label,
+        oldestDate
+    };
+};
+
 // --- Campaign Suitability Logic ---
 
 // 1. Normalized ER Score (0-100)

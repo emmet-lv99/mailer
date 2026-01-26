@@ -3,6 +3,7 @@ export type InstagramUser = {
   username: string;
   full_name: string;
   followers_count: number; // 0 if not fetched yet
+  posts_count: number;
   biography: string;
   profile_pic_url: string;
   recent_posts: {

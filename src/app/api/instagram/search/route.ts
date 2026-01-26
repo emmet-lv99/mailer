@@ -139,6 +139,7 @@ export async function POST(req: Request) {
                 biography: item.biography || "",
                 profile_pic_url: item.profilePicUrl || "",
                 recent_posts: recent_posts,
+                posts_count: item.postsCount || 0,
                 status: 'todo'
             });
         }
