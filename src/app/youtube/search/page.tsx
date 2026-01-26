@@ -3,12 +3,20 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { historyService } from "@/services/history/api";
 import { youtubeService } from "@/services/youtube/api";
 import { YouTubeChannel } from "@/services/youtube/types";
-import { CheckSquare, Download, Loader2, Search, Square, Youtube } from "lucide-react";
+import { CheckSquare, Download, Loader2, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { YouTubeChannelRow } from "./components/YouTubeChannelRow";
 
 export default function ExplorerPage() {
   const [query, setQuery] = useState("");
@@ -19,12 +27,20 @@ export default function ExplorerPage() {
   const [selectedChannelIds, setSelectedChannelIds] = useState<Set<string>>(new Set());
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [sentChannelIds, setSentChannelIds] = useState<Set<string>>(new Set());
+  const [channelStatuses, setChannelStatuses] = useState<Record<string, string>>({}); 
+  const [filterType, setFilterType] = useState<string>("all");
+  const [emails, setEmails] = useState<Record<string, string>>({});
 
   const checkSentHistory = async (candidates: YouTubeChannel[]) => {
     if (candidates.length === 0) return;
     try {
       const ids = candidates.map(c => c.id);
       const data = await historyService.checkSentHistory(ids);
+      
+      if (data.channelStatusMap) {
+          setChannelStatuses(prev => ({ ...prev, ...data.channelStatusMap }));
+      }
+
       if (data.sentChannelIds) {
         setSentChannelIds(prev => {
           const next = new Set(prev);
@@ -56,12 +72,12 @@ export default function ExplorerPage() {
         setChannels(prev => {
           const existingIds = new Set(prev.map(c => c.id));
           const newChannels = data.channels.filter((c: YouTubeChannel) => !existingIds.has(c.id));
-          checkSentHistory(newChannels); // Check history for new items
+          checkSentHistory(newChannels);
           return [...prev, ...newChannels];
         });
       } else {
         setChannels(data.channels);
-        checkSentHistory(data.channels); // Check history for all items
+        checkSentHistory(data.channels);
       }
       setNextPageToken(data.nextPageToken || null);
     } catch (error: any) {
@@ -74,7 +90,8 @@ export default function ExplorerPage() {
 
   const handleSearch = () => {
     setChannels([]);
-    setSentChannelIds(new Set()); // Reset history
+    setSentChannelIds(new Set()); 
+    setChannelStatuses({}); 
     setNextPageToken(null);
     searchChannels();
   };
@@ -94,18 +111,59 @@ export default function ExplorerPage() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedChannelIds.size === channels.length && channels.length > 0) {
-      setSelectedChannelIds(new Set());
+    const visibleChannels = getFilteredChannels();
+    const allSelected = visibleChannels.length > 0 && visibleChannels.every(c => selectedChannelIds.has(c.id));
+
+    if (allSelected) {
+      const newSelected = new Set(selectedChannelIds);
+      visibleChannels.forEach(c => newSelected.delete(c.id));
+      setSelectedChannelIds(newSelected);
     } else {
-      const newSelected = new Set(channels.map(c => c.id));
+      const newSelected = new Set(selectedChannelIds);
+      visibleChannels.forEach(c => newSelected.add(c.id));
       setSelectedChannelIds(newSelected);
     }
   };
 
-  const [emails, setEmails] = useState<Record<string, string>>({});
-
   const handleEmailChange = (channelId: string, email: string) => {
     setEmails(prev => ({ ...prev, [channelId]: email }));
+  };
+
+  const handleMarkUnsuitable = async () => {
+    if (selectedChannelIds.size === 0) return;
+
+    const selectedChannels = channels.filter(c => selectedChannelIds.has(c.id));
+    const logs = selectedChannels.map(c => ({
+      channel_id: c.id,
+      channel_name: c.title,
+      status: 'unsuitable',
+      source: 'system'
+    }));
+
+    setLoading(true);
+    try {
+      await historyService.createHistory(logs);
+      toast.success(`${selectedChannelIds.size}개 채널이 부적합으로 등록되었습니다.`);
+      
+      const newStatuses = { ...channelStatuses };
+      selectedChannelIds.forEach(id => {
+        newStatuses[id] = 'unsuitable';
+      });
+      setChannelStatuses(newStatuses);
+      
+      setSentChannelIds(prev => {
+        const next = new Set(prev);
+        selectedChannelIds.forEach(id => next.add(id));
+        return next;
+      });
+
+      setSelectedChannelIds(new Set());
+    } catch (error: any) {
+      console.error(error);
+      toast.error("부적합 등록 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const downloadCsv = () => {
@@ -116,7 +174,6 @@ export default function ExplorerPage() {
 
     const selectedChannels = channels.filter(c => selectedChannelIds.has(c.id));
     
-    // Updated CSV Headers for Rich Data
     const headers = [
       "Channel Name", 
       "Email", 
@@ -128,12 +185,12 @@ export default function ExplorerPage() {
     ];
 
     const rows = selectedChannels.map(c => [
-      `"${(c.title || "").replace(/"/g, '""')}"`, // Escape quotes
+      `"${(c.title || "").replace(/"/g, '""')}"`,
       emails[c.id] || "",
       c.statistics?.subscriberCount || "0",
       c.id,
       `https://www.youtube.com/channel/${c.id}`,
-      `"${(c.description || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`, // Escape quotes & newlines
+      `"${(c.description || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`,
       c.statistics?.videoCount || "0"
     ]);
 
@@ -152,10 +209,23 @@ export default function ExplorerPage() {
     document.body.removeChild(link);
   };
 
-  const formatNumber = (numStr?: string) => {
-    if (!numStr) return "0";
-    return parseInt(numStr).toLocaleString();
+  const getFilteredChannels = () => {
+    return channels.filter(channel => {
+      const status = channelStatuses[channel.id];
+      if (filterType === "sendable") {
+        return status !== 'sent' && status !== 'unsuitable';
+      }
+      if (filterType === "sent") {
+        return status === 'sent';
+      }
+      if (filterType === "unsuitable") {
+        return status === 'unsuitable';
+      }
+      return true;
+    });
   };
+
+  const filteredChannels = getFilteredChannels();
 
   return (
     <div className="container mx-auto py-8 space-y-8 max-w-6xl">
@@ -204,7 +274,7 @@ export default function ExplorerPage() {
             />
           </div>
 
-          <Button onClick={handleSearch} disabled={loading} className="w-full md:w-auto">
+          <Button onClick={handleSearch} disabled={loading} className="w-full md:w-auto self-end">
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "검색"}
           </Button>
         </div>
@@ -214,11 +284,37 @@ export default function ExplorerPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              총 {channels.length}개 채널 검색됨
+              총 {filteredChannels.length}개 채널 검색됨
+              {filterType !== "all" && channels.length !== filteredChannels.length && (
+                  <span className="ml-1 text-xs">({channels.length - filteredChannels.length}개 필터링됨)</span>
+              )}
             </div>
             <div className="flex items-center gap-2">
+              <Select 
+                value={filterType} 
+                onValueChange={setFilterType}
+              >
+                <SelectTrigger className="w-[180px] h-9">
+                  <SelectValue placeholder="필터 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 채널 보기</SelectItem>
+                  <SelectItem value="sendable">전송 가능 목록</SelectItem>
+                  <SelectItem value="sent">발송됨 목록</SelectItem>
+                  <SelectItem value="unsuitable">부적합 목록</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Button variant="outline" size="sm" onClick={toggleSelectAll}>
-                {selectedChannelIds.size === channels.length ? "전체 해제" : "전체 선택"}
+                 전체 선택/해제
+              </Button>
+              <Button 
+                variant="secondary"
+                size="sm" 
+                onClick={handleMarkUnsuitable} 
+                disabled={selectedChannelIds.size === 0 || loading}
+              >
+                부적합 추가 ({selectedChannelIds.size})
               </Button>
               <Button size="sm" onClick={downloadCsv} disabled={selectedChannelIds.size === 0}>
                 <Download className="mr-2 h-4 w-4" />
@@ -236,11 +332,7 @@ export default function ExplorerPage() {
                       className="cursor-pointer"
                       onClick={toggleSelectAll}
                     >
-                      {selectedChannelIds.size === channels.length && channels.length > 0 ? (
-                        <CheckSquare className="h-4 w-4" />
-                      ) : (
-                        <Square className="h-4 w-4" />
-                      )}
+                      <CheckSquare className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">채널</th>
@@ -252,79 +344,26 @@ export default function ExplorerPage() {
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
-                {channels.map((channel) => {
-                  const isSelected = selectedChannelIds.has(channel.id);
-                  return (
-                    <tr 
-                      key={channel.id} 
-                      className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${isSelected ? "bg-muted/50" : ""} ${sentChannelIds.has(channel.id) ? "opacity-60 bg-gray-50/50" : ""}`}
-                      onClick={() => {
-                         if (!sentChannelIds.has(channel.id)) toggleSelect(channel.id);
-                         else toast.warning("이미 이메일을 발송한 채널입니다.");
-                      }}
-                    >
-                      <td className="p-4 align-middle">
-                        <div className={`cursor-pointer ${sentChannelIds.has(channel.id) ? "cursor-not-allowed opacity-50" : ""}`}>
-                          {isSelected ? (
-                            <CheckSquare className="h-4 w-4 text-primary" />
-                          ) : sentChannelIds.has(channel.id) ? (
-                             <Square className="h-4 w-4 text-gray-300" />
-                          ) : (
-                            <Square className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={channel.thumbnailUrl} 
-                            alt={channel.title} 
-                            className="h-10 w-10 rounded-full object-cover border"
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-medium line-clamp-1 flex items-center gap-2">
-                              {channel.title}
-                              {sentChannelIds.has(channel.id) && (
-                                <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded border border-yellow-200">
-                                  발송됨
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-xs text-muted-foreground line-clamp-1">{channel.description || "설명 없음"}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle" onClick={(e) => e.stopPropagation()}>
-                        <Input 
-                          placeholder="이메일 입력" 
-                          value={emails[channel.id] || ""}
-                          onChange={(e) => handleEmailChange(channel.id, e.target.value)}
-                          className="h-8 text-xs"
-                        />
-                      </td>
-                      <td className="p-4 align-middle font-medium">
-                        {formatNumber(channel.statistics?.subscriberCount)}
-                      </td>
-                      <td className="p-4 align-middle hidden md:table-cell">
-                        {formatNumber(channel.statistics?.videoCount)}
-                      </td>
-                      <td className="p-4 align-middle text-muted-foreground hidden md:table-cell">
-                        {new Date(channel.publishedAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-4 align-middle text-right">
-                        <a 
-                          href={`https://www.youtube.com/channel/${channel.id}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 p-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Youtube className="h-4 w-4" />
-                        </a>
-                      </td>
+                {filteredChannels.length === 0 ? (
+                    <tr>
+                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                            필터링된 결과가 없습니다.
+                        </td>
                     </tr>
-                  );
-                })}
+                ) : (
+                  filteredChannels.map((channel) => (
+                    <YouTubeChannelRow
+                      key={channel.id}
+                      channel={channel}
+                      isSelected={selectedChannelIds.has(channel.id)}
+                      status={channelStatuses[channel.id]}
+                      email={emails[channel.id] || ""}
+                      filterType={filterType}
+                      onToggleSelect={toggleSelect}
+                      onEmailChange={handleEmailChange}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>

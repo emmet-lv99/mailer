@@ -6,12 +6,14 @@ interface InstagramState {
   keyword: string;
   searchMode: 'tag' | 'target';
   results: InstagramUser[];
+  fallbackUrl: string | null; // URL to Instagram when scraping fails
   selectedUsernames: Set<string>;
   analysisResults: any[];
   
   setKeyword: (q: string) => void;
   setSearchMode: (mode: 'tag' | 'target') => void;
   setResults: (users: InstagramUser[]) => void;
+  setFallbackUrl: (url: string | null) => void;
   toggleSelection: (username: string) => void;
   resetSelection: () => void;
   setSelectedUsers: (users: Set<string>) => void;
@@ -25,12 +27,14 @@ export const useInstagramStore = create<InstagramState>((set) => ({
   keyword: "",
   searchMode: 'tag',
   results: [],
+  fallbackUrl: null,
   selectedUsernames: new Set(),
   analysisResults: [],
 
   setKeyword: (q) => set({ keyword: q }),
   setSearchMode: (mode) => set({ searchMode: mode }),
   setResults: (users) => set({ results: users }),
+  setFallbackUrl: (url) => set({ fallbackUrl: url }),
   
   toggleSelection: (username) => set((state) => {
     const next = new Set(state.selectedUsernames);

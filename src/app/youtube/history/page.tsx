@@ -1,35 +1,60 @@
-
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-
 import { historyService } from "@/services/history/api";
 import { HistoryItem } from "@/services/history/types";
+import { Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function HistoryPage() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showRepliedOnly, setShowRepliedOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  
+  // Delete Modal State
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
 
   // Reset selection when filters change
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [showRepliedOnly, searchQuery]);
+  }, [showRepliedOnly, searchQuery, statusFilter]);
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const data = await historyService.fetchHistory(showRepliedOnly);
+      const data = await historyService.fetchHistory(showRepliedOnly, statusFilter);
       setHistory(data.history || []);
     } catch (error) {
       toast.error("이력을 불러오는데 실패했습니다.");
@@ -40,7 +65,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     fetchHistory();
-  }, [showRepliedOnly]);
+  }, [showRepliedOnly, statusFilter]);
 
   const toggleReplied = async (id: number, current: boolean) => {
     // Optimistic Update
@@ -65,9 +90,9 @@ export default function HistoryPage() {
     }
   };
 
-  const toggleStatus = async (id: number, currentStatus: string) => {
-    const newStatus = currentStatus === 'draft' ? 'sent' : 'draft';
-    
+  const handleStatusChange = async (id: number, newStatus: string) => {
+    if (history.find(h => h.id === id)?.status === newStatus) return;
+
     // Optimistic Update
     setHistory(prev => prev.map(item => 
       item.id === id ? { ...item, status: newStatus } : item
@@ -75,7 +100,7 @@ export default function HistoryPage() {
 
     try {
       await historyService.updateStatus(id, newStatus);
-      toast.success(`상태가 ${newStatus.toUpperCase()}로 변경되었습니다.`);
+      toast.success(`상태 변경됨: ${newStatus.toUpperCase()}`);
     } catch (error) {
       toast.error("상태 변경 실패");
       fetchHistory(); // Revert
@@ -116,6 +141,26 @@ export default function HistoryPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    // Bulk Delete Logic
+    const idsToDelete = Array.from(selectedIds);
+    if (idsToDelete.length === 0) return;
+
+    // Optimistic Update
+    setHistory(prev => prev.filter(item => !selectedIds.has(item.id)));
+    setSelectedIds(new Set());
+    
+    setItemToDelete(null); 
+
+    try {
+        await Promise.all(idsToDelete.map(id => historyService.deleteHistory(id)));
+        toast.success(`${idsToDelete.length}건이 삭제되었습니다.`);
+    } catch (error) {
+        toast.error("삭제 실패");
+        fetchHistory(); // Revert
+    }
+  };
+
   const filteredHistory = history.filter(item => 
     item.channel_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     item.email?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -133,13 +178,23 @@ export default function HistoryPage() {
           </div>
           <div className="flex gap-2">
             {selectedIds.size > 0 && (
-               <Button 
-                  onClick={() => handleBulkUpdate('sent')} 
-                  variant="default"
-                  className="animate-in fade-in"
-               >
-                 선택한 {selectedIds.size}건 발송완료(SENT) 처리
-               </Button>
+                <>
+                   <Button 
+                      onClick={() => handleBulkUpdate('sent')} 
+                      variant="default"
+                      className="animate-in fade-in"
+                   >
+                     선택한 {selectedIds.size}건 발송완료(SENT) 처리
+                   </Button>
+                   <Button 
+                      onClick={() => setItemToDelete(-1)} 
+                      variant="destructive"
+                      className="animate-in fade-in"
+                   >
+                     <Trash2 className="h-4 w-4 mr-2" />
+                     삭제
+                   </Button>
+                </>
             )}
             <Button variant="outline" onClick={fetchHistory} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
@@ -158,15 +213,31 @@ export default function HistoryPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                    />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch 
-                    id="replied-mode" 
-                    checked={showRepliedOnly}
-                    onCheckedChange={setShowRepliedOnly}
-                  />
-                  <label htmlFor="replied-mode" className="text-sm font-medium">
-                    답변 온 것만 보기
-                  </label>
+                <div className="flex items-center gap-4">
+                  <div className="w-[140px]">
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="상태 필터" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체 상태</SelectItem>
+                          <SelectItem value="sent">발송 완료</SelectItem>
+                          <SelectItem value="draft">임시 저장</SelectItem>
+                          <SelectItem value="unsuitable">부적합</SelectItem>
+                        </SelectContent>
+                      </Select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="replied-mode" 
+                      checked={showRepliedOnly}
+                      onCheckedChange={setShowRepliedOnly}
+                    />
+                    <label htmlFor="replied-mode" className="text-sm font-medium">
+                      답변 온 것만 보기
+                    </label>
+                  </div>
                 </div>
              </div>
           </CardHeader>
@@ -229,13 +300,27 @@ export default function HistoryPage() {
                         {new Date(item.sent_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
-                         <Badge 
-                            variant={item.status === 'sent' ? 'default' : 'secondary'}
-                            className="cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => toggleStatus(item.id, item.status)}
-                         >
-                            {item.status.toUpperCase()}
-                         </Badge>
+                         <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                             <Badge 
+                                variant={item.status === 'sent' ? 'default' : item.status === 'unsuitable' ? 'destructive' : 'secondary'}
+                                className="cursor-pointer hover:opacity-80 transition-opacity"
+                             >
+                                {item.status.toUpperCase()}
+                             </Badge>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="start">
+                             <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'sent')}>
+                               발송 완료 (SENT)
+                             </DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'draft')}>
+                               임시 저장 (DRAFT)
+                             </DropdownMenuItem>
+                             <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'unsuitable')}>
+                               부적합 (UNSUITABLE)
+                             </DropdownMenuItem>
+                           </DropdownMenuContent>
+                         </DropdownMenu>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center">
@@ -265,6 +350,24 @@ export default function HistoryPage() {
           </div>
         </Card>
       </div>
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>이력 일괄 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말 선택한 <span className="font-bold text-foreground">{selectedIds.size}건</span>의 이력을 삭제하시겠습니까? <br/>
+              삭제된 이력은 복구할 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

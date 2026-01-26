@@ -51,10 +51,10 @@ export async function POST(req: Request) {
                 const isHashtag = keyword.startsWith("#");
                 const query = isHashtag ? keyword.slice(1) : keyword;
                 
-                console.log(`[Step 1] Discovering users for hashtag: ${query}`);
                 const discoveryInput = {
                     hashtags: [query],
-                    resultsLimit: limit * 2, // Fetch more posts to ensure we get enough unique users
+                    maxPostsPerHashtag: limit * 2,
+                    scrapeMode: "recent" as const,
                 };
                 
                 // Use hashtag scraper for discovery
@@ -71,7 +71,6 @@ export async function POST(req: Request) {
                 }
                 
                 targetUsernames = Array.from(uniqueUsernames);
-                console.log(`[Step 1] Found ${targetUsernames.length} unique users.`);
             }
             
             if (targetUsernames.length > 0) {
@@ -87,7 +86,7 @@ export async function POST(req: Request) {
                         resultsType: "details",
                         resultsLimit: 10, // Increased post limit
                         searchLimit: 1,
-                        commentsPerPost: 10, // [NEW] Fetch top 10 comments per post
+                        commentsPerPost: 20, // [NEW] Fetch top 20 comments per post
                     };
                     
                     console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links`);
@@ -122,6 +121,9 @@ export async function POST(req: Request) {
                 imageUrl: post.displayUrl || post.thumbnailUrl || "",
                 likes: post.likesCount || 0,
                 comments: post.commentsCount || 0,
+                views: post.videoViewCount || 0, // Reels/Video views
+                type: post.type || "Image", // Image, Video, Sidecar
+                productType: post.productType || "feed", // clips = Reels
                 timestamp: post.timestamp || new Date().toISOString(),
                 latest_comments: (post.latestComments || []).map((c: any) => ({
                     text: c.text || "",
@@ -169,25 +171,14 @@ export async function POST(req: Request) {
         }
     }
 
-    // Attempt 3: Final Fallback to Mock Data if ALL scraping failed or no token
+    // No mock data fallback - check for fallback URL if scraping failed
+    let fallbackUrl: string | null = null;
     if (results.length === 0) {
-        console.warn("[Processing] No results from Discovery either. Generating MOCK data.");
-        const mockData = Array.from({ length: limit }).map((_, i) => ({
-            username: `simulated_${keyword}_${i + 1}`,
-            full_name: `Simulation User ${i + 1}`,
-            followers_count: Math.floor(Math.random() * 50000) + 1000,
-            biography: `API 호출 전면 실패로 생성된 가상 데이터입니다. (${i+1})`,
-            profile_pic_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${keyword}${i}`,
-            recent_posts: Array.from({ length: 10 }).map((_, j) => ({
-                caption: `Mock Post ${j+1}`,
-                imageUrl: `https://placehold.co/300x300?text=Mock${j+1}`,
-                likes: Math.floor(Math.random() * 100),
-                comments: Math.floor(Math.random() * 10),
-                timestamp: new Date(Date.now() - (86400000 * Math.floor(Math.random() * 10))).toISOString()
-            })),
-            status: 'todo'
-        }));
-        results.push(...mockData);
+        // Extract fallback URL from discovery items if available
+        const errorItem = (discoveryItems as any[]).find(item => item.url && item.error);
+        if (errorItem?.url) {
+            fallbackUrl = errorItem.url;
+        }
     }
     // -----------------------------------------------------------
 
@@ -212,10 +203,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
         results: finalResults,
+        fallbackUrl: fallbackUrl, // Add fallback URL when scraping fails
         meta: {
             keyword: keyword,
             count: finalResults.length,
-            mock: results[0]?.username?.startsWith('simulated_') // Flag if mock data was used
         }
     });
 

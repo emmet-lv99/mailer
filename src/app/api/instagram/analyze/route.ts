@@ -1,5 +1,4 @@
-
-import { geminiVisionModel } from "@/lib/gemini";
+import genAI from "@/lib/gemini"; // Import the instance, not the pre-configured model
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
@@ -104,6 +103,12 @@ export async function POST(req: Request) {
         }
     }
 
+    // Initialize Model with JSON enforcement
+    const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.0-flash",
+        generationConfig: { responseMimeType: "application/json" }
+    });
+
     // Process each user
     const analyzedResults = await Promise.all(
       users.map(async (user: any) => {
@@ -122,11 +127,29 @@ export async function POST(req: Request) {
         }
 
         // Variable Replacement
-        const prompt = systemPromptTemplate
+        let prompt = systemPromptTemplate
             .replace(/{{username}}/g, user.username || "")
             .replace(/{{biography}}/g, user.biography || "No bio")
             .replace(/{{full_name}}/g, user.full_name || "")
             .replace(/{{comments}}/g, commentsText); // [NEW] Inject comments
+
+        // CRITICAL: Enforce specific JSON schema for UI compatibility
+        // Append this instruction to ensure the AI output matches what the frontend expects,
+        // even if the DB prompt is different.
+        const enforcedSchema = `
+        
+        IMPORTANT: You must return the analysis in this EXACT JSON format. Do not change keys.
+        Output JSON format:
+        {
+          "is_target": boolean (true if suitable for the category),
+          "category": string (e.g. "Living", "Food", "Fashion", etc.),
+          "mood_keywords": string[],
+          "originality_score": number (1-10),
+          "summary": "Detailed analysis in Korean."
+        }
+        `;
+        
+        prompt += enforcedSchema;
 
         // Prepare images for Vision (limit based on settings)
         const imageParts = [];
@@ -160,26 +183,36 @@ export async function POST(req: Request) {
 
         try {
             // Call Gemini Vision
-            const result = await geminiVisionModel.generateContent([prompt, ...imageParts]);
+            const result = await model.generateContent([prompt, ...imageParts]);
             const response = await result.response;
             const text = response.text();
             
-            // Robust JSON extraction
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error("No JSON found in response");
+            // Log raw text if extraction fails
+            try {
+                // Remove markdown code blocks if present (Gemini sometimes adds them even with JSON mode)
+                let cleanedText = text.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
+                
+                // If responseMimeType is json, text should be valid JSON directly
+                const analysis = JSON.parse(cleanedText);
+                console.log(`[Analysis Success] ${user.username}`, analysis); // Debug log to see structure
+                return {
+                    username: user.username,
+                    analysis,
+                    success: true
+                };
+            } catch (jsonErr) {
+                console.error(`JSON Parse Failed for ${user.username}. Raw text:`, text);
+                throw new Error("No JSON found in response or Invalid JSON");
             }
-            const jsonStr = jsonMatch[0];
-            const analysis = JSON.parse(jsonStr);
-
-            return {
-                username: user.username,
-                analysis,
-                success: true
-            };
 
         } catch (error: any) {
             console.error(`Analysis failed for ${user.username}`, error);
+            // Check for safety ratings refusal
+            const blockMsg = error.response?.promptFeedback?.blockReason;
+            if (blockMsg) {
+                 console.error(`Blocked Reason: ${blockMsg}`);
+            }
+            
             return {
                 username: user.username,
                 success: false,

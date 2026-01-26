@@ -4,16 +4,17 @@ import { BulkUpdatePayload, HistoryItem } from "./types";
 const BASE_URL = "/api/youtube/history"; // Anticipating the move
 
 export const historyService = {
-  fetchHistory: async (hasReplied?: boolean): Promise<{ history: HistoryItem[] }> => {
+  fetchHistory: async (hasReplied?: boolean, status?: string): Promise<{ history: HistoryItem[] }> => {
     const params = new URLSearchParams();
     if (hasReplied) params.append("hasReplied", "true");
+    if (status && status !== "all") params.append("status", status);
     
     const res = await fetch(`${BASE_URL}?${params.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch history");
     return res.json();
   },
 
-  checkSentHistory: async (channelIds: string[]): Promise<{ sentChannelIds: string[] }> => {
+  checkSentHistory: async (channelIds: string[]): Promise<{ sentChannelIds: string[]; channelStatusMap: Record<string, string> }> => {
     const res = await fetch(`${BASE_URL}/check`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -57,6 +58,22 @@ export const historyService = {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error("Bulk update failed");
+  },
+
+  deleteHistory: async (id: number): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Delete failed");
+  },
+
+  createHistory: async (logs: any[]): Promise<void> => {
+    const res = await fetch(BASE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ logs }),
+    });
+    if (!res.ok) throw new Error("Failed to create history");
   },
 
   importHistory: async (file: File): Promise<{ count: number }> => {

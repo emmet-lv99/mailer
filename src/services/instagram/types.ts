@@ -10,6 +10,9 @@ export type InstagramUser = {
     imageUrl: string;
     likes: number;
     comments: number;
+    views?: number; // videoViewCount for Reels/Videos
+    type?: 'Image' | 'Video' | 'Sidecar'; // Post type
+    productType?: 'clips' | 'feed' | 'igtv'; // clips = Reels
     timestamp: string;
     latest_comments?: {
       text: string;
@@ -18,11 +21,12 @@ export type InstagramUser = {
     }[];
   }[];
   is_registered: boolean;
-  db_status: 'todo' | 'ignored' | 'sent' | 'replied' | null;
+  db_status: 'todo' | 'ignored' | 'sent' | 'replied' | 'unsuitable' | null;
 };
 
 export type SearchResponse = {
   results: InstagramUser[];
+  fallbackUrl?: string | null; // URL to Instagram hashtag page when scraping fails
   meta: {
     keyword: string;
     count: number;

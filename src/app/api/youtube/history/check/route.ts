@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabase
       .from('sent_logs')
-      .select('channel_id')
+      .select('channel_id, status')
       .in('channel_id', channelIds);
 
     if (error) {
@@ -25,8 +25,12 @@ export async function POST(req: Request) {
     }
 
     const sentChannelIds = Array.from(new Set(data?.map(r => r.channel_id) || []));
+    const channelStatusMap = data?.reduce((acc, curr) => {
+        acc[curr.channel_id] = curr.status;
+        return acc;
+    }, {} as Record<string, string>) || {};
 
-    return NextResponse.json({ sentChannelIds });
+    return NextResponse.json({ sentChannelIds, channelStatusMap });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
