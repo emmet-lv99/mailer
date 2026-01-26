@@ -16,7 +16,7 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
             <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-2 right-2 text-gray-500 hover:text-gray-900"><X className="w-5 h-5" /></button>
             <h4 className="text-base font-bold text-green-900 mb-2">신뢰도 점수 분석</h4>
             
-            <div className="space-y-4 w-full px-1 pt-2 overflow-y-auto max-h-[80vh] hide-scrollbar relative">
+            <div className="space-y-4 w-full px-1 pt-2 overflow-y-auto max-h-[70vh] hide-scrollbar relative">
                 {/* 1. Comment Ratio Visual */}
                 <div className="text-left">
                     <div className="flex justify-between text-xs mb-1 items-center">
@@ -32,18 +32,24 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                         const val = authDetails.commentRatio;
                         const markers = [{ v: 1.0, l: '적정' }, { v: 3.0, l: '우수' }, { v: 5.0, l: '최우수' }];
                         const maxVal = Math.max(val, 7.5);
+                        const pos = Math.min(100, (val / maxVal) * 100);
                         const getPos = (v: number) => Math.min(100, (v / maxVal) * 100);
 
                         return (
                             <div className="relative h-4 mb-2 select-none group/bar">
                                 <div className="absolute top-1.5 inset-x-0 h-1.5 bg-gradient-to-r from-red-100 via-yellow-100 to-green-100 rounded-full"></div>
-                                {markers.map((m) => (
-                                    <div key={m.l} className="absolute top-1.5 w-px h-1.5 bg-gray-300" style={{ left: `${getPos(m.v)}%` }}>
-                                            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[6px] text-gray-400 whitespace-nowrap">{m.l}</div>
-                                    </div>
-                                ))}
-                                <div className="absolute top-0.5 w-1 h-3.5 bg-black rounded-full shadow z-10" style={{ left: `${getPos(val)}%` }}>
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
+                                {markers.map((m) => {
+                                    const mPos = getPos(m.v);
+                                    return (
+                                        <div key={m.l} className="absolute top-1.5 w-px h-1.5 bg-gray-300" style={{ left: `${mPos}%` }}>
+                                            <div className={`absolute top-2 text-[6px] text-gray-400 whitespace-nowrap ${mPos > 85 ? 'right-0 translate-x-0' : mPos < 15 ? 'left-0 translate-x-0' : 'left-1/2 -translate-x-1/2'}`}>
+                                                {m.l}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                <div className="absolute top-0.5 w-1 h-3.5 bg-black rounded-full shadow z-10" style={{ left: `${pos}%` }}>
+                                    <div className={`absolute top-full mt-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none ${pos > 85 ? 'right-0' : pos < 15 ? 'left-0' : 'left-1/2 -translate-x-1/2'}`}>
                                         실측값: {val.toFixed(2)}%
                                     </div>
                                 </div>
@@ -63,47 +69,37 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                                 {Math.round((authDetails.viewScore / 20) * 100)}% (+{authDetails.viewScore}/20점)
                             </span>
                         ) : (
-                            <div className="relative">
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); setShowInfo(!showInfo); }}
-                                    className="text-gray-400 font-medium flex items-center gap-1 hover:text-gray-600 transition-colors"
-                                >
-                                    - (측정 불가)
-                                    <Info className="w-3.5 h-3.5" />
-                                </button>
-                                
-                                {showInfo && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-slate-800 text-white text-[11px] rounded-lg shadow-2xl z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                        <div className="flex justify-between items-start gap-2 mb-1">
-                                            <p className="leading-relaxed font-normal flex-1">
-                                                릴스 게시물이 없어 조회수 비율을 측정할 수 없습니다. 이는 페널티가 아니며, 댓글 비율만으로 신뢰도를 평가합니다.
-                                            </p>
-                                            <button onClick={(e) => { e.stopPropagation(); setShowInfo(false); }} className="text-slate-400 hover:text-white shrink-0">
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                        <div className="absolute -bottom-1 right-3 w-2 h-2 bg-slate-800 rotate-45"></div>
-                                    </div>
-                                )}
-                            </div>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setShowInfo(true); }}
+                                className="text-gray-400 font-medium flex items-center gap-1 hover:text-gray-600 transition-colors"
+                            >
+                                - (측정 불가)
+                                <Info className="w-3.5 h-3.5" />
+                            </button>
                         )}
                     </div>
                     {authDetails?.viewScore !== null && (() => {
                         const val = authDetails.viewRatio;
                         const markers = [{ v: 0.01, l: '적정' }, { v: 0.02, l: '우수' }, { v: 0.03, l: '최우수' }];
                         const maxVal = Math.max(val, 0.045);
+                        const pos = Math.min(100, (val / maxVal) * 100);
                         const getPos = (v: number) => Math.min(100, (v / maxVal) * 100);
 
                         return (
                             <div className="relative h-4 select-none group/bar">
                                 <div className="absolute top-1.5 inset-x-0 h-1.5 bg-gradient-to-r from-red-100 via-yellow-100 to-green-100 rounded-full"></div>
-                                {markers.map((m) => (
-                                    <div key={m.l} className="absolute top-1.5 w-px h-1.5 bg-gray-300" style={{ left: `${getPos(m.v)}%` }}>
-                                            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[6px] text-gray-400 whitespace-nowrap">{m.l}</div>
-                                    </div>
-                                ))}
-                                <div className="absolute top-0.5 w-1 h-3.5 bg-black rounded-full shadow z-10" style={{ left: `${getPos(val)}%` }}>
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
+                                {markers.map((m) => {
+                                    const mPos = getPos(m.v);
+                                    return (
+                                        <div key={m.l} className="absolute top-1.5 w-px h-1.5 bg-gray-300" style={{ left: `${mPos}%` }}>
+                                            <div className={`absolute top-2 text-[6px] text-gray-400 whitespace-nowrap ${mPos > 85 ? 'right-0 translate-x-0' : mPos < 15 ? 'left-0 translate-x-0' : 'left-1/2 -translate-x-1/2'}`}>
+                                                {m.l}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                <div className="absolute top-0.5 w-1 h-3.5 bg-black rounded-full shadow z-10" style={{ left: `${pos}%` }}>
+                                    <div className={`absolute top-full mt-1 px-1.5 py-0.5 bg-black text-white text-[8px] rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none ${pos > 85 ? 'right-0' : pos < 15 ? 'left-0' : 'left-1/2 -translate-x-1/2'}`}>
                                         실측값: {val.toFixed(3)}
                                     </div>
                                 </div>
@@ -144,6 +140,32 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                     )}
                 </div>
             </div>
+
+            {/* Info Overlay (Portal alternative - sibling of content to avoid clipping) */}
+            {showInfo && (
+                <div className="absolute inset-x-4 top-[20%] z-[100] p-4 bg-slate-900 text-white text-[11px] rounded-xl shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="flex justify-between items-start gap-4 mb-2">
+                        <h5 className="font-bold text-slate-200 flex items-center gap-1.5 text-xs">
+                            <Info className="w-4 h-4 text-blue-400" />
+                            측정 불가 안내
+                        </h5>
+                        <button onClick={(e) => { e.stopPropagation(); setShowInfo(false); }} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                            <X className="w-4 h-4 text-white/50" />
+                        </button>
+                    </div>
+                    <p className="leading-relaxed font-normal text-slate-300">
+                        릴스 게시물이 없어 조회수 비율을 측정할 수 없습니다. 이는 인플루언서의 페널티가 아니며, 시스템이 댓글 비율만으로 신뢰도를 공정하게 평가합니다.
+                    </p>
+                    <div className="mt-3 pt-3 border-t border-white/10 flex justify-end">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setShowInfo(false); }}
+                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg font-bold transition-colors shadow-sm"
+                        >
+                            확인
+                        </button>
+                    </div>
+                </div>
+            )}
             </div>
         </div>
     );
