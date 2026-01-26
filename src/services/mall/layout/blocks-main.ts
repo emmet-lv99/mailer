@@ -34,34 +34,38 @@ Structure:
   },
   
   /**
-   * HERO GRID - 에디토리얼 스타일 매거진 그리드
+   * HERO - 에디토리얼 스타일 매거진 그리드
    */
-  'hero-grid': {
-    id: 'hero-grid',
-    name: 'Hero Grid',
-    nameKo: '히어로 그리드',
+  'hero': {
+    id: 'hero',
+    name: 'Hero',
+    nameKo: '히어로',
     category: 'main',
-    description: 'Editorial hero with product grid links',
-    descriptionKo: '에디토리얼 히어로 + 제품 링크 그리드',
+    description: 'hero',
+    descriptionKo: '히어로',
     visualStructure: `
-┌───────────────┬───────────────┐
-│               │   [Small 1]   │
-│    [Hero]     ├───────────────┤
-│    Vertical   │   [Small 2]   │
-└───────────────┴───────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ [  Full Width Dark/Vibrant Background Container       ] │
+│ │                                                     │ │
+│ │   [   Bold Typography / Catchphrase (Left/Center) ] │ │
+│ │   [   Dynamic Person/Model Image (Right/Center)   ] │ │
+│ │                                                     │ │
+│ └─────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
 `,
     specifications: {
-      split: '60/40',
-      heroWidth: '768px'
+      width: '100%',
+      height: '600-700px',
+      contentWidth: '1280px'
     },
     promptTemplate: `
-HERO GRID - EDITORIAL MAGAZINE STYLE:
+HERO - HIGH IMPACT STUDIO STYLE:
 Layout:
-- Left (60%): Large vertical hero banner (768px wide).
-- Right (40%): 2×2 mini-grid of product category links or featured items.
-- Typography: Bold brutalist or elegant serif headings overlapping images.
+- Container: Full browser width background (Vibrant Color or Dark Mode).
+- Content Area: Max-width 1280px centered.
+- Composition: Dynamic layout with large model/person photography overlapping or next to bold typography.
 `,
-    useCases: ['에디토리얼 느낌 강조', '카테고리 퀵 서비스']
+    useCases: ['브랜드 느낌 강조', '이벤트 프로모션']
   }
 };
 

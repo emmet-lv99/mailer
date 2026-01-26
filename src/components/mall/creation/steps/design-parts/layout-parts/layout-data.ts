@@ -22,7 +22,7 @@ export const radiuses = [
   ];
   
   export const mainLayouts = [
-    { name: "Hero Grid (Standard)", value: "hero-grid", desc: "Classic banner with product grid" },
+    { name: "Hero Grid (Standard)", value: "hero", desc: "Classic banner with product grid" },
     { name: "Full Screen Scroll", value: "full-scroll", desc: "Immersive storytelling experience" },
     { name: "Carousel (Center)", value: "carousel-center", desc: "Swipeable banner with peek effect" },
   ];

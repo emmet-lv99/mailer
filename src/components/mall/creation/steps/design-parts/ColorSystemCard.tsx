@@ -41,15 +41,29 @@ export function ColorSystemCard({ colors, onColorChange }: ColorSystemCardProps)
                 {section.label}
               </Label>
               <div className="flex gap-2">
-                <div 
-                  className="w-10 h-10 rounded-xl border border-gray-100 shadow-inner flex-shrink-0" 
-                  style={{ backgroundColor: section.value }}
-                />
-                <Input 
-                  value={section.value} 
-                  onChange={(e) => onColorChange(section.path, e.target.value)}
-                  className="h-10 rounded-xl border-gray-100 text-[11px] font-mono bg-gray-50/30"
-                />
+                <div className="relative w-10 h-10 rounded-xl border border-gray-100 shadow-inner flex-shrink-0 overflow-hidden group cursor-pointer transition-transform active:scale-95">
+                  <div 
+                    className="absolute inset-0 z-10" 
+                    style={{ backgroundColor: section.value }} 
+                  />
+                  <input
+                    type="color"
+                    value={section.value}
+                    onChange={(e) => onColorChange(section.path, e.target.value)}
+                    className="absolute inset-0 w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-0 opacity-0 cursor-pointer"
+                  />
+                </div>
+                <div className="flex-1 relative">
+                  <Input 
+                    value={section.value} 
+                    onChange={(e) => onColorChange(section.path, e.target.value)}
+                    className="h-10 rounded-xl border-gray-100 text-[11px] font-mono bg-gray-50/30 uppercase pl-8"
+                  />
+                  <div 
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border border-gray-200"
+                    style={{ backgroundColor: section.value }}
+                  />
+                </div>
               </div>
             </div>
           ))}

@@ -28,6 +28,8 @@ interface MallState {
   selectedDesigns: Record<string, string>; // { 'MAIN_PC': 'base64...', ... }
   generationStatus: 'idle' | 'generating' | 'completed';
   refinedPrompts: Record<string, string>; // { 'MAIN_PC': 'Refined...', ... }
+  visualNarrative: string | null; // [NEW] The "8K Description" for the layout
+  generatedHtml: string | null; // [NEW] Full Code Generation state
 
   // Actions
   setProjectId: (id: string | null) => void;
@@ -43,6 +45,8 @@ interface MallState {
   selectDesign: (step: string, image: string) => void;
   setGenerationStatus: (status: 'idle' | 'generating' | 'completed') => void;
   setRefinedPrompt: (step: string, prompt: string) => void;
+  setVisualNarrative: (narrative: string) => void;
+  setGeneratedHtml: (html: string | null) => void;
   save: () => Promise<void>; 
   loadProject: (project: any) => void;
   resetAll: () => void;
@@ -72,6 +76,8 @@ export const useMallStore = create<MallState>((set, get) => ({
   selectedDesigns: {},
   generationStatus: 'idle',
   refinedPrompts: {},
+  visualNarrative: null,
+  generatedHtml: null,
 
   setProjectId: (id) => set({ projectId: id }),
   setStep: (step) => set({ currentStep: step }),
@@ -116,6 +122,9 @@ export const useMallStore = create<MallState>((set, get) => ({
   setRefinedPrompt: (step, prompt) => set((state) => ({
     refinedPrompts: { ...state.refinedPrompts, [step]: prompt }
   })),
+
+  setVisualNarrative: (narrative) => set({ visualNarrative: narrative }),
+  setGeneratedHtml: (html) => set({ generatedHtml: html }),
 
   // [NEW] Load existing project data
   loadProject: (project: any) => {

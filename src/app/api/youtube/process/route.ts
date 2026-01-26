@@ -123,7 +123,7 @@ export async function POST(req: Request) {
             // I will add YouTube Data API Key to Settings Page logic in next refactor.
             // For now, I'll assume the user might have put it in `.env.local` or I can read it from server env.
             // I'll check `.env` in `index.js`.
-            // `YOUTUBE_API_KEY=AIzaSyDMSY8Wc8mFneZG1oWIuKVgEtr0tkKCO7s`
+            // API Key removed for security
             // I can copy this to `.env.local` of the web app.
             
             // I will proactively read `YOUTUBE_API_KEY` from process.env (server side).

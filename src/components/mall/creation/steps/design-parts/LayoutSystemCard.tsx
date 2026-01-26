@@ -174,7 +174,7 @@ export function LayoutSystemCard({ layout, onLayoutChange }: LayoutSystemCardPro
       <CardHeader className="p-6 pb-2">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
           <Layout className="w-5 h-5 text-indigo-500" />
-          4. 페이지 레이아웃 세트
+          페이지 레이아웃 세트
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 pt-4 flex-1 space-y-8">

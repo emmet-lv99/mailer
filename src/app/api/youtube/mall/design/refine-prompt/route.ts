@@ -313,7 +313,7 @@ Treatment: Shadow ${spec.components.shadowIntensity}, Border ${spec.components.b
   private generateContentSection(spec: DesignSpec, layoutBlocks: any[], archetype?: any): string {
     const gridBlock = layoutBlocks.find(b => b.category === 'product-list' && ['grid-5', 'grid-4', 'grid-3', 'grid-2'].includes(b.type));
     const videoBlock = layoutBlocks.find(b => (b.category === 'shorts' || b.category === 'video-product') && ['feed-scroll', 'full-width-video', 'split-video', 'story-grid'].includes(b.type));
-    const mainBlock = layoutBlocks.find(b => (b.category === 'main' || b.category === 'detail') && ['carousel-center', 'hero-grid', 'product-hero'].includes(b.type));
+    const mainBlock = layoutBlocks.find(b => (b.category === 'main' || b.category === 'detail') && ['carousel-center', 'hero', 'product-hero'].includes(b.type));
     const headerBlock = layoutBlocks.find(b => b.category === 'header' || b.category === 'top-banner');
     
     let contentSectionValue = '';

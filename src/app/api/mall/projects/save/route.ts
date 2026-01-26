@@ -33,13 +33,30 @@ export async function POST(request: Request) {
 
     let result;
     if (id) {
-       // Update
-       result = await supabase
+       // Try Update first
+       const updateResponse = await supabase
          .from("mall_projects")
          .update(projectData)
          .eq("id", id)
-         .select()
-         .single();
+         .select();
+
+       if (updateResponse.error) {
+           return NextResponse.json({ error: updateResponse.error.message }, { status: 500 });
+       }
+
+       // If update succeeded and returned data
+       if (updateResponse.data && updateResponse.data.length > 0) {
+           result = { data: updateResponse.data[0], error: null };
+       } else {
+           // ID provided but not found (deleted? invalid?) -> Treat as new Insert
+           // But we should not reuse the old ID if it was auto-generated. Let Supabase generate new one.
+           console.warn(`Project ID ${id} not found. Creating new project.`);
+           result = await supabase
+             .from("mall_projects")
+             .insert([projectData])
+             .select()
+             .single();
+       }
     } else {
        // Insert
        result = await supabase

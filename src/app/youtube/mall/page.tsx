@@ -2,10 +2,9 @@
 
 import { StepIndicator } from "@/components/mall/creation/step-indicator";
 import { ChannelAnalysisStep } from "@/components/mall/creation/steps/channel-analysis-step";
-import { DesignSystemStep } from "@/components/mall/creation/steps/design-system-step"; // [New]
-import { MockupStyleStep } from "@/components/mall/creation/steps/mockup-style-step";
-import { PromptStep } from "@/components/mall/creation/steps/prompt-step";
-import { ReferenceStep } from "@/components/mall/creation/steps/reference-step";
+import { LayoutDesignStep } from "@/components/mall/creation/steps/layout-design-step"; // Step 3 [NEW]
+import { LayoutStep } from "@/components/mall/creation/steps/layout-step"; // Step 2
+import { PromptStep } from "@/components/mall/creation/steps/prompt-step"; // Step 4
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -24,7 +23,7 @@ export default function MallPage() {
     }
   }, [projectId]);
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 5));
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 4));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   return (
@@ -33,10 +32,9 @@ export default function MallPage() {
 
       <div className="mt-8">
         {currentStep === 1 && <ChannelAnalysisStep onNext={nextStep} />}
-        {currentStep === 2 && <DesignSystemStep onNext={nextStep} onBack={prevStep} />}
-        {currentStep === 3 && <MockupStyleStep onNext={nextStep} onBack={prevStep} />}
-        {currentStep === 4 && <ReferenceStep onNext={nextStep} onBack={prevStep} />}
-        {currentStep === 5 && <PromptStep onNext={nextStep} onBack={prevStep} />}
+        {currentStep === 2 && <LayoutStep onNext={nextStep} onBack={prevStep} />}
+        {currentStep === 3 && <LayoutDesignStep onNext={nextStep} onBack={prevStep} />}
+        {currentStep === 4 && <PromptStep onNext={nextStep} onBack={prevStep} />}
       </div>
     </div>
   );
