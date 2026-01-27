@@ -16,56 +16,9 @@ import {
     isUserActive
 } from "@/services/instagram/utils";
 import { Check, Loader2, X } from "lucide-react";
+import { AnalysisResult } from "../../types";
 import { MetricsBadges } from "./MetricsBadges";
 import { PostsGrid } from "./PostsGrid";
-
-interface AnalysisResult {
-  username: string;
-  success: boolean;
-  error?: string;
-  analysis?: {
-    summary?: string;
-    mood_keywords?: string[];
-
-    // Dual Role Structure
-    investmentAnalyst?: {
-      tier: string;
-      totalScore: number;
-      decision: string;
-      estimatedValue: string;
-      expectedROI: string;
-      currentAssessment: {
-        strengths: string[];
-        weaknesses: string[];
-        risks: string[];
-        brutalVerdict: string;
-      };
-    };
-    influencerExpert?: {
-      grade: string;
-      totalScore: number;
-      recommendation: string;
-      estimatedValueIn6Months: string;
-      growthAnalysis: {
-        followerGrowthRate: string;
-        engagementTrend: string;
-        contentVirality: string;
-      };
-      futureAssessment: {
-        growthTrajectory: string;
-        hiddenStrengths: string[];
-        potentialRisks: string[];
-        strategicAdvice: string[];
-        expertVerdict: string;
-      };
-    };
-    comparisonSummary?: {
-      agreement: boolean;
-      keyDifference: string;
-      recommendation: string;
-    };
-  };
-}
 
 interface AnalysisResultCardProps {
   result: AnalysisResult;
@@ -131,66 +84,8 @@ export function AnalysisResultCard({
   const { analysis } = result;
   if (!analysis) return null;
 
-  // --- Start Adapter Logic ---
-  // If the standard keys are missing, try to adapt from the "Korean Schema" (심사 결과)
-  let { investmentAnalyst: investment, influencerExpert: expert, comparisonSummary: comparison } = analysis;
-
-  if (!investment && !expert && (analysis as any)["심사 결과"]) {
-    const raw = (analysis as any)["심사 결과"];
-    const evaluation = raw["투자 종합 평가"] || {};
-    const consistency = raw["채널 일관성 분석"] || {};
-    const imageAnalysis = raw["이미지 분석"] || {};
-    const quantitative = raw["정량 분석"] || {};
-    const campaign = raw["캠페인 적합도"] || {};
-
-    // 1. Map Investment Analyst
-    investment = {
-      tier: raw["티어"] || raw["등급"] || "Unknown",
-      totalScore: parseInt(evaluation["총점"] || "0"),
-      decision: evaluation["등급"] || "판단 유보",
-      estimatedValue: "산정 불가", 
-      expectedROI: "산정 불가",   
-      currentAssessment: {
-        strengths: evaluation["강점"] ? evaluation["강점"].split(/,\s*/) : [],
-        weaknesses: evaluation["약점"] ? evaluation["약점"].split(/,\s*/) : [],
-        risks: evaluation["리스크"] ? evaluation["리스크"].split(/,\s*/) : [],
-        brutalVerdict: evaluation["종합 의견"] || raw["종합 의견"] || "의견 없음"
-      }
-    };
-
-    // 2. Map Influencer Expert (Derived from Consistency & Image Analysis)
-    expert = {
-      grade: consistency["등급"] || "미정",
-      totalScore: parseInt(consistency["총점"] || "0"),
-      recommendation: consistency["톤앤매너 일관성"] || "컨설팅 필요",
-      estimatedValueIn6Months: "데이터 부족",
-      growthAnalysis: {
-        followerGrowthRate: quantitative["활동 상태"] || "분석 불가",
-        engagementTrend: quantitative["Engagement Rate"] || "분석 불가",
-        contentVirality: consistency["업로드 패턴"] || "분석 불가"
-      },
-      futureAssessment: {
-        growthTrajectory: "현 상태 유지 또는 완만한 성장 예상",
-        hiddenStrengths: [consistency["주제 일관성"], consistency["톤앤매너 일관성"]].filter(Boolean),
-        potentialRisks: [imageAnalysis["브랜드 안전"], imageAnalysis["일관성"]].filter(Boolean).map(s => `리스크: ${s}`),
-        strategicAdvice: [
-           imageAnalysis["콘텐츠 품질"], 
-           imageAnalysis["PPL 스킬"],
-           `협찬 적합도: ${campaign["협찬"] || '미정'}`,
-           `공동구매 적합도: ${campaign["공동구매"] || '미정'}`
-        ].filter(Boolean),
-        expertVerdict: imageAnalysis["콘텐츠 품질"] || consistency["종합 의견"] || "이미지와 채널 일관성을 바탕으로 한 전문가 의견입니다."
-      }
-    };
-
-    // 3. Map Comparison Summary (Derived)
-    comparison = {
-      agreement: true, // Single source, so strictly "agreed"
-      keyDifference: "단일 프롬프트 분석 결과입니다. 투자 심사역과 전문가 의견이 통합되어 있습니다.",
-      recommendation: evaluation["종합 의견"] || "신중한 검토가 필요합니다."
-    };
-  }
-  // --- End Adapter Logic ---
+  // Destructure with default empty objects to prevent crashes if something slips
+  const { investmentAnalyst: investment, influencerExpert: expert, comparisonSummary: comparison } = analysis;
 
   const reelsPosts = originalUser?.recent_posts?.filter((p: any) => p.productType === 'clips') || [];
 
@@ -262,6 +157,7 @@ export function AnalysisResultCard({
             <TabsContent value="investment" className="p-6 m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {investment ? (
                     <>
+                        {/* Key Metrics Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="p-4 bg-slate-50 border rounded-lg">
                                 <div className="text-xs text-muted-foreground font-medium mb-1">투자 등급</div>
@@ -271,16 +167,14 @@ export function AnalysisResultCard({
                                 <div className="text-xs text-muted-foreground font-medium mb-1">총점</div>
                                 <div className="text-2xl font-black text-slate-800">{investment.totalScore}점</div>
                             </div>
-                            <div className="p-4 bg-slate-50 border rounded-lg">
-                                <div className="text-xs text-muted-foreground font-medium mb-1">적정 단가</div>
-                                <div className="text-xl font-bold text-slate-800">{investment.estimatedValue}</div>
-                            </div>
-                            <div className="p-4 bg-slate-50 border rounded-lg">
-                                <div className="text-xs text-muted-foreground font-medium mb-1">예상 ROI</div>
-                                <div className="text-xl font-bold text-blue-600">{investment.expectedROI}</div>
+                            <div className="p-4 bg-slate-50 border rounded-lg md:col-span-2">
+                                <div className="text-xs text-muted-foreground font-medium mb-1">예상 가치 / ROI</div>
+                                <div className="text-sm font-bold text-slate-800">{investment.estimatedValue}</div>
+                                <div className="text-xs text-slate-500 mt-1">{investment.expectedROI}</div>
                             </div>
                         </div>
 
+                        {/* Brutal Verdict */}
                         <div className="space-y-3">
                             <h4 className="font-bold text-sm bg-red-50 text-red-800 px-3 py-1.5 rounded inline-block">💀 Brutal Verdict (냉혹한 판결)</h4>
                             <div className="text-sm leading-relaxed p-4 bg-red-50/50 border border-red-100 rounded-lg text-red-900 font-medium">
@@ -288,10 +182,11 @@ export function AnalysisResultCard({
                             </div>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
+                        {/* Detailed Assessment */}
+                        <div className="grid md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <div className="font-semibold text-sm flex items-center gap-2 text-green-700">
-                                    <Check className="w-4 h-4" /> 강점 (Strengths)
+                                    <Check className="w-4 h-4" />강점 (Strengths)
                                 </div>
                                 <ul className="text-sm space-y-1 list-disc pl-4 text-muted-foreground">
                                     {investment.currentAssessment.strengths.length > 0 ? (
@@ -302,11 +197,19 @@ export function AnalysisResultCard({
                                 </ul>
                             </div>
                             <div className="space-y-2">
-                                <div className="font-semibold text-sm flex items-center gap-2 text-red-700">
+                                <div className="font-semibold text-sm flex items-center gap-2 text-orange-700">
                                     <X className="w-4 h-4" /> 약점 (Weaknesses)
                                 </div>
                                 <ul className="text-sm space-y-1 list-disc pl-4 text-muted-foreground">
                                     {investment.currentAssessment.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                                </ul>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="font-semibold text-sm flex items-center gap-2 text-red-700">
+                                    <span className="text-xs">⚠️</span> 리스크 (Risks)
+                                </div>
+                                <ul className="text-sm space-y-1 list-disc pl-4 text-muted-foreground">
+                                    {investment.currentAssessment.risks.map((r, i) => <li key={i}>{r}</li>)}
                                 </ul>
                             </div>
                         </div>
@@ -322,36 +225,63 @@ export function AnalysisResultCard({
                     <>
                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                                <div className="text-xs text-indigo-600 font-medium mb-1">성장 가능성</div>
+                                <div className="text-xs text-indigo-600 font-medium mb-1">성장 등급</div>
                                 <div className="text-xl font-bold text-indigo-900">{expert.grade}</div>
                             </div>
                              <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
                                 <div className="text-xs text-indigo-600 font-medium mb-1">육성 점수</div>
                                 <div className="text-xl font-bold text-indigo-900">{expert.totalScore}점</div>
                             </div>
-                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg md:col-span-2">
                                 <div className="text-xs text-indigo-600 font-medium mb-1">전문가 추천</div>
-                                <div className="text-lg font-bold text-indigo-900">{expert.recommendation}</div>
-                            </div>
-                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                                <div className="text-xs text-indigo-600 font-medium mb-1">6개월 후 가치</div>
-                                <div className="text-lg font-bold text-indigo-900">{expert.estimatedValueIn6Months}</div>
+                                <div className="text-sm font-bold text-indigo-900">{expert.recommendation}</div>
                             </div>
                         </div>
+
+                         {/* Growth Analysis Grid */}
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {Object.entries(expert.growthAnalysis || {}).map(([key, value]) => (
+                                <div key={key} className="p-3 bg-white border rounded text-xs">
+                                    <div className="text-muted-foreground font-semibold mb-1 uppercase tracking-wider">
+                                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                                    </div>
+                                    <div className="text-indigo-900 font-medium break-keep">{value}</div>
+                                </div>
+                            ))}
+                         </div>
 
                          <div className="space-y-3">
                             <h4 className="font-bold text-sm bg-indigo-100 text-indigo-800 px-3 py-1.5 rounded inline-block">🌱 Expert Verdict (육성 의견)</h4>
                             <div className="text-sm leading-relaxed p-4 bg-indigo-50/50 border border-indigo-100 rounded-lg text-indigo-900 font-medium">
                                 {expert.futureAssessment.expertVerdict}
+                                <div className="mt-2 pt-2 border-t border-indigo-200/50 text-indigo-800 text-xs">
+                                   <strong>성장 궤적:</strong> {expert.futureAssessment.growthTrajectory}
+                                </div>
                             </div>
                         </div>
 
+                         {/* Hidden Strengths & Risks */}
+                         <div className="grid md:grid-cols-2 gap-4">
+                            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                                <h5 className="text-xs font-bold text-blue-700 mb-2 uppercase">잠재력 (Hidden Strengths)</h5>
+                                <ul className="text-xs space-y-1 list-disc pl-4 text-blue-900">
+                                    {expert.futureAssessment.hiddenStrengths.map((s, i) => <li key={i}>{s}</li>)}
+                                </ul>
+                            </div>
+                            <div className="bg-orange-50/50 p-4 rounded-lg border border-orange-100">
+                                <h5 className="text-xs font-bold text-orange-700 mb-2 uppercase">잠재 리스크 (Potential Risks)</h5>
+                                <ul className="text-xs space-y-1 list-disc pl-4 text-orange-900">
+                                    {expert.futureAssessment.potentialRisks.map((r, i) => <li key={i}>{r}</li>)}
+                                </ul>
+                            </div>
+                         </div>
+
                          <div className="space-y-3">
                             <h4 className="font-bold text-sm text-foreground">💡 전략적 조언 (Strategic Advice)</h4>
-                            <div className="grid md:grid-cols-2 gap-3">
+                             <div className="grid md:grid-cols-2 gap-3">
                                 {expert.futureAssessment.strategicAdvice.map((advice, i) => (
-                                    <div key={i} className="text-sm p-3 bg-slate-50 border rounded text-slate-700 flex gap-2">
-                                        <span className="text-indigo-500 font-bold">{i+1}.</span>
+                                    <div key={i} className="text-sm p-3 border rounded flex gap-2 bg-slate-50 border-slate-200 text-slate-700">
+                                        <span className="text-indigo-500 font-bold shrink-0">{i+1}.</span>
                                         {advice}
                                     </div>
                                 ))}
@@ -363,7 +293,7 @@ export function AnalysisResultCard({
                 )}
              </TabsContent>
 
-             {/* 3. Verdict View */}
+            {/* 3. Verdict View */}
              <TabsContent value="verdict" className="p-6 m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {comparison ? (
                     <div className="space-y-6">

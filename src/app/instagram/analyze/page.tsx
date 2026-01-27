@@ -7,8 +7,8 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PostLightbox } from "../components/PostLightbox";
 import { AnalysisResultCard } from "./components/AnalysisResultCard";
-import { PostLightbox } from "./components/PostLightbox";
 
 export default function InstagramAnalyzePage() {
     const { results, selectedUsernames, analysisResults, setAnalysisResults, removeAnalysisResult, updateUserStatus, searchMode } = useInstagramStore();
