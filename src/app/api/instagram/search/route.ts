@@ -45,9 +45,9 @@ export async function POST(req: Request) {
     if (process.env.APIFY_API_TOKEN) {
         try {
             // [TIMEOUT PROTECTION] Wrap Apify logic in a race with a timeout
-            // Vercel/Gateway usually times out at 60s, so we cut off at 55s to return JSON safely
-            const TIMEOUT_MS = 55_000;
-            
+            // Standard Vercel limit is 60s, so using 60s as a hard cap.
+            const TIMEOUT_MS = 60_000;
+
             const apifyTask = async () => {
                 // TARGET MODE: Skip Discovery, Direct Lookup
                 if (mode === 'target') {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
                     
                     const instaUsername = process.env.INSTAGRAM_USERNAME;
                     const instaPassword = process.env.INSTAGRAM_PASSWORD;
-                    
+
                     const discoveryInput = {
                         hashtags: [query],
                         maxPostsPerHashtag: tagLimit * 1, // Use Separate Tag Limit
@@ -115,25 +115,46 @@ export async function POST(req: Request) {
                             loginPassword: instaPassword,
                         };
 
-                        console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links (Parallel Details + Posts)`);
+                        console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links`);
                         
-                        // Run both Details (metadata) and Posts (30 posts) in parallel
-                        // [OPTIMIZATION] Only run parallel if we have few targets or it's target mode
-                        // For tag mode with many targets, we might want to be careful, but user needs accurate data.
-                        // We rely on timeout to catch if it's too slow.
-                        const [detailRun, postsRun] = await Promise.all([
-                            client.actor("apify/instagram-scraper").call({
+                        let detailRun, postsRun;
+
+                        // [STABILIZATION] Logic:
+                        // If multiple targets (Tag Mode), run sequentially to reduce load/blocking risk.
+                        // If single target (ID Mode), run parallel for speed.
+                        if (directUrls.length > 1) {
+                            console.log(`[Stabilization] Running Step 2 sequentially for ${directUrls.length} targets.`);
+                            
+                            // 1. Get Details
+                            detailRun = await client.actor("apify/instagram-scraper").call({
                                 ...commonInput,
                                 resultsType: "details",
                                 resultsLimit: directUrls.length,
-                            }),
-                            client.actor("apify/instagram-scraper").call({
+                            });
+                            
+                            // 2. Get Posts
+                            postsRun = await client.actor("apify/instagram-scraper").call({
                                 ...commonInput,
                                 resultsType: "posts",
                                 resultsLimit: directUrls.length * postLimit,
                                 maxPosts: postLimit,
-                            })
-                        ]);
+                            });
+                        } else {
+                            console.log(`[Performance] Running Step 2 in parallel for single target.`);
+                            [detailRun, postsRun] = await Promise.all([
+                                client.actor("apify/instagram-scraper").call({
+                                    ...commonInput,
+                                    resultsType: "details",
+                                    resultsLimit: directUrls.length,
+                                }),
+                                client.actor("apify/instagram-scraper").call({
+                                    ...commonInput,
+                                    resultsType: "posts",
+                                    resultsLimit: directUrls.length * postLimit,
+                                    maxPosts: postLimit,
+                                })
+                            ]);
+                        }
 
                         const [detailDataset, postsDataset] = await Promise.all([
                             client.dataset(detailRun.defaultDatasetId).listItems(),
@@ -189,12 +210,12 @@ export async function POST(req: Request) {
 
                         console.log(`[Step 2] Fetched and merged ${detailItems.length} detailed profiles.`);
                     } catch (e) {
-                        console.error("[Step 2] Profile parallel scrape failed:", e);
+                        console.error("[Step 2] Profile scraper failed:", e);
                         throw e; // Re-throw to be caught by outer race or catch
                     }
                 }
             };
-
+            
             // Execute with Timeout
             await Promise.race([
                 apifyTask(),
@@ -202,11 +223,9 @@ export async function POST(req: Request) {
             ]);
 
         } catch (e: any) {
-            console.error("Apify execution failed or timed out:", e);
-            // Don't kill the request, just log and proceed with whatever (empty) data we might have
-            // Or if it's a timeout, we return an error response
+             console.error("Apify execution failed or timed out:", e);
              if (e.message.includes("Timeout")) {
-                 return NextResponse.json({ error: "Search timed out. Please try again or search for a specific user." }, { status: 504 });
+                 return NextResponse.json({ error: "Search timed out. Instagram might be blocking requests. Please try again later or reduce the limit." }, { status: 504 });
              }
         }
     } else {
