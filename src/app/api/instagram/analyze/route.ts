@@ -243,7 +243,7 @@ export async function POST(req: Request) {
         const allPosts = (user.recent_posts || []).slice(0, 30);
         const postsForTrend = allPosts.map((post: any) => ({
           likes: post.likes || 0,
-          comments: post.commentsCount || 0,
+          comments: post.comments || 0, // [FIX] Match field name from search/route.ts
           timestamp: post.timestamp || ''
         }));
         const trendMetrics = calculateERTrend(postsForTrend, followers);

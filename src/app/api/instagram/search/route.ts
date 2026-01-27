@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     } catch (e) {
         console.warn("Failed to fetch settings, using default postLimit 10", e);
     }
+    console.log(`[Instagram Search] Using postLimit: ${postLimit} (트렌드 분석용 최소 30개 필요)`);
 
     // --- REAL EXECUTION (Only if token exists) ---
     if (process.env.APIFY_API_TOKEN) {
@@ -83,21 +84,93 @@ export async function POST(req: Request) {
                     // Method A: directUrls (Most reliable for profile scraping)
                     const directUrls = targetUsernames.map(u => `https://www.instagram.com/${u}/`);
                     
-                    const detailInput = {
-                        directUrls: directUrls,
-                        resultsType: "details",
-                        resultsLimit: directUrls.length, // Fetch all candidates including buffer
-                        searchLimit: 1,
-                        commentsPerPost: 20, // [NEW] Fetch top 20 comments per post
-                    };
+                    // Instagram login credentials from ENV (enables 30+ posts scraping)
+                    const instaUsername = process.env.INSTAGRAM_USERNAME;
+                    const instaPassword = process.env.INSTAGRAM_PASSWORD;
                     
-                    console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links`);
-                    const detailRun = await client.actor("apify/instagram-scraper").call(detailInput);
-                    const detailDataset = await client.dataset(detailRun.defaultDatasetId).listItems();
-                    detailItems = detailDataset.items;
-                    console.log(`[Step 2] Fetched ${detailItems.length} detailed profiles.`);
+                    // Prepare parallel actor inputs
+                    const commonInput = {
+                        directUrls: directUrls,
+                        searchLimit: 1,
+                        commentsPerPost: 20,
+                        username_login: instaUsername,
+                        password_login: instaPassword,
+                        loginUsername: instaUsername,
+                        loginPassword: instaPassword,
+                    };
+
+                    console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links (Parallel Details + Posts)`);
+                    
+                    // Run both Details (metadata) and Posts (30 posts) in parallel
+                    const [detailRun, postsRun] = await Promise.all([
+                        client.actor("apify/instagram-scraper").call({
+                            ...commonInput,
+                            resultsType: "details",
+                            resultsLimit: directUrls.length,
+                        }),
+                        client.actor("apify/instagram-scraper").call({
+                            ...commonInput,
+                            resultsType: "posts",
+                            resultsLimit: directUrls.length * postLimit,
+                            maxPosts: postLimit,
+                        })
+                    ]);
+
+                    const [detailDataset, postsDataset] = await Promise.all([
+                        client.dataset(detailRun.defaultDatasetId).listItems(),
+                        client.dataset(postsRun.defaultDatasetId).listItems()
+                    ]);
+                    
+                    // 1. Map profile info from Detail items (normalize username to lowercase)
+                    const profileInfoMap = new Map<string, any>();
+                    for (const item of (detailDataset.items as any[])) {
+                        const username = (item.username as string)?.toLowerCase();
+                        if (username) {
+                            profileInfoMap.set(username, item);
+                        }
+                    }
+
+                    // 2. Aggregate posts from Posts items (normalize username to lowercase)
+                    const aggregatedUsers = new Map<string, any>();
+                    for (const post of (postsDataset.items as any[])) {
+                        const originalUsername = (post.ownerUsername || post.username) as string;
+                        if (!originalUsername) continue;
+                        const username = originalUsername.toLowerCase();
+                        
+                        if (!aggregatedUsers.has(username)) {
+                            // Get rich metadata from the Profile Scrape if available
+                            const profileInfo = profileInfoMap.get(username) || {};
+                            const owner = post.owner || {};
+
+                            aggregatedUsers.set(username, {
+                                username: originalUsername, // Keep original casing for display
+                                fullName: profileInfo.fullName || post.ownerFullName || owner.fullName || post.fullName || "",
+                                followersCount: profileInfo.followersCount || post.ownerFollowersCount || owner.followersCount || owner.edge_followed_by?.count || 0,
+                                biography: profileInfo.biography || post.ownerBiography || owner.biography || "",
+                                profilePicUrl: profileInfo.profilePicUrl || post.ownerProfilePicUrl || owner.profilePicUrl || post.profilePicUrl || "",
+                                postsCount: profileInfo.postsCount || post.ownerPostsCount || owner.postsCount || 0,
+                                latestPosts: []
+                            });
+                        }
+                        
+                        const userData = aggregatedUsers.get(username);
+                        if (userData) {
+                            userData.latestPosts.push(post);
+                        }
+                    }
+                    
+                    detailItems = Array.from(aggregatedUsers.values());
+                    
+                    // 3. Fallback: If some users were found in details but not posts, add them
+                    for (const [username, profile] of profileInfoMap) {
+                        if (!aggregatedUsers.has(username)) {
+                            detailItems.push(profile);
+                        }
+                    }
+
+                    console.log(`[Step 2] Fetched and merged ${detailItems.length} detailed profiles.`);
                 } catch (e) {
-                    console.error("[Step 2] Profile scrape failed, using fallback:", e);
+                    console.error("[Step 2] Profile parallel scrape failed:", e);
                 }
             }
         } catch (e) {
@@ -116,6 +189,7 @@ export async function POST(req: Request) {
             if (!username) continue; // Skip invalid items
 
             const latestPosts = item.latestPosts || [];
+            console.log(`[Posts Count] ${username}: Apify returned ${latestPosts.length} posts, using ${Math.min(latestPosts.length, postLimit)} for trend analysis`);
             
             const recent_posts = latestPosts.slice(0, postLimit).map((post: any) => ({
                 id: post.id || "",
@@ -136,12 +210,12 @@ export async function POST(req: Request) {
             
             results.push({
                 username: username,
-                full_name: item.fullName || "",
-                followers_count: item.followersCount || 0,
+                full_name: item.fullName || item.full_name || "",
+                followers_count: item.followersCount || item.followers_count || 0,
                 biography: item.biography || "",
-                profile_pic_url: item.profilePicUrl || "",
+                profile_pic_url: item.profilePicUrl || item.profile_pic_url || "",
                 recent_posts: recent_posts,
-                posts_count: item.postsCount || 0,
+                posts_count: item.postsCount || item.posts_count || 0,
                 status: 'todo'
             });
         }
