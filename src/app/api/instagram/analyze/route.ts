@@ -1,4 +1,4 @@
-import { BrutalUserPromptParams } from "@/app/instagram/types";
+import { BrutalUserPromptParams, TrendMetrics } from "@/app/instagram/types";
 import genAI from "@/lib/gemini";
 import { BRUTAL_ANALYST_SYSTEM_PROMPT } from "@/lib/prompts/brutal-analyst";
 import { INSTAGRAM_ANALYSIS_SCHEMA } from "@/lib/schemas/analysis";
@@ -16,8 +16,93 @@ import {
 } from "@/services/instagram/utils";
 import { NextResponse } from "next/server";
 
+// ------------------------------------------------------------------
+// Trend Analysis Functions (30-post based)
+// ------------------------------------------------------------------
+
+interface PostForTrend {
+  likes: number;
+  comments: number;
+  timestamp: string;
+}
+
+function calculateERTrend(posts: PostForTrend[], followers: number): TrendMetrics | null {
+  console.log(`[TrendMetrics] Calculating for ${posts.length} posts, followers: ${followers}`);
+  
+  if (posts.length < 10) {
+    // 최소 10개 게시물 필요
+    console.log(`[TrendMetrics] Not enough posts (${posts.length} < 10)`);
+    return null;
+  }
+
+  // 3개 구간으로 분할 (최신순 정렬 가정)
+  const recentPosts = posts.slice(0, Math.min(10, posts.length));
+  const middlePosts = posts.slice(10, 20);
+  const oldestPosts = posts.slice(20, 30);
+
+  // 구간별 ER 계산
+  const calcPeriodMetrics = (periodPosts: PostForTrend[]) => {
+    if (periodPosts.length === 0) return { er: 0, avgLikes: 0, avgComments: 0 };
+    const totalLikes = periodPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
+    const totalComments = periodPosts.reduce((sum, p) => sum + (p.comments || 0), 0);
+    const avgLikes = totalLikes / periodPosts.length;
+    const avgComments = totalComments / periodPosts.length;
+    const er = followers > 0 ? ((avgLikes + avgComments) / followers) * 100 : 0;
+    return { er, avgLikes, avgComments };
+  };
+
+  const recent = calcPeriodMetrics(recentPosts);
+  const middle = calcPeriodMetrics(middlePosts);
+  const oldest = calcPeriodMetrics(oldestPosts);
+
+  // ER 추세 계산 (최근 vs 중간+이전 평균)
+  const previousAvgER = middlePosts.length > 0 
+    ? (middle.er + (oldestPosts.length > 0 ? oldest.er : middle.er)) / (oldestPosts.length > 0 ? 2 : 1)
+    : 0;
+  
+  const erChangePercent = previousAvgER > 0 
+    ? ((recent.er - previousAvgER) / previousAvgER) * 100 
+    : 0;
+
+  // 추세 판정
+  let erTrend: 'rising' | 'stable' | 'declining';
+  if (erChangePercent > 15) {
+    erTrend = 'rising';
+  } else if (erChangePercent < -15) {
+    erTrend = 'declining';
+  } else {
+    erTrend = 'stable';
+  }
+
+  // 평균 업로드 주기 계산
+  let avgUploadFrequency = 0;
+  if (posts.length >= 2) {
+    const timestamps = posts
+      .map(p => new Date(p.timestamp).getTime())
+      .filter(t => !isNaN(t))
+      .sort((a, b) => b - a); // 최신순
+    
+    if (timestamps.length >= 2) {
+      const totalDays = (timestamps[0] - timestamps[timestamps.length - 1]) / (1000 * 60 * 60 * 24);
+      avgUploadFrequency = Math.round(totalDays / (timestamps.length - 1));
+    }
+  }
+
+  return {
+    erTrend,
+    erChangePercent: Math.round(erChangePercent * 10) / 10,
+    avgUploadFrequency,
+    totalPosts: posts.length,
+    periodComparison: {
+      recent: { er: Math.round(recent.er * 100) / 100, avgLikes: Math.round(recent.avgLikes), avgComments: Math.round(recent.avgComments) },
+      middle: { er: Math.round(middle.er * 100) / 100, avgLikes: Math.round(middle.avgLikes), avgComments: Math.round(middle.avgComments) },
+      oldest: { er: Math.round(oldest.er * 100) / 100, avgLikes: Math.round(oldest.avgLikes), avgComments: Math.round(oldest.avgComments) }
+    }
+  };
+}
+
 function buildBrutalUserPrompt(params: BrutalUserPromptParams): string {
-  const { username, fullName, biography, followers, metrics, postsData } = params;
+  const { username, fullName, biography, followers, metrics, trendMetrics, postsData } = params;
   
   // 게시글 텍스트 구성
   const postsText = postsData.map((post, i) => {
@@ -35,6 +120,17 @@ function buildBrutalUserPrompt(params: BrutalUserPromptParams): string {
 댓글 샘플:
 ${commentsText || '(댓글 없음)'}`;
   }).join('\n\n---\n');
+
+  // 트렌드 분석 섹션 (30개 게시물 기반)
+  const trendText = trendMetrics ? `
+**트렌드 분석 (30개 게시물 기반):**
+- ER 추세: ${trendMetrics.erTrend === 'rising' ? '📈 상승' : trendMetrics.erTrend === 'declining' ? '📉 하락' : '➡️ 유지'} (${trendMetrics.erChangePercent > 0 ? '+' : ''}${trendMetrics.erChangePercent}%)
+- 구간별 ER:
+  - 최근 10개: ${trendMetrics.periodComparison.recent.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.recent.avgLikes}개)
+  - 중간 10개: ${trendMetrics.periodComparison.middle.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.middle.avgLikes}개)
+  - 이전 10개: ${trendMetrics.periodComparison.oldest.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.oldest.avgLikes}개)
+- 평균 업로드 주기: ${trendMetrics.avgUploadFrequency}일
+` : '';
 
   // 최적화된 프롬프트 (Data Only)
   return `## 투자심사 대상 인플루언서
@@ -54,13 +150,13 @@ ${commentsText || '(댓글 없음)'}`;
 - 활동 상태: ${metrics.isActive ? '활성' : '비활성'}
 - 업로드 주기: ${metrics.avgUploadCycle !== null ? metrics.avgUploadCycle + '일' : '측정 불가'}
 - 시장 기준: ${metrics.marketSuitable ? '충족 ✓' : '미달 ✗'}
-
+${trendText}
 **캠페인 적합도 (시스템 계산):**
 - 협찬: ${metrics.campaignSuitability.sponsorship.grade}급 (${metrics.campaignSuitability.sponsorship.score}점)
 - 유료 광고: ${metrics.campaignSuitability.paidAd.grade}급 (${metrics.campaignSuitability.paidAd.score}점)
 - 공동구매: ${metrics.campaignSuitability.coPurchase.grade}급 (${metrics.campaignSuitability.coPurchase.score}점)
 
-**게시글 데이터:**
+**게시글 데이터 (최근 10개):**
 ${postsText}`;
 }
 
@@ -143,8 +239,18 @@ export async function POST(req: Request) {
           campaignSuitability
         };
 
-        // Prepare posts data
-        const postsData = (user.recent_posts || [])
+        // Calculate trend metrics using up to 30 posts
+        const allPosts = (user.recent_posts || []).slice(0, 30);
+        const postsForTrend = allPosts.map((post: any) => ({
+          likes: post.likes || 0,
+          comments: post.commentsCount || 0,
+          timestamp: post.timestamp || ''
+        }));
+        const trendMetrics = calculateERTrend(postsForTrend, followers);
+        console.log(`[TrendMetrics] Result for ${user.username}:`, trendMetrics ? JSON.stringify(trendMetrics) : 'null');
+
+        // Prepare posts data (최근 10개만 AI 분석용)
+        const postsData = allPosts
           .slice(0, analysisLimit)
           .map((post: any) => {
             const fanComments = (post.latest_comments || [])
@@ -162,13 +268,14 @@ export async function POST(req: Request) {
             };
           });
 
-        // Build brutal prompt
+        // Build brutal prompt with trend data
         const userPrompt = buildBrutalUserPrompt({
           username: user.username || '',
           fullName: user.full_name || '',
           biography: user.biography || '',
           followers: followers,
           metrics: { ...preCalculatedMetrics, erGrade: preCalculatedMetrics.erGrade || '미산정' },
+          trendMetrics: trendMetrics || undefined,
           postsData: postsData
         });
 
@@ -236,6 +343,7 @@ export async function POST(req: Request) {
           return {
             username: user.username,
             analysis,
+            trendMetrics: trendMetrics || undefined,
             success: true
           };
 

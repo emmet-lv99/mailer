@@ -5,20 +5,101 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InstagramUser } from "@/services/instagram/types";
 import {
-    calculateAuthenticity,
-    calculateCampaignSuitability,
-    calculateEngagementRate,
-    getAccountGrade,
-    getAccountTier,
-    getAverageUploadCycle,
-    getLatestPostDate,
-    isMarketSuitable,
-    isUserActive
+  calculateAuthenticity,
+  calculateCampaignSuitability,
+  calculateEngagementRate,
+  getAccountGrade,
+  getAccountTier,
+  getAverageUploadCycle,
+  getLatestPostDate,
+  isMarketSuitable,
+  isUserActive
 } from "@/services/instagram/utils";
-import { Check, Loader2, X } from "lucide-react";
-import { AnalysisResult } from "../../types";
+import { ArrowDown, ArrowRight, ArrowUp, Check, Loader2, X } from "lucide-react";
+import { AnalysisResult, TrendMetrics } from "../../types";
 import { MetricsBadges } from "./MetricsBadges";
 import { PostsGrid } from "./PostsGrid";
+
+// Trend Metrics Display Component
+function TrendMetricsBadge({ trendMetrics }: { trendMetrics: TrendMetrics }) {
+  const getTrendIcon = () => {
+    switch (trendMetrics.erTrend) {
+      case 'rising': return <ArrowUp className="w-4 h-4 text-green-500" />;
+      case 'declining': return <ArrowDown className="w-4 h-4 text-red-500" />;
+      default: return <ArrowRight className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getTrendColor = () => {
+    switch (trendMetrics.erTrend) {
+      case 'rising': return 'bg-green-50 border-green-200 text-green-700';
+      case 'declining': return 'bg-red-50 border-red-200 text-red-700';
+      default: return 'bg-gray-50 border-gray-200 text-gray-700';
+    }
+  };
+
+  const getTrendLabel = () => {
+    switch (trendMetrics.erTrend) {
+      case 'rising': return '상승';
+      case 'declining': return '하락';
+      default: return '유지';
+    }
+  };
+
+  return (
+    <div className="p-3 rounded-lg border bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 space-y-2">
+      <div className="text-xs font-semibold text-purple-700 uppercase tracking-wide">📊 트렌드 분석 ({trendMetrics.totalPosts}개 게시물)</div>
+      
+      {/* ER Trend Badge */}
+      <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-bold ${getTrendColor()}`}>
+          {getTrendIcon()}
+          <span>ER {getTrendLabel()}</span>
+          <span className="ml-1">
+            {trendMetrics.erChangePercent > 0 ? '+' : ''}{trendMetrics.erChangePercent}%
+          </span>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          업로드 주기: <span className="font-semibold">{trendMetrics.avgUploadFrequency}일</span>
+        </div>
+      </div>
+
+      {/* Period Comparison Mini Chart */}
+      <div className="flex items-end gap-1 h-8">
+        {[
+          { label: '이전', data: trendMetrics.periodComparison.oldest },
+          { label: '중간', data: trendMetrics.periodComparison.middle },
+          { label: '최근', data: trendMetrics.periodComparison.recent }
+        ].map((period, i) => {
+          const maxER = Math.max(
+            trendMetrics.periodComparison.oldest.er,
+            trendMetrics.periodComparison.middle.er,
+            trendMetrics.periodComparison.recent.er
+          );
+          const height = maxER > 0 ? (period.data.er / maxER) * 100 : 50;
+          
+          return (
+            <div key={i} className="flex flex-col items-center flex-1">
+              <div 
+                className={`w-full rounded-t transition-all ${
+                  i === 2 ? 'bg-purple-500' : i === 1 ? 'bg-purple-400' : 'bg-purple-300'
+                }`}
+                style={{ height: `${Math.max(height, 20)}%` }}
+                title={`${period.label}: ER ${period.data.er}%`}
+              />
+              <div className="text-[9px] text-muted-foreground mt-0.5">{period.data.er}%</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex justify-between text-[9px] text-muted-foreground px-1">
+        <span>이전 10개</span>
+        <span>중간 10개</span>
+        <span>최근 10개</span>
+      </div>
+    </div>
+  );
+}
 
 interface AnalysisResultCardProps {
   result: AnalysisResult;
@@ -140,7 +221,16 @@ export function AnalysisResultCard({
         </div>
 
         {/* Metrics Badges */}
-        {metrics && <MetricsBadges metrics={metrics} originalUser={originalUser} />}
+        <div className="space-y-3">
+          {metrics && <MetricsBadges metrics={metrics} originalUser={originalUser} />}
+          {result.trendMetrics ? (
+            <TrendMetricsBadge trendMetrics={result.trendMetrics} />
+          ) : (
+            <div className="p-3 rounded-lg border bg-gray-50 border-gray-200 text-xs text-gray-500">
+              <span className="font-medium">📊 트렌드 분석 불가:</span> 게시물 10개 이상 필요 (현재 {originalUser?.recent_posts?.length || 0}개)
+            </div>
+          )}
+        </div>
       </div>
       
       <div className="p-0">

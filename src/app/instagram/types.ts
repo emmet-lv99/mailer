@@ -8,6 +8,7 @@ export interface AnalysisResult {
   success: boolean;
   error?: string;
   analysis?: AnalysisData;
+  trendMetrics?: TrendMetrics;  // 30개 게시물 기반 트렌드 분석
 }
 
 /**
@@ -68,6 +69,21 @@ export interface ComparisonSummary {
 }
 
 /**
+ * Trend metrics calculated from posts (up to 30, minimum 10)
+ */
+export interface TrendMetrics {
+  erTrend: 'rising' | 'stable' | 'declining';
+  erChangePercent: number;  // 최근 10개 vs 이전 비교
+  avgUploadFrequency: number;  // 평균 업로드 주기 (일)
+  totalPosts: number;  // 실제 분석에 사용된 게시물 수
+  periodComparison: {
+    recent: { er: number; avgLikes: number; avgComments: number };
+    middle: { er: number; avgLikes: number; avgComments: number };
+    oldest: { er: number; avgLikes: number; avgComments: number };
+  };
+}
+
+/**
  * Parameters for building the brutal user prompt
  */
 export interface BrutalUserPromptParams {
@@ -90,6 +106,7 @@ export interface BrutalUserPromptParams {
       coPurchase: { grade: string; score: number };
     };
   };
+  trendMetrics?: TrendMetrics;  // 30개 게시물 기반 트렌드 분석
   postsData: Array<{
     caption: string;
     hashtags: string[];
@@ -100,3 +117,4 @@ export interface BrutalUserPromptParams {
     }>;
   }>;
 }
+
