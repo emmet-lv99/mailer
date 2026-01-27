@@ -25,6 +25,7 @@ export function GeneralSettings() {
   
   const [limit, setLimit] = useState("10"); // Analysis Limit
   const [postLimit, setPostLimit] = useState("10"); // Search Post Limit
+  const [tagLimit, setTagLimit] = useState("10"); // Tag Discovery Limit
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,6 +35,9 @@ export function GeneralSettings() {
       
       const postLimitSetting = settings.find(s => s.key === 'insta_post_limit');
       if (postLimitSetting) setPostLimit(postLimitSetting.value);
+
+      const tagLimitSetting = settings.find(s => s.key === 'insta_tag_limit');
+      if (tagLimitSetting) setTagLimit(tagLimitSetting.value);
     }
   }, [settings]);
 
@@ -60,6 +64,18 @@ export function GeneralSettings() {
           key: "insta_post_limit",
           value: postLimit,
           description: "검색 시 수집할 최근 게시물 수",
+          type: "INSTA"
+        }),
+      });
+
+      // Save Tag Limit
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "insta_tag_limit",
+          value: tagLimit,
+          description: "해시태그 검색(Discovery) 시 각 태그당 수집할 최대 게시물/유저 수",
           type: "INSTA"
         }),
       });
@@ -116,6 +132,22 @@ export function GeneralSettings() {
             />
             <p className="text-sm text-muted-foreground">
               ID 검색 시 저장할 최근 게시물의 최대 개수입니다.
+            </p>
+          </div>
+
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label htmlFor="tagLimit">태그 검색 수집 개수 (Discovery)</Label>
+            <Input 
+              type="number" 
+              id="tagLimit" 
+              placeholder="10" 
+              value={tagLimit}
+              onChange={(e) => setTagLimit(e.target.value)}
+              min="1"
+              max="20"
+            />
+            <p className="text-sm text-muted-foreground">
+              해시태그 검색 시 각 태그당 수집할 최대 게시물 수입니다.
             </p>
           </div>
 

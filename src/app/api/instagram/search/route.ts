@@ -22,163 +22,198 @@ export async function POST(req: Request) {
 
     // Fetch Settings
     let postLimit = 10;
+    let tagLimit = 10;
     try {
-        const { data: setting } = await supabase
+        const { data: settings } = await supabase
             .from('settings')
-            .select('value')
-            .eq('key', 'insta_post_limit')
-            .single();
+            .select('key, value')
+            .in('key', ['insta_post_limit', 'insta_tag_limit']);
         
-        if (setting && setting.value) {
-            postLimit = parseInt(setting.value, 10) || 10;
+        if (settings) {
+            const pSetting = settings.find(s => s.key === 'insta_post_limit');
+            if (pSetting?.value) postLimit = parseInt(pSetting.value, 10) || 10;
+
+            const tSetting = settings.find(s => s.key === 'insta_tag_limit');
+            if (tSetting?.value) tagLimit = parseInt(tSetting.value, 10) || 10;
         }
     } catch (e) {
-        console.warn("Failed to fetch settings, using default postLimit 10", e);
+        console.warn("Failed to fetch settings, using defaults", e);
     }
-    console.log(`[Instagram Search] Using postLimit: ${postLimit} (트렌드 분석용 최소 30개 필요)`);
+    console.log(`[Instagram Search] Using postLimit: ${postLimit}, tagLimit: ${tagLimit}`);
 
     // --- REAL EXECUTION (Only if token exists) ---
     if (process.env.APIFY_API_TOKEN) {
         try {
-            // TARGET MODE: Skip Discovery, Direct Lookup
-            if (mode === 'target') {
-                const username = keyword.replace(/^@/, '').trim();
-                targetUsernames = [username];
-                console.log(`[Target Search] Looking up specific user: ${username}`);
-            } 
-            // TAG MODE: Discovery via Hashtag
-            else {
-                // Step 1: Discover Users via Hashtag
-                const isHashtag = keyword.startsWith("#");
-                const query = isHashtag ? keyword.slice(1) : keyword;
-                
-                const discoveryInput = {
-                    hashtags: [query],
-                    maxPostsPerHashtag: limit * 10,
-                    scrapeMode: "recent" as const,
-                };
-                
-                // Use hashtag scraper for discovery
-                const discoveryRun = await client.actor("apify/instagram-hashtag-scraper").call(discoveryInput);
-                const discoveryDataset = await client.dataset(discoveryRun.defaultDatasetId).listItems();
-                discoveryItems = discoveryDataset.items;
-                
-                // Extract unique usernames
-                // [BUFFER STRATEGY] specific details fetch might fail (private, etc), so we fetch 1.5x candidates
-                const candidateLimit = Math.ceil(limit * 1.5);
-                const uniqueUsernames = new Set<string>();
-                for (const item of (discoveryItems as any[])) {
-                    if (item.ownerUsername && uniqueUsernames.size < candidateLimit) {
-                         uniqueUsernames.add(item.ownerUsername);
-                    }
-                }
-                
-                targetUsernames = Array.from(uniqueUsernames);
-            }
+            // [TIMEOUT PROTECTION] Wrap Apify logic in a race with a timeout
+            // Vercel/Gateway usually times out at 60s, so we cut off at 55s to return JSON safely
+            const TIMEOUT_MS = 55_000;
             
-            if (targetUsernames.length > 0) {
-                // Step 2: Fetch Details for these Users (Profile Scraper)
-                console.log(`[Step 2] Fetching details for users: ${targetUsernames.join(", ")}`);
-                
-                try {
-                    // Method A: directUrls (Most reliable for profile scraping)
-                    const directUrls = targetUsernames.map(u => `https://www.instagram.com/${u}/`);
+            const apifyTask = async () => {
+                // TARGET MODE: Skip Discovery, Direct Lookup
+                if (mode === 'target') {
+                    const username = keyword.replace(/^@/, '').trim();
+                    targetUsernames = [username];
+                    console.log(`[Target Search] Looking up specific user: ${username}`);
+                } 
+                // TAG MODE: Discovery via Hashtag
+                else {
+                    // Step 1: Discover Users via Hashtag
+                    const isHashtag = keyword.startsWith("#");
+                    const query = isHashtag ? keyword.slice(1) : keyword;
                     
-                    // Instagram login credentials from ENV (enables 30+ posts scraping)
                     const instaUsername = process.env.INSTAGRAM_USERNAME;
                     const instaPassword = process.env.INSTAGRAM_PASSWORD;
                     
-                    // Prepare parallel actor inputs
-                    const commonInput = {
-                        directUrls: directUrls,
-                        searchLimit: 1,
-                        commentsPerPost: 20,
+                    const discoveryInput = {
+                        hashtags: [query],
+                        maxPostsPerHashtag: tagLimit * 1, // Use Separate Tag Limit
+                        scrapeMode: "recent" as const,
                         username_login: instaUsername,
                         password_login: instaPassword,
                         loginUsername: instaUsername,
                         loginPassword: instaPassword,
                     };
-
-                    console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links (Parallel Details + Posts)`);
                     
-                    // Run both Details (metadata) and Posts (30 posts) in parallel
-                    const [detailRun, postsRun] = await Promise.all([
-                        client.actor("apify/instagram-scraper").call({
-                            ...commonInput,
-                            resultsType: "details",
-                            resultsLimit: directUrls.length,
-                        }),
-                        client.actor("apify/instagram-scraper").call({
-                            ...commonInput,
-                            resultsType: "posts",
-                            resultsLimit: directUrls.length * postLimit,
-                            maxPosts: postLimit,
-                        })
-                    ]);
-
-                    const [detailDataset, postsDataset] = await Promise.all([
-                        client.dataset(detailRun.defaultDatasetId).listItems(),
-                        client.dataset(postsRun.defaultDatasetId).listItems()
-                    ]);
+                    // Use hashtag scraper for discovery
+                    const discoveryRun = await client.actor("apify/instagram-hashtag-scraper").call(discoveryInput);
+                    const discoveryDataset = await client.dataset(discoveryRun.defaultDatasetId).listItems();
+                    discoveryItems = discoveryDataset.items;
                     
-                    // 1. Map profile info from Detail items (normalize username to lowercase)
-                    const profileInfoMap = new Map<string, any>();
-                    for (const item of (detailDataset.items as any[])) {
-                        const username = (item.username as string)?.toLowerCase();
-                        if (username) {
-                            profileInfoMap.set(username, item);
-                        }
-                    }
-
-                    // 2. Aggregate posts from Posts items (normalize username to lowercase)
-                    const aggregatedUsers = new Map<string, any>();
-                    for (const post of (postsDataset.items as any[])) {
-                        const originalUsername = (post.ownerUsername || post.username) as string;
-                        if (!originalUsername) continue;
-                        const username = originalUsername.toLowerCase();
-                        
-                        if (!aggregatedUsers.has(username)) {
-                            // Get rich metadata from the Profile Scrape if available
-                            const profileInfo = profileInfoMap.get(username) || {};
-                            const owner = post.owner || {};
-
-                            aggregatedUsers.set(username, {
-                                username: originalUsername, // Keep original casing for display
-                                fullName: profileInfo.fullName || post.ownerFullName || owner.fullName || post.fullName || "",
-                                followersCount: profileInfo.followersCount || post.ownerFollowersCount || owner.followersCount || owner.edge_followed_by?.count || 0,
-                                biography: profileInfo.biography || post.ownerBiography || owner.biography || "",
-                                profilePicUrl: profileInfo.profilePicUrl || post.ownerProfilePicUrl || owner.profilePicUrl || post.profilePicUrl || "",
-                                postsCount: profileInfo.postsCount || post.ownerPostsCount || owner.postsCount || 0,
-                                latestPosts: []
-                            });
-                        }
-                        
-                        const userData = aggregatedUsers.get(username);
-                        if (userData) {
-                            userData.latestPosts.push(post);
+                    // Extract unique usernames
+                    // [BUFFER STRATEGY] specific details fetch might fail (private, etc), so we fetch 1.5x candidates
+                    const candidateLimit = Math.ceil(limit * 1.5);
+                    const uniqueUsernames = new Set<string>();
+                    for (const item of (discoveryItems as any[])) {
+                        if (item.ownerUsername && uniqueUsernames.size < candidateLimit) {
+                             uniqueUsernames.add(item.ownerUsername);
                         }
                     }
                     
-                    detailItems = Array.from(aggregatedUsers.values());
-                    
-                    // 3. Fallback: If some users were found in details but not posts, add them
-                    for (const [username, profile] of profileInfoMap) {
-                        if (!aggregatedUsers.has(username)) {
-                            detailItems.push(profile);
-                        }
-                    }
-
-                    console.log(`[Step 2] Fetched and merged ${detailItems.length} detailed profiles.`);
-                } catch (e) {
-                    console.error("[Step 2] Profile parallel scrape failed:", e);
+                    targetUsernames = Array.from(uniqueUsernames);
                 }
-            }
-        } catch (e) {
-            console.error("Apify execution failed:", e);
+                
+                if (targetUsernames.length > 0) {
+                    // Step 2: Fetch Details for these Users (Profile Scraper)
+                    console.log(`[Step 2] Fetching details for users: ${targetUsernames.join(", ")}`);
+                    
+                    try {
+                        // Method A: directUrls (Most reliable for profile scraping)
+                        const directUrls = targetUsernames.map(u => `https://www.instagram.com/${u}/`);
+                        
+                        // Instagram login credentials from ENV (enables 30+ posts scraping)
+                        const instaUsername = process.env.INSTAGRAM_USERNAME;
+                        const instaPassword = process.env.INSTAGRAM_PASSWORD;
+                        
+                        // Prepare parallel actor inputs
+                        const commonInput = {
+                            directUrls: directUrls,
+                            searchLimit: 1,
+                            commentsPerPost: 20,
+                            username_login: instaUsername,
+                            password_login: instaPassword,
+                            loginUsername: instaUsername,
+                            loginPassword: instaPassword,
+                        };
+
+                        console.log(`[Step 2] Scraping profiles using directUrls: ${directUrls.length} links (Parallel Details + Posts)`);
+                        
+                        // Run both Details (metadata) and Posts (30 posts) in parallel
+                        // [OPTIMIZATION] Only run parallel if we have few targets or it's target mode
+                        // For tag mode with many targets, we might want to be careful, but user needs accurate data.
+                        // We rely on timeout to catch if it's too slow.
+                        const [detailRun, postsRun] = await Promise.all([
+                            client.actor("apify/instagram-scraper").call({
+                                ...commonInput,
+                                resultsType: "details",
+                                resultsLimit: directUrls.length,
+                            }),
+                            client.actor("apify/instagram-scraper").call({
+                                ...commonInput,
+                                resultsType: "posts",
+                                resultsLimit: directUrls.length * postLimit,
+                                maxPosts: postLimit,
+                            })
+                        ]);
+
+                        const [detailDataset, postsDataset] = await Promise.all([
+                            client.dataset(detailRun.defaultDatasetId).listItems(),
+                            client.dataset(postsRun.defaultDatasetId).listItems()
+                        ]);
+                        
+                        // 1. Map profile info from Detail items (normalize username to lowercase)
+                        const profileInfoMap = new Map<string, any>();
+                        for (const item of (detailDataset.items as any[])) {
+                            const username = (item.username as string)?.toLowerCase();
+                            if (username) {
+                                profileInfoMap.set(username, item);
+                            }
+                        }
+
+                        // 2. Aggregate posts from Posts items (normalize username to lowercase)
+                        const aggregatedUsers = new Map<string, any>();
+                        for (const post of (postsDataset.items as any[])) {
+                            const originalUsername = (post.ownerUsername || post.username) as string;
+                            if (!originalUsername) continue;
+                            const username = originalUsername.toLowerCase();
+                            
+                            if (!aggregatedUsers.has(username)) {
+                                // Get rich metadata from the Profile Scrape if available
+                                const profileInfo = profileInfoMap.get(username) || {};
+                                const owner = post.owner || {};
+
+                                aggregatedUsers.set(username, {
+                                    username: originalUsername, // Keep original casing for display
+                                    fullName: profileInfo.fullName || post.ownerFullName || owner.fullName || post.fullName || "",
+                                    followersCount: profileInfo.followersCount || post.ownerFollowersCount || owner.followersCount || owner.edge_followed_by?.count || 0,
+                                    biography: profileInfo.biography || post.ownerBiography || owner.biography || "",
+                                    profilePicUrl: profileInfo.profilePicUrl || post.ownerProfilePicUrl || owner.profilePicUrl || post.profilePicUrl || "",
+                                    postsCount: profileInfo.postsCount || post.ownerPostsCount || owner.postsCount || 0,
+                                    latestPosts: []
+                                });
+                            }
+                            
+                            const userData = aggregatedUsers.get(username);
+                            if (userData) {
+                                userData.latestPosts.push(post);
+                            }
+                        }
+                        
+                        detailItems = Array.from(aggregatedUsers.values());
+                        
+                        // 3. Fallback: If some users were found in details but not posts, add them
+                        for (const [username, profile] of profileInfoMap) {
+                            if (!aggregatedUsers.has(username)) {
+                                detailItems.push(profile);
+                            }
+                        }
+
+                        console.log(`[Step 2] Fetched and merged ${detailItems.length} detailed profiles.`);
+                    } catch (e) {
+                        console.error("[Step 2] Profile parallel scrape failed:", e);
+                        throw e; // Re-throw to be caught by outer race or catch
+                    }
+                }
+            };
+
+            // Execute with Timeout
+            await Promise.race([
+                apifyTask(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout: Scraping took too long")), TIMEOUT_MS))
+            ]);
+
+        } catch (e: any) {
+            console.error("Apify execution failed or timed out:", e);
+            // Don't kill the request, just log and proceed with whatever (empty) data we might have
+            // Or if it's a timeout, we return an error response
+             if (e.message.includes("Timeout")) {
+                 return NextResponse.json({ error: "Search timed out. Please try again or search for a specific user." }, { status: 504 });
+             }
         }
     } else {
         console.warn("APIFY_API_TOKEN is missing. Skipping real execution.");
     }
+    
+    // --- RESULT PROCESSING (CASCADE STRATEGY) ---
     
     // --- RESULT PROCESSING (CASCADE STRATEGY) ---
     
