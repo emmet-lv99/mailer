@@ -3,7 +3,7 @@ import {
   calculateAuthenticity,
   calculateCampaignSuitability,
   calculateEngagementRate,
-  getAccountAge,
+  formatNumber,
   getAccountGrade,
   getAccountTier,
   getAverageUploadCycle,
@@ -40,7 +40,6 @@ export function InstagramUserCard({
     const isActive = isUserActive(latestDate);
     const avgCycle = getAverageUploadCycle(user.recent_posts);
     const { authenticityScore, isFake, details: authDetails } = calculateAuthenticity(user);
-    const ageInfo = getAccountAge(user);
     
     // For Grade Explanation
     const er = calculateEngagementRate(user);
@@ -170,20 +169,14 @@ export function InstagramUserCard({
             </div>
 
             {/* Stats Section */}
-            <div className="grid grid-cols-3 divide-x border-y bg-muted/20">
+            <div className="grid grid-cols-2 divide-x border-y bg-muted/20">
                 <div className="p-2 text-center">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">팔로워</div>
-                    <div className="text-sm font-medium">{user.followers_count === -1 ? '?' : user.followers_count.toLocaleString()}</div>
+                    <div className="text-sm font-medium">{formatNumber(user.followers_count)}</div>
                 </div>
                 <div className="p-2 text-center">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">평균 주기</div>
                     <div className="text-sm font-medium">{avgCycle ? `${avgCycle}일` : '-'}</div>
-                </div>
-                <div className="p-2 text-center">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">데이터 기간</div>
-                    <div className="text-sm font-medium" title={`최초 게시물: ${ageInfo.oldestDate?.toLocaleDateString()}`}>
-                        {ageInfo.label}
-                    </div>
                 </div>
             </div>
 

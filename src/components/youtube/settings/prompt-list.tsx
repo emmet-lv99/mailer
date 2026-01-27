@@ -50,12 +50,12 @@ export function PromptList({ selectedId, onSelect, promptType = 'YOUTUBE' }: Pro
             onClick={() => onSelect(prompt)}
           >
             <CardHeader className="p-4 pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium truncate">
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-base font-medium break-keep">
                   {prompt.title}
                 </CardTitle>
                 {prompt.is_default && (
-                  <span className="flex items-center text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                  <span className="flex-none flex items-center text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300 whitespace-nowrap">
                     <Check className="mr-1 h-3 w-3" /> 기본
                   </span>
                 )}

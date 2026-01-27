@@ -2,19 +2,20 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InstagramUser } from "@/services/instagram/types";
 import {
-  calculateAuthenticity,
-  calculateCampaignSuitability,
-  calculateEngagementRate,
-  getAccountGrade,
-  getAccountTier,
-  getAverageUploadCycle,
-  getLatestPostDate,
-  isMarketSuitable,
-  isUserActive
+    calculateAuthenticity,
+    calculateCampaignSuitability,
+    calculateEngagementRate,
+    getAccountGrade,
+    getAccountTier,
+    getAverageUploadCycle,
+    getLatestPostDate,
+    isMarketSuitable,
+    isUserActive
 } from "@/services/instagram/utils";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { MetricsBadges } from "./MetricsBadges";
 import { PostsGrid } from "./PostsGrid";
 
@@ -23,8 +24,46 @@ interface AnalysisResult {
   success: boolean;
   error?: string;
   analysis?: {
-    summary: string;
+    summary?: string;
     mood_keywords?: string[];
+
+    // Dual Role Structure
+    investmentAnalyst?: {
+      tier: string;
+      totalScore: number;
+      decision: string;
+      estimatedValue: string;
+      expectedROI: string;
+      currentAssessment: {
+        strengths: string[];
+        weaknesses: string[];
+        risks: string[];
+        brutalVerdict: string;
+      };
+    };
+    influencerExpert?: {
+      grade: string;
+      totalScore: number;
+      recommendation: string;
+      estimatedValueIn6Months: string;
+      growthAnalysis: {
+        followerGrowthRate: string;
+        engagementTrend: string;
+        contentVirality: string;
+      };
+      futureAssessment: {
+        growthTrajectory: string;
+        hiddenStrengths: string[];
+        potentialRisks: string[];
+        strategicAdvice: string[];
+        expertVerdict: string;
+      };
+    };
+    comparisonSummary?: {
+      agreement: boolean;
+      keyDifference: string;
+      recommendation: string;
+    };
   };
 }
 
@@ -92,10 +131,71 @@ export function AnalysisResultCard({
   const { analysis } = result;
   if (!analysis) return null;
 
+  // --- Start Adapter Logic ---
+  // If the standard keys are missing, try to adapt from the "Korean Schema" (심사 결과)
+  let { investmentAnalyst: investment, influencerExpert: expert, comparisonSummary: comparison } = analysis;
+
+  if (!investment && !expert && (analysis as any)["심사 결과"]) {
+    const raw = (analysis as any)["심사 결과"];
+    const evaluation = raw["투자 종합 평가"] || {};
+    const consistency = raw["채널 일관성 분석"] || {};
+    const imageAnalysis = raw["이미지 분석"] || {};
+    const quantitative = raw["정량 분석"] || {};
+    const campaign = raw["캠페인 적합도"] || {};
+
+    // 1. Map Investment Analyst
+    investment = {
+      tier: raw["티어"] || raw["등급"] || "Unknown",
+      totalScore: parseInt(evaluation["총점"] || "0"),
+      decision: evaluation["등급"] || "판단 유보",
+      estimatedValue: "산정 불가", 
+      expectedROI: "산정 불가",   
+      currentAssessment: {
+        strengths: evaluation["강점"] ? evaluation["강점"].split(/,\s*/) : [],
+        weaknesses: evaluation["약점"] ? evaluation["약점"].split(/,\s*/) : [],
+        risks: evaluation["리스크"] ? evaluation["리스크"].split(/,\s*/) : [],
+        brutalVerdict: evaluation["종합 의견"] || raw["종합 의견"] || "의견 없음"
+      }
+    };
+
+    // 2. Map Influencer Expert (Derived from Consistency & Image Analysis)
+    expert = {
+      grade: consistency["등급"] || "미정",
+      totalScore: parseInt(consistency["총점"] || "0"),
+      recommendation: consistency["톤앤매너 일관성"] || "컨설팅 필요",
+      estimatedValueIn6Months: "데이터 부족",
+      growthAnalysis: {
+        followerGrowthRate: quantitative["활동 상태"] || "분석 불가",
+        engagementTrend: quantitative["Engagement Rate"] || "분석 불가",
+        contentVirality: consistency["업로드 패턴"] || "분석 불가"
+      },
+      futureAssessment: {
+        growthTrajectory: "현 상태 유지 또는 완만한 성장 예상",
+        hiddenStrengths: [consistency["주제 일관성"], consistency["톤앤매너 일관성"]].filter(Boolean),
+        potentialRisks: [imageAnalysis["브랜드 안전"], imageAnalysis["일관성"]].filter(Boolean).map(s => `리스크: ${s}`),
+        strategicAdvice: [
+           imageAnalysis["콘텐츠 품질"], 
+           imageAnalysis["PPL 스킬"],
+           `협찬 적합도: ${campaign["협찬"] || '미정'}`,
+           `공동구매 적합도: ${campaign["공동구매"] || '미정'}`
+        ].filter(Boolean),
+        expertVerdict: imageAnalysis["콘텐츠 품질"] || consistency["종합 의견"] || "이미지와 채널 일관성을 바탕으로 한 전문가 의견입니다."
+      }
+    };
+
+    // 3. Map Comparison Summary (Derived)
+    comparison = {
+      agreement: true, // Single source, so strictly "agreed"
+      keyDifference: "단일 프롬프트 분석 결과입니다. 투자 심사역과 전문가 의견이 통합되어 있습니다.",
+      recommendation: evaluation["종합 의견"] || "신중한 검토가 필요합니다."
+    };
+  }
+  // --- End Adapter Logic ---
+
   const reelsPosts = originalUser?.recent_posts?.filter((p: any) => p.productType === 'clips') || [];
 
   return (
-    <Card className="overflow-hidden border-2 transition-all hover:border-primary/50 hover:shadow-lg">
+    <Card className="overflow-hidden border-2 transition-all hover:border-primary/50 hover:shadow-lg bg-white dark:bg-zinc-950">
       {/* Card Header: Profile & Score */}
       <div className="p-6 flex flex-col sm:flex-row gap-6 border-b bg-muted/30">
         {/* Profile Info */}
@@ -113,6 +213,15 @@ export function AnalysisResultCard({
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-xl font-bold">{originalUser?.full_name || result.username}</h3>
+              {investment && (
+                <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                  investment.decision.includes('금지') ? 'bg-red-100 text-red-700 border-red-200' :
+                  investment.decision.includes('보류') ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                  'bg-green-100 text-green-700 border-green-200'
+                }`}>
+                  {investment.decision}
+                </span>
+              )}
             </div>
             <a 
               href={`https://instagram.com/${result.username}`} 
@@ -139,64 +248,193 @@ export function AnalysisResultCard({
         {metrics && <MetricsBadges metrics={metrics} originalUser={originalUser} />}
       </div>
       
-      <div className="p-6 flex flex-col gap-6">
-        {/* Analysis Content (Summary) */}
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-semibold text-sm mb-2 text-foreground/80 flex items-center gap-2">
-              💡 AI 분석 요약
-            </h4>
-            <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border">
-              {analysis.summary}
+      <div className="p-0">
+        <Tabs defaultValue="investment" className="w-full">
+            <div className="px-6 pt-4 border-b bg-muted/10">
+                <TabsList className="grid w-full grid-cols-3 max-w-[400px]">
+                    <TabsTrigger value="investment">투자심사역 (냉혹)</TabsTrigger>
+                    <TabsTrigger value="expert">전문가 (육성)</TabsTrigger>
+                    <TabsTrigger value="verdict">종합 판결</TabsTrigger>
+                </TabsList>
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            {analysis.mood_keywords?.map((keyword: string, k: number) => (
-              <span key={k} className="px-3 py-1 bg-white dark:bg-slate-800 border rounded-full text-xs text-muted-foreground shadow-sm">
-                #{keyword}
-              </span>
-            ))}
-          </div>
-        </div>
+            {/* 1. Investment Analyst View */}
+            <TabsContent value="investment" className="p-6 m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {investment ? (
+                    <>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="p-4 bg-slate-50 border rounded-lg">
+                                <div className="text-xs text-muted-foreground font-medium mb-1">투자 등급</div>
+                                <div className="text-2xl font-black text-slate-800">{investment.tier}급</div>
+                            </div>
+                            <div className="p-4 bg-slate-50 border rounded-lg">
+                                <div className="text-xs text-muted-foreground font-medium mb-1">총점</div>
+                                <div className="text-2xl font-black text-slate-800">{investment.totalScore}점</div>
+                            </div>
+                            <div className="p-4 bg-slate-50 border rounded-lg">
+                                <div className="text-xs text-muted-foreground font-medium mb-1">적정 단가</div>
+                                <div className="text-xl font-bold text-slate-800">{investment.estimatedValue}</div>
+                            </div>
+                            <div className="p-4 bg-slate-50 border rounded-lg">
+                                <div className="text-xs text-muted-foreground font-medium mb-1">예상 ROI</div>
+                                <div className="text-xl font-bold text-blue-600">{investment.expectedROI}</div>
+                            </div>
+                        </div>
 
-        <div className="h-px bg-border/50" />
+                        <div className="space-y-3">
+                            <h4 className="font-bold text-sm bg-red-50 text-red-800 px-3 py-1.5 rounded inline-block">💀 Brutal Verdict (냉혹한 판결)</h4>
+                            <div className="text-sm leading-relaxed p-4 bg-red-50/50 border border-red-100 rounded-lg text-red-900 font-medium">
+                                {investment.currentAssessment.brutalVerdict}
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <div className="font-semibold text-sm flex items-center gap-2 text-green-700">
+                                    <Check className="w-4 h-4" /> 강점 (Strengths)
+                                </div>
+                                <ul className="text-sm space-y-1 list-disc pl-4 text-muted-foreground">
+                                    {investment.currentAssessment.strengths.length > 0 ? (
+                                        investment.currentAssessment.strengths.map((s, i) => <li key={i}>{s}</li>)
+                                    ) : (
+                                        <li className="text-slate-400">특별한 강점 없음</li>
+                                    )}
+                                </ul>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="font-semibold text-sm flex items-center gap-2 text-red-700">
+                                    <X className="w-4 h-4" /> 약점 (Weaknesses)
+                                </div>
+                                <ul className="text-sm space-y-1 list-disc pl-4 text-muted-foreground">
+                                    {investment.currentAssessment.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                                </ul>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="text-center py-10 text-muted-foreground">투자 심사 데이터가 없습니다.</div>
+                )}
+            </TabsContent>
+
+             {/* 2. Influencer Expert View */}
+             <TabsContent value="expert" className="p-6 m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {expert ? (
+                    <>
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                <div className="text-xs text-indigo-600 font-medium mb-1">성장 가능성</div>
+                                <div className="text-xl font-bold text-indigo-900">{expert.grade}</div>
+                            </div>
+                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                <div className="text-xs text-indigo-600 font-medium mb-1">육성 점수</div>
+                                <div className="text-xl font-bold text-indigo-900">{expert.totalScore}점</div>
+                            </div>
+                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                <div className="text-xs text-indigo-600 font-medium mb-1">전문가 추천</div>
+                                <div className="text-lg font-bold text-indigo-900">{expert.recommendation}</div>
+                            </div>
+                             <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                                <div className="text-xs text-indigo-600 font-medium mb-1">6개월 후 가치</div>
+                                <div className="text-lg font-bold text-indigo-900">{expert.estimatedValueIn6Months}</div>
+                            </div>
+                        </div>
+
+                         <div className="space-y-3">
+                            <h4 className="font-bold text-sm bg-indigo-100 text-indigo-800 px-3 py-1.5 rounded inline-block">🌱 Expert Verdict (육성 의견)</h4>
+                            <div className="text-sm leading-relaxed p-4 bg-indigo-50/50 border border-indigo-100 rounded-lg text-indigo-900 font-medium">
+                                {expert.futureAssessment.expertVerdict}
+                            </div>
+                        </div>
+
+                         <div className="space-y-3">
+                            <h4 className="font-bold text-sm text-foreground">💡 전략적 조언 (Strategic Advice)</h4>
+                            <div className="grid md:grid-cols-2 gap-3">
+                                {expert.futureAssessment.strategicAdvice.map((advice, i) => (
+                                    <div key={i} className="text-sm p-3 bg-slate-50 border rounded text-slate-700 flex gap-2">
+                                        <span className="text-indigo-500 font-bold">{i+1}.</span>
+                                        {advice}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                 ) : (
+                    <div className="text-center py-10 text-muted-foreground">전문가 분석 데이터가 없습니다.</div>
+                )}
+             </TabsContent>
+
+             {/* 3. Verdict View */}
+             <TabsContent value="verdict" className="p-6 m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {comparison ? (
+                    <div className="space-y-6">
+                        <div className={`p-4 rounded-lg border ${comparison.agreement ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                             <div className="font-bold text-lg mb-2 flex items-center gap-2">
+                                {comparison.agreement ? (
+                                    <span className="text-green-700">✅ 의견 일치</span>
+                                ) : (
+                                    <span className="text-orange-700">⚡ 의견 불일치 (쟁점 존재)</span>
+                                )}
+                             </div>
+                             <p className="text-sm text-foreground/80 leading-relaxed">
+                                {comparison.keyDifference}
+                             </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-lg">최종 권고 사항</h4>
+                            <div className="p-6 bg-slate-900 text-slate-100 rounded-xl shadow-lg leading-relaxed text-base min-h-[100px] flex items-center justify-center text-center">
+                                "{comparison.recommendation}"
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 pt-4 mt-4">
+                            <Button 
+                                variant="outline" 
+                                className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 h-12"
+                                onClick={() => onRemove(result.username)}
+                            >
+                                부적합 (제외)
+                            </Button>
+                            <Button 
+                                className={`flex-1 ${originalUser?.is_registered ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white h-12`}
+                                disabled={originalUser?.is_registered || registering.has(result.username)}
+                                onClick={() => originalUser && onRegister({
+                                ...originalUser,
+                                analysis: analysis
+                                })}
+                            >
+                                {registering.has(result.username) ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 등록 중</>
+                                ) : originalUser?.is_registered ? (
+                                "등록됨 (관리중)"
+                                ) : (
+                                "최종 심사 통과 (등록)"
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                     <div className="text-center py-10 text-muted-foreground">종합 판결 데이터가 없습니다.</div>
+                )}
+             </TabsContent>
+        </Tabs>
+      </div>
+
+       <div className="h-px bg-border/50" />
 
         {/* Reels Section */}
-        {reelsPosts.length > 0 && (
-          <PostsGrid posts={reelsPosts} type="reels" onPostSelect={onPostSelect} />
-        )}
-
-        {/* All Posts */}
-        <PostsGrid posts={originalUser?.recent_posts || []} type="all" onPostSelect={onPostSelect} />
-        
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-4 border-t mt-4">
-          <Button 
-            variant="outline" 
-            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-            onClick={() => onRemove(result.username)}
-          >
-            부적합
-          </Button>
-          <Button 
-            className={`flex-1 ${originalUser?.is_registered ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-            disabled={originalUser?.is_registered || registering.has(result.username)}
-            onClick={() => originalUser && onRegister({
-              ...originalUser,
-              analysis: analysis
-            })}
-          >
-            {registering.has(result.username) ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 등록 중</>
-            ) : originalUser?.is_registered ? (
-              "등록됨 (관리중)"
-            ) : (
-              "등록"
+        <div className="p-6 pt-0 mt-6">
+            <h4 className="font-bold text-sm mb-4 text-muted-foreground">최근 인기 콘텐츠</h4>
+            {reelsPosts.length > 0 && (
+            <PostsGrid posts={reelsPosts} type="reels" onPostSelect={onPostSelect} />
             )}
-          </Button>
+
+            {/* All Posts */}
+            <div className="mt-4">
+                <PostsGrid posts={originalUser?.recent_posts || []} type="all" onPostSelect={onPostSelect} />
+            </div>
         </div>
-      </div>
     </Card>
   );
 }

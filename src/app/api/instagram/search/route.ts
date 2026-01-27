@@ -53,7 +53,7 @@ export async function POST(req: Request) {
                 
                 const discoveryInput = {
                     hashtags: [query],
-                    maxPostsPerHashtag: limit * 2,
+                    maxPostsPerHashtag: limit * 10,
                     scrapeMode: "recent" as const,
                 };
                 
@@ -63,9 +63,11 @@ export async function POST(req: Request) {
                 discoveryItems = discoveryDataset.items;
                 
                 // Extract unique usernames
+                // [BUFFER STRATEGY] specific details fetch might fail (private, etc), so we fetch 1.5x candidates
+                const candidateLimit = Math.ceil(limit * 1.5);
                 const uniqueUsernames = new Set<string>();
                 for (const item of (discoveryItems as any[])) {
-                    if (item.ownerUsername && uniqueUsernames.size < limit) {
+                    if (item.ownerUsername && uniqueUsernames.size < candidateLimit) {
                          uniqueUsernames.add(item.ownerUsername);
                     }
                 }
@@ -84,7 +86,7 @@ export async function POST(req: Request) {
                     const detailInput = {
                         directUrls: directUrls,
                         resultsType: "details",
-                        resultsLimit: 10, // Increased post limit
+                        resultsLimit: directUrls.length, // Fetch all candidates including buffer
                         searchLimit: 1,
                         commentsPerPost: 20, // [NEW] Fetch top 20 comments per post
                     };
@@ -193,14 +195,16 @@ export async function POST(req: Request) {
 
     const existingMap = new Map(existingUsers?.map(u => [u.username, u.status]));
 
-    // Mark status
-    const finalResults = results.map(user => ({
-        ...user,
-        db_status: existingMap.get(user.username) || null,
-        is_registered: existingMap.has(user.username),
-        // Filter logic: 5k ~ 100k
-        is_target_range: user.followers_count >= 5000 && user.followers_count <= 100000
-    }));
+    // Mark status and Cut to requested limit
+    const finalResults = results
+        .slice(0, limit) // [BUFFER FIX] Ensure we only return requested amount
+        .map(user => ({
+            ...user,
+            db_status: existingMap.get(user.username) || null,
+            is_registered: existingMap.has(user.username),
+            // Filter logic: 5k ~ 100k
+            is_target_range: user.followers_count >= 5000 && user.followers_count <= 100000
+        }));
 
     return NextResponse.json({ 
         results: finalResults,
@@ -210,7 +214,6 @@ export async function POST(req: Request) {
             count: finalResults.length,
         }
     });
-
   } catch (error: any) {
     console.error("Route Handler Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

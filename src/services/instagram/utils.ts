@@ -58,6 +58,11 @@ export const getProxiedUrl = (url: string | null | undefined) => {
     return `/api/image-proxy?url=${encodeURIComponent(url)}`;
 };
 
+export const formatNumber = (num: number) => {
+    if (num === -1) return '?';
+    return num.toLocaleString();
+};
+
 // --- Account Grading & Suitability Logic ---
 
 // Helper to get detailed metrics for Authenticity calculation
