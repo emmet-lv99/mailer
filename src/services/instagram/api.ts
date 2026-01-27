@@ -2,7 +2,12 @@
 import { SearchResponse } from "./types";
 
 export const instagramService = {
-  search: async (keyword: string, limit: number = 10, mode: 'tag' | 'target' = 'tag'): Promise<SearchResponse> => {
+  search: async (
+    keyword: string, 
+    limit: number = 10, 
+    mode: 'tag' | 'target' = 'tag',
+    onLog?: (message: string) => void
+  ): Promise<SearchResponse> => {
     const res = await fetch("/api/instagram/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -14,7 +19,72 @@ export const instagramService = {
       throw new Error(error.error || "Failed to search");
     }
 
-    return res.json();
+    if (!res.body) throw new Error("ReadableStream not supported in this browser.");
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalResult: SearchResponse | null = null;
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep the last partial line
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                    const data = JSON.parse(line);
+                    if (data.type === 'log') {
+                        onLog?.(data.message);
+                    } else if (data.type === 'result') {
+                        finalResult = data.data;
+                    } else if (data.type === 'error') {
+                        throw new Error(data.message);
+                    }
+                } catch (e: any) {
+                    console.warn("Stream parse error:", e);
+                    if (e.message && e.message !== "Unexpected end of JSON input") {
+                        throw e; // Re-throw actual errors
+                    }
+                }
+            }
+        }
+        
+    } finally {
+        reader.releaseLock();
+    }
+
+    // Flush decoder
+    buffer += decoder.decode();
+
+    // Flush remaining buffer
+    if (buffer.trim()) {
+        try {
+            console.log("[Stream] Final buffer content:", buffer); 
+            const data = JSON.parse(buffer);
+            if (data.type === 'log') {
+                onLog?.(data.message);
+            } else if (data.type === 'result') {
+                finalResult = data.data;
+            } else if (data.type === 'error') {
+                throw new Error(data.message);
+            }
+        } catch (e) {
+            console.warn("[Stream] Final buffer parse error:", e);
+        }
+    }
+
+    if (!finalResult) {
+        console.error("[Stream] No final result found. Buffer:", buffer);
+        throw new Error("검색 결과가 없습니다. (서버 응답 오류)");
+    }
+
+    return finalResult;
   },
 
   analyze: async (users: any[], promptType: 'INSTA' | 'INSTA_TARGET' = 'INSTA'): Promise<{ results: any[] }> => {

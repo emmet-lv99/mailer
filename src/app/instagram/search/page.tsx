@@ -32,6 +32,7 @@ function SearchPageContent() {
   const [searched, setSearched] = useState(results.length > 0);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [logs, setLogs] = useState<string[]>([]);
 
   // Sync URL mode to Store and clear results if mode changes
   useEffect(() => {
@@ -43,6 +44,7 @@ function SearchPageContent() {
         setKeyword('');
         setSelectedUsers(new Set());
         setSearched(false);
+        setLogs([]);
     }
   }, [urlMode, searchMode, setSearchMode, setResults, setFallbackUrl, setKeyword, setSelectedUsers]);
 
@@ -53,9 +55,13 @@ function SearchPageContent() {
     setLoading(true);
     setSearched(false);
     setFallbackUrl(null);
+    setLogs([]); // Clear logs
+
     try {
       // In target mode, limit is always 1 (semantically), but API handles it.
-      const data = await instagramService.search(keyword, limit, urlMode);
+      const data = await instagramService.search(keyword, limit, urlMode, (log) => {
+          setLogs(prev => [...prev, log]);
+      });
       setResults(data.results);
       setFallbackUrl(data.fallbackUrl || null);
       setSearched(true);
@@ -141,6 +147,30 @@ function SearchPageContent() {
           </Button>
         </form>
       </Card>
+
+      {/* Progress Logs (Terminal Style) - Hide when search is complete (searched is true) */}
+      {!searched && (loading || logs.length > 0) && (
+          <Card className="p-4 bg-gray-950 text-green-500 font-mono text-xs md:text-sm max-h-[240px] overflow-y-auto mb-2 shadow-inner border-gray-800">
+              <div className="flex flex-col gap-1.5">
+                  {logs.map((log, i) => (
+                      <div key={i} className="break-all whitespace-pre-wrap flex">
+                          <span className="opacity-40 mr-3 select-none shrink-0">&gt;</span>
+                          <span>
+                            {log.startsWith('⚠️') ? <span className="text-yellow-400">{log}</span> : 
+                             log.startsWith('✅') ? <span className="text-blue-400 font-bold">{log}</span> : 
+                             log.startsWith('[') ? <span className="text-cyan-400">{log}</span> : log}
+                          </span>
+                      </div>
+                  ))}
+                  {loading && (
+                      <div className="animate-pulse mt-1 text-gray-500 flex">
+                          <span className="mr-3 opacity-40">&gt;</span>
+                          <span className="w-2 h-4 bg-green-500/50 block"></span>
+                      </div>
+                  )}
+              </div>
+          </Card>
+      )}
 
 
       {/* Results */}
