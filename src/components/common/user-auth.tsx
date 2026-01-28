@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 export function UserAuth() {
   const { data: session } = useSession();
@@ -28,8 +28,8 @@ export function UserAuth() {
   }
 
   return (
-    <Button variant="default" size="sm" onClick={() => signIn("google")}>
-      Google 로그인
+    <Button variant="default" size="sm" onClick={() => window.location.href = "/login"}>
+      로그인
     </Button>
   );
 }
