@@ -2,8 +2,27 @@
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const url = new URL(req.url);
+    const mode = url.searchParams.get("mode");
+    const username = url.searchParams.get("username");
+
+    // Mode: Analysis History (Single User)
+    if (mode === 'analysis' && username) {
+        const { data, error } = await supabase
+            .from("analysis_history")
+            .select("*")
+            .eq("username", username.toLowerCase())
+            .order("analyzed_at", { ascending: false })
+            .limit(1)
+            .single();
+        
+        if (error) throw error;
+        return NextResponse.json({ result: data });
+    }
+
+    // Default: List Targets (CRM)
     const { data, error } = await supabase
       .from("instagram_targets")
       .select("*")

@@ -21,8 +21,9 @@ export type InstagramUser = {
       timestamp: string;
     }[];
   }[];
-  is_registered: boolean;
-  db_status: 'todo' | 'ignored' | 'sent' | 'replied' | 'unsuitable' | null;
+  is_registered?: boolean; // If true, managed in CRM
+  db_status?: string; // CRM status
+  latest_analysis_date?: string | null; // Last analyzed date form history
 };
 
 export type SearchResponse = {

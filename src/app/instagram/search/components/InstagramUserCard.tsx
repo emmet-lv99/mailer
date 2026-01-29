@@ -15,6 +15,7 @@ import {
 } from "@/services/instagram/utils";
 import { Instagram } from "lucide-react";
 import { useState } from "react";
+import { AnalysisHistoryModal } from "./modals/AnalysisHistoryModal";
 import { AuthenticityModal } from "./modals/AuthenticityModal";
 import { CampaignSuitabilityModal } from "./modals/CampaignSuitabilityModal";
 import { FakeAccountModal } from "./modals/FakeAccountModal";
@@ -27,6 +28,7 @@ interface InstagramUserCardProps {
     isDisabled: boolean;
     onToggleSelection: (username: string) => void;
     onPostSelect: (post: any) => void;
+    onLoadAnalysis: (username: string) => void;
 }
 
 export function InstagramUserCard({ 
@@ -34,7 +36,8 @@ export function InstagramUserCard({
     isSelected, 
     isDisabled, 
     onToggleSelection, 
-    onPostSelect 
+    onPostSelect,
+    onLoadAnalysis
 }: InstagramUserCardProps) {
     const latestDate = getLatestPostDate(user);
     const isActive = isUserActive(latestDate);
@@ -54,6 +57,7 @@ export function InstagramUserCard({
     const [showMarketModal, setShowMarketModal] = useState(false);
     const [showFakeModal, setShowFakeModal] = useState(false);
     const [showCampaignModal, setShowCampaignModal] = useState(false);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
 
     return (
         <div 
@@ -110,6 +114,16 @@ export function InstagramUserCard({
                                 캠페인 적합
                              </button>
                              
+                             {/* Analysis History Badge */}
+                             {user.latest_analysis_date && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setShowHistoryModal(true); }}
+                                    className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white tracking-wider flex items-center gap-1 hover:bg-blue-700 transition-colors shadow-sm animate-pulse"
+                                >
+                                    📋 분석 리포트 확인 ({new Date(user.latest_analysis_date).toLocaleDateString()})
+                                </button>
+                             )}
+
                              {/* Authenticity Badges */}
                              {isFake ? (
                                 <button 
@@ -293,6 +307,22 @@ export function InstagramUserCard({
                     onClose={() => setShowFakeModal(false)}
                     authDetails={authDetails}
                     tier={tier}
+                />
+            )}
+            {showHistoryModal && (
+                <AnalysisHistoryModal 
+                    isOpen={showHistoryModal}
+                    onClose={() => setShowHistoryModal(false)}
+                    username={user.username}
+                    date={user.latest_analysis_date!}
+                    onLoadHistory={() => {
+                        setShowHistoryModal(false);
+                        onLoadAnalysis(user.username);
+                    }}
+                    onNewAnalysis={() => {
+                        setShowHistoryModal(false);
+                        // Just close modal, user can select card as normal
+                    }}
                 />
             )}
         </div>

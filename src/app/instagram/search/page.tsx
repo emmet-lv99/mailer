@@ -10,7 +10,7 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { getLatestPostDate } from "@/services/instagram/utils";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PostLightbox } from "../components/PostLightbox";
 import { InstagramUserCard } from "./components/InstagramUserCard";
 
@@ -22,11 +22,13 @@ function SearchPageContent() {
   const { 
     keyword, setKeyword, 
     searchMode, setSearchMode,
-    results, setResults, 
+    results, setResults,
     fallbackUrl, setFallbackUrl,
+    analysisResults, setAnalysisResults,
     selectedUsernames, toggleSelection, setSelectedUsers 
   } = useInstagramStore();
 
+  const router = useRouter();
   const [limit, setLimit] = useState(30);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(results.length > 0);
@@ -70,6 +72,44 @@ function SearchPageContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadAnalysis = async (username: string) => {
+      try {
+          const toastId = toast.loading("기존 분석 리포트를 불러오는 중...");
+          const { result } = await instagramService.getAnalysisResult(username);
+          
+          if (result && result.full_analysis) {
+              // Construct AnalysisResult object from DB history
+              // Note: detailed posts/trendMetrics might be missing if not saved fully.
+              const analysisResult = {
+                  username: result.username,
+                  success: true,
+                  verifiedProfile: {
+                      username: result.username,
+                      followers: result.followers,
+                      profilePicUrl: result.profile_pic_url,
+                      fullName: result.full_analysis.basicStats?.fullName || result.username,
+                      biography: result.full_analysis.basicStats?.biography || "",
+                      isVerified: true
+                  },
+                  analysis: result.full_analysis,
+                  // Trend metrics might be missing in history for now, unless we backfill.
+                  // UI handles missing trendMetrics gracefully.
+                  trendMetrics: undefined 
+              };
+
+              setAnalysisResults([analysisResult as any]);
+              toast.dismiss(toastId);
+              toast.success("기존 분석 결과를 불러왔습니다!");
+              router.push('/instagram/analyze');
+          } else {
+              toast.dismiss(toastId);
+              toast.error("저장된 분석 내용이 손상되었거나 없습니다.");
+          }
+      } catch (e: any) {
+          toast.error("리포트 로딩 실패: " + e.message);
+      }
   };
 
   const sortedResults = [...results].map(user => ({
@@ -220,9 +260,10 @@ function SearchPageContent() {
                     key={user.username}
                     user={user}
                     isSelected={selectedUsernames.has(user.username)}
-                    isDisabled={user.is_registered}
+                    isDisabled={!!user.is_registered}
                     onToggleSelection={toggleSelection}
                     onPostSelect={setSelectedPost}
+                    onLoadAnalysis={handleLoadAnalysis}
                 />
             ))}
           </div>

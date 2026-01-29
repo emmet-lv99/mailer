@@ -134,7 +134,7 @@ export async function POST(req: Request) {
                                     const commonInput = {
                                         directUrls: directUrls,
                                         searchLimit: 1,
-                                        commentsPerPost: 20,
+                                        commentsPerPost: 30,
                                         username_login: instaUsername,
                                         password_login: instaPassword,
                                         loginUsername: instaUsername,
@@ -261,6 +261,8 @@ export async function POST(req: Request) {
                         const recent_posts = latestPosts.slice(0, postLimit).map((post: any) => ({
                             id: post.id || "",
                             caption: post.caption || "",
+                            hashtags: post.hashtags || [],
+                            mentions: post.mentions || [],
                             imageUrl: post.displayUrl || post.thumbnailUrl || "",
                             likes: post.likesCount || 0,
                             comments: post.commentsCount || 0,
@@ -324,14 +326,41 @@ export async function POST(req: Request) {
                     }
                 }
 
-                // 4. Check against DB
                 const usernames = results.map(r => r.username);
-                const { data: existingUsers } = await supabase
-                    .from("instagram_targets")
-                    .select("username, status")
-                    .in("username", usernames);
+                
+                // Parallel Fetch: Targets & Analysis History
+                const [targetsRes, historyRes] = await Promise.all([
+                    supabase
+                        .from("instagram_targets")
+                        .select("username, status")
+                        .in("username", usernames),
+                    supabase
+                        .from("analysis_history")
+                        .select("username, analyzed_at")
+                        .in("username", usernames)
+                        .order("analyzed_at", { ascending: false })
+                ]);
+
+                const existingUsers = targetsRes.data;
+                const analysisHistory = historyRes.data;
 
                 const existingMap = new Map(existingUsers?.map(u => [u.username, u.status]));
+                
+                // Get latest date per user
+                const historyMap = new Map<string, string>();
+                if (analysisHistory) {
+                    for (const h of analysisHistory) {
+                        // usage of .in() with order() might return multiple rows per user
+                        // Since we iterate in order, the first one we see is the latest (due to desc order?)
+                        // Wait, .in() + sort order depends on if we can group. 
+                        // Supabase basic select returns all rows matching.
+                        // We sort logic in memory to be safe or rely on query order.
+                        // If we iterate array, and set map only if not present, checking order ensures max.
+                        if (!historyMap.has(h.username)) {
+                            historyMap.set(h.username, h.analyzed_at);
+                        }
+                    }
+                }
 
                 const finalResults = results
                     .slice(0, limit)
@@ -339,6 +368,7 @@ export async function POST(req: Request) {
                         ...user,
                         db_status: existingMap.get(user.username) || null,
                         is_registered: existingMap.has(user.username),
+                        latest_analysis_date: historyMap.get(user.username) || null,
                         is_target_range: user.followers_count >= 5000 && user.followers_count <= 100000
                     }));
 

@@ -5,6 +5,13 @@ export interface InvestmentAnalyst {
   tier: 'S' | 'A' | 'B' | 'C' | 'D';
   totalScore: number;
   decision: string;
+  estimatedValue: string;
+  conversionMetrics: {
+    reachPotential: string;
+    purchaseIntent: string;
+    conversionLikelihood: string;
+    estimatedBuyers?: string;
+  };
   currentAssessment: {
     strengths: string[];
     weaknesses: string[];

@@ -12,14 +12,37 @@ export function InvestmentTab({ investment }: InvestmentTabProps) {
     return (
         <div className="p-6 m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 focus-visible:ring-0">
             {/* Score Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-slate-50 border rounded-lg text-center">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">투자 등급</div>
-                    <div className={`text-2xl font-black ${getTierColor(investment.tier).split(' ')[0]}`}>{investment.tier}급</div>
+            {/* Score Grid & Conversion Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. Score Card */}
+                <div className="bg-slate-50 border rounded-lg p-4 flex flex-col justify-center items-center space-y-2">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">투자 등급</div>
+                    <div className={`text-4xl font-black ${getTierColor(investment.tier).split(' ')[0]} mb-1`}>{investment.tier}급</div>
+                    <div className="flex gap-4 text-xs font-medium text-slate-500">
+                         <span>총점 <span className="text-slate-900">{investment.totalScore}</span></span>
+                         <span className="text-slate-300">|</span>
+                         <span>가치 <span className="text-slate-900">{investment.estimatedValue}</span></span>
+                    </div>
                 </div>
-                <div className="p-4 bg-slate-50 border rounded-lg text-center">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">총점</div>
-                    <div className="text-2xl font-black text-slate-800">{investment.totalScore}</div>
+
+                {/* 2. Conversion Metrics Grid (New) */}
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-blue-50/50 border border-blue-100 rounded p-2 text-center">
+                        <div className="text-[9px] text-blue-600 font-bold mb-0.5">도달 가능성</div>
+                        <div className="text-sm font-bold text-blue-900">{investment.conversionMetrics.reachPotential}</div>
+                    </div>
+                    <div className="bg-indigo-50/50 border border-indigo-100 rounded p-2 text-center">
+                        <div className="text-[9px] text-indigo-600 font-bold mb-0.5">구매 의향</div>
+                        <div className="text-sm font-bold text-indigo-900">{investment.conversionMetrics.purchaseIntent}</div>
+                    </div>
+                    <div className="bg-violet-50/50 border border-violet-100 rounded p-2 text-center">
+                         <div className="text-[9px] text-violet-600 font-bold mb-0.5">전환 확률</div>
+                         <div className="text-sm font-bold text-violet-900">{investment.conversionMetrics.conversionLikelihood}</div>
+                    </div>
+                     <div className="bg-emerald-50/50 border border-emerald-100 rounded p-2 text-center">
+                          <div className="text-[9px] text-emerald-600 font-bold mb-0.5">예상 구매자</div>
+                          <div className="text-sm font-bold text-emerald-900">{investment.conversionMetrics.estimatedBuyers || '-'}</div>
+                     </div>
                 </div>
             </div>
 

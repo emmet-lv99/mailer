@@ -147,8 +147,8 @@ export async function POST(req: Request) {
           campaignSuitability
         };
 
-        // Calculate trend metrics using up to 30 posts
-        const allPosts = (user.recent_posts || []).slice(0, 30);
+        // Calculate trend metrics using ALL collected posts
+        const allPosts = user.recent_posts || [];
         const postsForTrend = allPosts.map((post: any) => ({
           likes: post.likes || 0,
           comments: post.comments || 0, // [FIX] Match field name from search/route.ts

@@ -138,6 +138,12 @@ export const instagramService = {
       return res.json();
   },
 
+  getAnalysisResult: async (username: string): Promise<any> => {
+      const res = await fetch(`/api/instagram/history?mode=analysis&username=${encodeURIComponent(username)}`);
+      if (!res.ok) throw new Error("Failed to fetch analysis result");
+      return res.json();
+  },
+
   updateStatus: async (username: string, status: string): Promise<void> => {
       const res = await fetch("/api/instagram/history", {
           method: "PATCH",

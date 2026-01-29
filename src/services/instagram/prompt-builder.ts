@@ -20,14 +20,14 @@ export function buildBrutalUserPrompt(params: BrutalUserPromptParams): string {
 ${commentsText || '(댓글 없음)'}`;
   }).join('\n\n---\n');
 
-  // 트렌드 분석 섹션 (30개 게시물 기반)
+  // 트렌드 분석 섹션 (전체 수집 게시물 기반)
   const trendText = trendMetrics ? `
-**트렌드 분석 (30개 게시물 기반):**
+**트렌드 분석 (${trendMetrics.totalPosts}개 게시물 기반):**
 - ER 추세: ${trendMetrics.erTrend === 'rising' ? '📈 상승' : trendMetrics.erTrend === 'declining' ? '📉 하락' : '➡️ 유지'} (${trendMetrics.erChangePercent > 0 ? '+' : ''}${trendMetrics.erChangePercent}%)
 - 구간별 ER:
-  - 최근 10개: ${trendMetrics.periodComparison.recent.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.recent.avgLikes}개)
-  - 중간 10개: ${trendMetrics.periodComparison.middle.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.middle.avgLikes}개)
-  - 이전 10개: ${trendMetrics.periodComparison.oldest.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.oldest.avgLikes}개)
+  - 최근 구간 (${Math.floor(trendMetrics.totalPosts / 3)}개): ${trendMetrics.periodComparison.recent.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.recent.avgLikes}개)
+  - 중간 구간 (${Math.floor(trendMetrics.totalPosts / 3)}개): ${trendMetrics.periodComparison.middle.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.middle.avgLikes}개)
+  - 이전 구간 (${trendMetrics.totalPosts - Math.floor(trendMetrics.totalPosts / 3) * 2}개): ${trendMetrics.periodComparison.oldest.er.toFixed(2)}% (좋아요 평균 ${trendMetrics.periodComparison.oldest.avgLikes}개)
 - 평균 업로드 주기: ${trendMetrics.avgUploadFrequency}일
 ` : '';
 

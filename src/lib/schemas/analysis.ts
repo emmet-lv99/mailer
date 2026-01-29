@@ -11,7 +11,16 @@ export const INSTAGRAM_ANALYSIS_SCHEMA = {
         totalScore: { type: "NUMBER" },
         decision: { type: "STRING" },
         estimatedValue: { type: "STRING" },
-        expectedROI: { type: "STRING" },
+        conversionMetrics: {
+          type: "OBJECT",
+          properties: {
+            reachPotential: { type: "STRING" },
+            purchaseIntent: { type: "STRING" },
+            conversionLikelihood: { type: "STRING" },
+            estimatedBuyers: { type: "STRING" }
+          },
+          required: ["reachPotential", "purchaseIntent", "conversionLikelihood"]
+        },
         currentAssessment: {
           type: "OBJECT",
           properties: {
@@ -23,7 +32,7 @@ export const INSTAGRAM_ANALYSIS_SCHEMA = {
           required: ["strengths", "weaknesses", "risks", "brutalVerdict"]
         }
       },
-      required: ["tier", "totalScore", "decision", "estimatedValue", "expectedROI", "currentAssessment"]
+      required: ["tier", "totalScore", "decision", "estimatedValue", "conversionMetrics", "currentAssessment"]
     },
     influencerExpert: {
       type: "OBJECT",

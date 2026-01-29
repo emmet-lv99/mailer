@@ -15,10 +15,18 @@ export function calculateERTrend(posts: PostForTrend[], followers: number): Tren
     return null;
   }
 
-  // 3개 구간으로 분할 (최신순 정렬 가정)
-  const recentPosts = posts.slice(0, Math.min(10, posts.length));
-  const middlePosts = posts.slice(10, 20);
-  const oldestPosts = posts.slice(20, 30);
+  // 3개 구간으로 동적 분할 (전체 데이터 활용)
+  const segmentSize = Math.floor(posts.length / 3);
+  const remainder = posts.length % 3;
+
+  // 나머지 처리를 위해 구간별 크기 조정 (최근 게시물에 나머지 할당하지 않고 가장 과거에 할당하거나 등등. 여기서는 단순하게)
+  // [Recent (size)] [Middle (size)] [Oldest (size + remainder)] 형태로 분할
+  
+  const recentPosts = posts.slice(0, segmentSize);
+  const middlePosts = posts.slice(segmentSize, segmentSize * 2);
+  const oldestPosts = posts.slice(segmentSize * 2);
+
+  console.log(`[TrendMetrics] Segment Split: Recent(${recentPosts.length}), Middle(${middlePosts.length}), Oldest(${oldestPosts.length})`);
 
   // 구간별 ER 계산
   const calcPeriodMetrics = (periodPosts: PostForTrend[]) => {

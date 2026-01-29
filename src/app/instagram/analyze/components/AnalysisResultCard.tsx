@@ -5,17 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InstagramUser } from "@/services/instagram/types";
 import {
-    calculateAuthenticity,
-    calculateCampaignSuitability,
-    calculateEngagementRate,
-    getAccountGrade,
-    getAccountTier,
-    getAverageUploadCycle,
-    getLatestPostDate,
-    isMarketSuitable,
-    isUserActive
+  calculateAuthenticity,
+  calculateCampaignSuitability,
+  calculateEngagementRate,
+  getAccountGrade,
+  getAccountTier,
+  getAverageUploadCycle,
+  getLatestPostDate,
+  isMarketSuitable,
+  isUserActive
 } from "@/services/instagram/utils";
-import { ArrowDown, ArrowRight, ArrowUp, Check, Loader2, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Check, Clock, Loader2, X } from "lucide-react";
 import { AnalysisResult, TrendMetrics } from "../../types";
 import { MetricsBadges } from "./MetricsBadges";
 import { PostsGrid } from "./PostsGrid";
@@ -93,9 +93,9 @@ function TrendMetricsBadge({ trendMetrics }: { trendMetrics: TrendMetrics }) {
         })}
       </div>
       <div className="flex justify-between text-[9px] text-muted-foreground px-1">
-        <span>이전 10개</span>
-        <span>중간 10개</span>
-        <span>최근 10개</span>
+        <span>이전 {trendMetrics.totalPosts - Math.floor(trendMetrics.totalPosts / 3) * 2}개</span>
+        <span>중간 {Math.floor(trendMetrics.totalPosts / 3)}개</span>
+        <span>최근 {Math.floor(trendMetrics.totalPosts / 3)}개</span>
       </div>
     </div>
   );
@@ -136,6 +136,35 @@ export function AnalysisResultCard({
 
   // Error State
   if (!result.success) {
+    const isRateLimit = result.error?.includes('429') || result.error?.includes('Resource exhausted') || result.error?.includes('Quota exceeded');
+
+    if (isRateLimit) {
+      return (
+        <Card className="p-6 border-l-4 border-l-orange-500 shadow-sm bg-orange-50/50">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center border-2 border-orange-200 shrink-0">
+               <Clock className="w-8 h-8 text-orange-500" />
+            </div>
+            <div>
+              <div className="font-bold text-orange-800 flex items-center gap-2 text-lg">
+                시스템 과부하 (잠시 대기)
+                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-200">
+                  429 Too Many Requests
+                </span>
+              </div>
+              <div className="text-orange-700 mt-2 text-sm leading-relaxed">
+                <p><strong>구글 AI 분석 요청이 너무 많습니다.</strong></p>
+                <p className="mt-1">잠시 후(약 30초~1분)에 다시 시도해주시면 정상적으로 처리됩니다.</p>
+                <div className="text-xs text-orange-600/60 mt-2 pt-2 border-t border-orange-200/50">
+                   Error Details: {result.error}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
     return (
       <Card className="p-6 border-l-4 border-l-red-500 shadow-sm bg-red-50/50">
         <div className="flex items-start gap-4">
@@ -261,19 +290,41 @@ export function AnalysisResultCard({
                 {investment ? (
                     <>
                         {/* Key Metrics Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="p-4 bg-slate-50 border rounded-lg">
-                                <div className="text-xs text-muted-foreground font-medium mb-1">투자 등급</div>
-                                <div className="text-2xl font-black text-slate-800">{investment.tier}급</div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* 1. Score Card */}
+                            <div className="bg-slate-50 border rounded-lg p-4 flex flex-col justify-center items-center space-y-2">
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">투자 등급</div>
+                                <div className={`text-4xl font-black mb-1 ${
+                                    investment.tier === 'S' ? 'text-violet-600' :
+                                    investment.tier === 'A' ? 'text-blue-600' :
+                                    investment.tier === 'B' ? 'text-green-600' :
+                                    investment.tier === 'C' ? 'text-orange-500' : 'text-red-500'
+                                }`}>{investment.tier}급</div>
+                                <div className="flex gap-4 text-xs font-medium text-slate-500">
+                                     <span>총점 <span className="text-slate-900">{investment.totalScore}</span></span>
+                                     <span className="text-slate-300">|</span>
+                                     <span>가치 <span className="text-slate-900">{investment.estimatedValue}</span></span>
+                                </div>
                             </div>
-                            <div className="p-4 bg-slate-50 border rounded-lg">
-                                <div className="text-xs text-muted-foreground font-medium mb-1">총점</div>
-                                <div className="text-2xl font-black text-slate-800">{investment.totalScore}점</div>
-                            </div>
-                            <div className="p-4 bg-slate-50 border rounded-lg md:col-span-2">
-                                <div className="text-xs text-muted-foreground font-medium mb-1">예상 가치 / ROI</div>
-                                <div className="text-sm font-bold text-slate-800">{investment.estimatedValue}</div>
-                                <div className="text-xs text-slate-500 mt-1">{investment.expectedROI}</div>
+
+                            {/* 2. Conversion Metrics Grid (New) */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-blue-50/50 border border-blue-100 rounded p-2 text-center">
+                                    <div className="text-[9px] text-blue-600 font-bold mb-0.5">도달 가능성</div>
+                                    <div className="text-sm font-bold text-blue-900">{investment.conversionMetrics?.reachPotential || '-'}</div>
+                                </div>
+                                <div className="bg-indigo-50/50 border border-indigo-100 rounded p-2 text-center">
+                                    <div className="text-[9px] text-indigo-600 font-bold mb-0.5">구매 의향</div>
+                                    <div className="text-sm font-bold text-indigo-900">{investment.conversionMetrics?.purchaseIntent || '-'}</div>
+                                </div>
+                                <div className="bg-violet-50/50 border border-violet-100 rounded p-2 text-center">
+                                     <div className="text-[9px] text-violet-600 font-bold mb-0.5">전환 확률</div>
+                                     <div className="text-sm font-bold text-violet-900">{investment.conversionMetrics?.conversionLikelihood || '-'}</div>
+                                </div>
+                                 <div className="bg-emerald-50/50 border border-emerald-100 rounded p-2 text-center">
+                                      <div className="text-[9px] text-emerald-600 font-bold mb-0.5">예상 구매자</div>
+                                      <div className="text-sm font-bold text-emerald-900">{investment.conversionMetrics?.estimatedBuyers || '-'}</div>
+                                 </div>
                             </div>
                         </div>
 

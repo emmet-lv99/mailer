@@ -1,15 +1,15 @@
-
+import { supabaseAdmin } from "@/lib/supabase";
 import {
-    calculateAuthenticity,
-    calculateCampaignSuitability,
-    calculateEngagementRate,
-    calculateTrendMetrics,
-    getAccountGrade,
-    getAccountTier,
-    getAverageUploadCycle,
-    getLatestPostDate,
-    isMarketSuitable,
-    isUserActive
+  calculateAuthenticity,
+  calculateCampaignSuitability,
+  calculateEngagementRate,
+  calculateTrendMetrics,
+  getAccountGrade,
+  getAccountTier,
+  getAverageUploadCycle,
+  getLatestPostDate,
+  isMarketSuitable,
+  isUserActive
 } from "@/services/instagram/utils";
 import { NextResponse } from "next/server";
 
@@ -84,10 +84,29 @@ export async function POST(req: Request) {
                we might skip this. But for 'Deep Analysis' we often want 30 posts for trend analysis.
                Let's fetch fresh 30 posts here.
             */
+             // Fetch Settings for Limit
+            let postLimit = 30; // Default for deep analysis
+            try {
+                if (supabaseAdmin) {
+                    const { data: settings } = await supabaseAdmin // Use admin client for settings if needed
+                        .from('settings')
+                        .select('value')
+                        .eq('key', 'insta_post_limit')
+                        .single();
+                    
+                    if (settings?.value) {
+                        postLimit = parseInt(settings.value, 10) || 30;
+                    }
+                }
+            } catch (e) {
+                // Ignore settings fetch error
+            }
+
              const postsRun = await client.actor("apify/instagram-scraper").call({
                 directUrls: [`https://www.instagram.com/${user.username}/`],
                 resultsType: "posts",
-                resultsLimit: 30, // Fetch 30 for trend analysis
+                resultsLimit: postLimit, // Use dynamic limit
+
                 username_login: instaUsername,
                 password_login: instaPassword,
                 loginUsername: instaUsername,
