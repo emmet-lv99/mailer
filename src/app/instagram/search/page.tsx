@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { getLatestPostDate } from "@/services/instagram/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PostLightbox } from "../components/PostLightbox";
+import { AnalysisRefreshConfirmModal } from "./components/AnalysisRefreshConfirmModal";
 import { InstagramUserCard } from "./components/InstagramUserCard";
 
 function SearchPageContent() {
@@ -35,6 +36,7 @@ function SearchPageContent() {
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [logs, setLogs] = useState<string[]>([]);
+  const [refreshTarget, setRefreshTarget] = useState<string | null>(null);
 
   // Sync URL mode to Store and clear results if mode changes
   useEffect(() => {
@@ -72,6 +74,35 @@ function SearchPageContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onRefreshClick = (username: string) => {
+      setRefreshTarget(username);
+  };
+
+  const executeRefresh = async () => {
+      if (!refreshTarget) return;
+      const username = refreshTarget;
+      setRefreshTarget(null); // Close modal
+
+      setLoading(true);
+      setSearched(false);
+      setLogs([]); 
+
+      try {
+        const data = await instagramService.search(username, 1, 'target', (log) => {
+            setLogs(prev => [...prev, log]);
+        }, true); // force = true
+        
+        setResults(data.results); // Replace results
+        setFallbackUrl(data.fallbackUrl || null);
+        setSearched(true);
+      } catch (error: any) {
+        toast.error(error.message);
+        setLoading(false); // Ensure loading is false on error
+      } finally {
+        setLoading(false);
+      }
   };
 
   const handleLoadAnalysis = async (username: string) => {
@@ -264,6 +295,7 @@ function SearchPageContent() {
                     onToggleSelection={toggleSelection}
                     onPostSelect={setSelectedPost}
                     onLoadAnalysis={handleLoadAnalysis}
+                    onRefresh={onRefreshClick}
                 />
             ))}
           </div>
@@ -295,6 +327,13 @@ function SearchPageContent() {
               onClose={() => setSelectedPost(null)} 
             />
           )}
+
+          {/* Refresh Confirmation Modal */}
+          <AnalysisRefreshConfirmModal 
+            open={!!refreshTarget}
+            onOpenChange={(open) => !open && setRefreshTarget(null)}
+            onConfirm={executeRefresh}
+          />
         </div>
       )}
     </div>

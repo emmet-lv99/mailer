@@ -14,8 +14,8 @@ import {
   isUserActive
 } from "@/services/instagram/utils";
 import { Instagram } from "lucide-react";
-import { useState } from "react";
-import { AnalysisHistoryModal } from "./modals/AnalysisHistoryModal";
+import { useEffect, useState } from "react";
+import { AnalysisHistoryModal } from "./AnalysisHistoryModal";
 import { AuthenticityModal } from "./modals/AuthenticityModal";
 import { CampaignSuitabilityModal } from "./modals/CampaignSuitabilityModal";
 import { FakeAccountModal } from "./modals/FakeAccountModal";
@@ -29,6 +29,7 @@ interface InstagramUserCardProps {
     onToggleSelection: (username: string) => void;
     onPostSelect: (post: any) => void;
     onLoadAnalysis: (username: string) => void;
+    onRefresh?: (username: string) => void;
 }
 
 export function InstagramUserCard({ 
@@ -37,8 +38,12 @@ export function InstagramUserCard({
     isDisabled, 
     onToggleSelection, 
     onPostSelect,
-    onLoadAnalysis
+    onLoadAnalysis,
+    onRefresh
 }: InstagramUserCardProps) {
+
+    
+    // console.log('[UserCard] Debug:', user.username, user.latest_analysis_date, user.is_from_history);
     const latestDate = getLatestPostDate(user);
     const isActive = isUserActive(latestDate);
     const avgCycle = getAverageUploadCycle(user.recent_posts);
@@ -58,6 +63,13 @@ export function InstagramUserCard({
     const [showFakeModal, setShowFakeModal] = useState(false);
     const [showCampaignModal, setShowCampaignModal] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+    // Auto-open history modal if result is from DB
+    useEffect(() => {
+        if (user.is_from_history) {
+            setShowHistoryModal(true);
+        }
+    }, [user.is_from_history]);
 
     return (
         <div 
@@ -114,15 +126,7 @@ export function InstagramUserCard({
                                 캠페인 적합
                              </button>
                              
-                             {/* Analysis History Badge */}
-                             {user.latest_analysis_date && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setShowHistoryModal(true); }}
-                                    className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white tracking-wider flex items-center gap-1 hover:bg-blue-700 transition-colors shadow-sm animate-pulse"
-                                >
-                                    📋 분석 리포트 확인 ({new Date(user.latest_analysis_date).toLocaleDateString()})
-                                </button>
-                             )}
+
 
                              {/* Authenticity Badges */}
                              {isFake ? (
@@ -195,80 +199,110 @@ export function InstagramUserCard({
             </div>
 
             {/* Recent Posts Gallery - 일반 게시물 + 릴스 구분 */}
-            <div className="p-3 bg-muted/10">
-                {/* Reels Section */}
-                {user.recent_posts.filter(p => p.productType === 'clips').length > 0 && (
-                    <div className="mb-3">
-                        <div className="text-[10px] text-muted-foreground mb-2 flex justify-between items-center">
-                            <span className="flex items-center gap-1">
-                                <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[8px] px-1.5 py-0.5 rounded font-bold">REELS</span>
-                                <span>{user.recent_posts.filter(p => p.productType === 'clips').length}개</span>
-                            </span>
+            <div className="p-3 bg-muted/10 h-[100px] flex flex-col justify-center items-center">
+                {user.is_from_history ? (
+                    <div className="w-full flex flex-col gap-2">
+                        {/* Status Row */}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                            <span>{user.latest_analysis_date ? new Date(user.latest_analysis_date).toLocaleDateString() : '-'}</span>
+                            <span className="font-medium text-foreground">분석 결과가 있습니다.</span>
                         </div>
-                        <div className="grid grid-cols-5 gap-1">
-                            {user.recent_posts.filter(p => p.productType === 'clips').slice(0, 5).map((post, idx) => (
-                                <div 
-                                    key={`reel-${idx}`} 
-                                    className="aspect-square rounded-md bg-muted overflow-hidden border relative cursor-pointer group"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (post?.imageUrl) onPostSelect(post);
-                                    }}
+                        
+                        {/* Action Buttons Row */}
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setShowHistoryModal(true); }}
+                                className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-xs hover:bg-primary/90 transition-colors font-medium"
+                            >
+                                보기
+                            </button>
+                            {onRefresh && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onRefresh(user.username); }}
+                                    className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded text-xs hover:bg-secondary/80 transition-colors border"
                                 >
-                                    {post?.imageUrl ? (
-                                        <img src={getProxiedUrl(post.imageUrl)} alt="" className="w-full h-full object-cover transition-transform hover:scale-110" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground/30">•</div>
-                                    )}
-                                    {/* Reels Metrics Overlay */}
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="flex items-center gap-1 text-white text-[8px]">
-                                            <span>👁 {(post.views || 0).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                    최신 정보 불러오기
+                                </button>
+                            )}
                         </div>
                     </div>
-                )}
-
-                {/* Regular Posts Section */}
-                <div className="text-[10px] text-muted-foreground mb-2 flex justify-between items-center">
-                    <span>최근 게시물</span>
-                    <span>{latestDate ? latestDate.toLocaleDateString() : '-'}</span>
-                </div>
-                <div className="grid grid-cols-5 gap-1">
-                    {/* Show first 10 posts (2 rows of 5) */}
-                    {user.recent_posts.slice(0, 10).map((post, idx) => (
-                        <div 
-                            key={idx} 
-                            className="aspect-square rounded-md bg-muted overflow-hidden border relative cursor-pointer group"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (post?.imageUrl) onPostSelect(post);
-                            }}
-                        >
-                            {post?.imageUrl ? (
-                                <img src={getProxiedUrl(post.imageUrl)} alt="" className="w-full h-full object-cover transition-transform hover:scale-110" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground/30">•</div>
-                            )}
-                            {/* Reels Badge */}
-                            {post?.productType === 'clips' && (
-                                <div className="absolute top-0.5 right-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[6px] px-1 py-0.5 rounded font-bold">
-                                    R
-                                </div>
-                            )}
-                            {/* Metrics Overlay */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="flex items-center gap-1 text-white text-[7px]">
-                                    <span>❤️{(post?.likes || 0).toLocaleString()}</span>
-                                    {(post?.views || 0) > 0 && <span>👁{(post?.views || 0).toLocaleString()}</span>}
-                                </div>
+                ) : (
+                   <>
+                    {/* Reels Section */}
+                    {user.recent_posts.filter(p => p.productType === 'clips').length > 0 && (
+                        <div className="mb-3">
+                            <div className="text-[10px] text-muted-foreground mb-2 flex justify-between items-center">
+                                <span className="flex items-center gap-1">
+                                    <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[8px] px-1.5 py-0.5 rounded font-bold">REELS</span>
+                                    <span>{user.recent_posts.filter(p => p.productType === 'clips').length}개</span>
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-5 gap-1">
+                                {user.recent_posts.filter(p => p.productType === 'clips').slice(0, 5).map((post, idx) => (
+                                    <div 
+                                        key={`reel-${idx}`} 
+                                        className="aspect-square rounded-md bg-muted overflow-hidden border relative cursor-pointer group"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (post?.imageUrl) onPostSelect(post);
+                                        }}
+                                    >
+                                        {post?.imageUrl ? (
+                                            <img src={getProxiedUrl(post.imageUrl)} alt="" className="w-full h-full object-cover transition-transform hover:scale-110" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground/30">•</div>
+                                        )}
+                                        {/* Reels Metrics Overlay */}
+                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center gap-1 text-white text-[8px]">
+                                                <span>👁 {(post.views || 0).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    ))}
-                </div>
+                    )}
+
+                    {/* Regular Posts Section */}
+                    <div className="text-[10px] text-muted-foreground mb-2 flex justify-between items-center">
+                        <span>최근 게시물</span>
+                        <span>{latestDate ? latestDate.toLocaleDateString() : '-'}</span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1">
+                        {/* Show first 10 posts (2 rows of 5) */}
+                        {user.recent_posts.slice(0, 10).map((post, idx) => (
+                            <div 
+                                key={idx} 
+                                className="aspect-square rounded-md bg-muted overflow-hidden border relative cursor-pointer group"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (post?.imageUrl) onPostSelect(post);
+                                }}
+                            >
+                                {post?.imageUrl ? (
+                                    <img src={getProxiedUrl(post.imageUrl)} alt="" className="w-full h-full object-cover transition-transform hover:scale-110" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground/30">•</div>
+                                )}
+                                {/* Reels Badge */}
+                                {post?.productType === 'clips' && (
+                                    <div className="absolute top-0.5 right-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[6px] px-1 py-0.5 rounded font-bold">
+                                        R
+                                    </div>
+                                )}
+                                {/* Metrics Overlay */}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-1 text-white text-[7px]">
+                                        <span>❤️{(post?.likes || 0).toLocaleString()}</span>
+                                        {(post?.views || 0) > 0 && <span>👁{(post?.views || 0).toLocaleString()}</span>}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    </>
+                )}
             </div>
 
             {/* Modals - Components */}
@@ -311,17 +345,17 @@ export function InstagramUserCard({
             )}
             {showHistoryModal && (
                 <AnalysisHistoryModal 
-                    isOpen={showHistoryModal}
-                    onClose={() => setShowHistoryModal(false)}
+                    open={showHistoryModal}
+                    onOpenChange={setShowHistoryModal}
                     username={user.username}
-                    date={user.latest_analysis_date!}
-                    onLoadHistory={() => {
+                    analyzedDate={user.latest_analysis_date || null}
+                    onLoad={() => {
                         setShowHistoryModal(false);
                         onLoadAnalysis(user.username);
                     }}
-                    onNewAnalysis={() => {
+                    onRefresh={() => {
                         setShowHistoryModal(false);
-                        // Just close modal, user can select card as normal
+                        onRefresh?.(user.username);
                     }}
                 />
             )}

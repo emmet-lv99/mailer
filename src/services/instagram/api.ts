@@ -6,12 +6,13 @@ export const instagramService = {
     keyword: string, 
     limit: number = 10, 
     mode: 'tag' | 'target' = 'tag',
-    onLog?: (message: string) => void
+    onLog?: (message: string) => void,
+    force: boolean = false
   ): Promise<SearchResponse> => {
     const res = await fetch("/api/instagram/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword, limit, mode }),
+      body: JSON.stringify({ keyword, limit, mode, force }),
     });
 
     if (!res.ok) {

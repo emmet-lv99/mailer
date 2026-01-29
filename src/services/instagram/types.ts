@@ -24,6 +24,7 @@ export type InstagramUser = {
   is_registered?: boolean; // If true, managed in CRM
   db_status?: string; // CRM status
   latest_analysis_date?: string | null; // Last analyzed date form history
+  is_from_history?: boolean; // If true, result is from DB (no posts)
 };
 
 export type SearchResponse = {

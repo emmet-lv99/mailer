@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -10,13 +10,16 @@ export async function GET(req: Request) {
 
     // Mode: Analysis History (Single User)
     if (mode === 'analysis' && username) {
-        const { data, error } = await supabase
+        if (!supabaseAdmin) throw new Error("Supabase Admin client not initialized");
+        
+        const { data, error } = await supabaseAdmin
             .from("analysis_history")
             .select("*")
             .eq("username", username.toLowerCase())
             .order("analyzed_at", { ascending: false })
             .limit(1)
-            .single();
+            .limit(1)
+            .maybeSingle();
         
         if (error) throw error;
         return NextResponse.json({ result: data });

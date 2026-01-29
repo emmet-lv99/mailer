@@ -1,6 +1,6 @@
 
 import client from "@/lib/apify";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
 // Actor ID for Instagram Scraper (apify/instagram-scraper is a good choice, but requires login sometimes)
@@ -26,22 +26,35 @@ export async function POST(req: Request) {
             let targetUsernames: string[] = [];
             
             // Helper to send logs to client
+            // Helper to send logs to client
             const sendLog = (message: string) => {
-                const logChunk = JSON.stringify({ type: 'log', message }) + '\n';
-                controller.enqueue(encoder.encode(logChunk));
+                try {
+                    const logChunk = JSON.stringify({ type: 'log', message }) + '\n';
+                    controller.enqueue(encoder.encode(logChunk));
+                } catch (e) {
+                   // Ignore stream errors (e.g. client disconnect)
+                }
                 console.log(message); // Keep server-side logging
             };
 
             // Helper to send final result
             const sendResult = (data: any) => {
-                const resultChunk = JSON.stringify({ type: 'result', data }) + '\n';
-                controller.enqueue(encoder.encode(resultChunk));
+                try {
+                    const resultChunk = JSON.stringify({ type: 'result', data }) + '\n';
+                    controller.enqueue(encoder.encode(resultChunk));
+                } catch (e) {
+                    console.warn("Failed to send result:", e);
+                }
             };
 
             // Helper to send error
             const sendError = (message: string, code: number = 500) => {
-                const errorChunk = JSON.stringify({ type: 'error', message, code }) + '\n';
-                controller.enqueue(encoder.encode(errorChunk));
+                try {
+                    const errorChunk = JSON.stringify({ type: 'error', message, code }) + '\n';
+                    controller.enqueue(encoder.encode(errorChunk));
+                } catch (e) {
+                    console.warn("Failed to send error:", e);
+                }
             };
 
             try {
@@ -78,7 +91,64 @@ export async function POST(req: Request) {
                             if (mode === 'target') {
                                 const username = keyword.replace(/^@/, '').trim();
                                 targetUsernames = [username];
-                                sendLog(`[Target] '${username}' 계정을 직접 조회합니다.`);
+
+                                // [COST OPTIMIZATION] Check DB First (unless forced)
+                                const shouldCheckDB = !body.force;
+                                
+                                console.log(`[Search Debug] Username: ${username}, Force: ${body.force}, Checking DB: ${shouldCheckDB}`);
+
+                                if (shouldCheckDB) {
+                                    try {
+                                        // Use admin client if available to bypass RLS, otherwise fallback
+                                        const dbClient = supabaseAdmin || supabase;
+                                        
+                                        const { data: history, error } = await dbClient
+                                            .from('analysis_history')
+                                            .select('*')
+                                            .eq('username', username.toLowerCase())
+                                            .order('analyzed_at', { ascending: false })
+                                            .limit(1)
+                                            .maybeSingle();
+
+                                        if (error) {
+                                            console.error("[Search Debug] DB Error:", error);
+                                        }
+
+                                        if (history) {
+                                            console.log(`[Search Debug] History found for ${username}`);
+                                            sendLog(`[System] 기존 분석 이력이 발견되었습니다. (${new Date(history.analyzed_at).toLocaleDateString()})`);
+                                            sendLog(`[Optimization] 유료 스크래핑을 건너뛰고 저장된 데이터를 불러옵니다.`);
+                                            
+                                            // Construct result from history
+                                            const profile = history.full_analysis?.basicStats || {};
+                                            
+                                            results.push({
+                                                username: history.username,
+                                                full_name: profile.fullName || history.username, // Fallback
+                                                followers_count: history.followers || 0,
+                                                biography: profile.biography || "분석 기록에 저장된 정보입니다.",
+                                                profile_pic_url: history.profile_pic_url || profile.profilePicUrl || "",
+                                                recent_posts: [], // Detailed posts not in history
+                                                posts_count: 0,
+                                                status: 'todo',
+                                                latest_analysis_date: history.analyzed_at,
+                                                is_from_history: true // Flag for UI
+                                            });
+
+                                            // Skip Apify entirely
+                                            targetUsernames = []; 
+                                        } else {
+                                            console.log(`[Search Debug] No history found for ${username}`);
+                                            sendLog(`[Target] '${username}' 계정을 직접 조회합니다. (저장된 분석 내역 없음)`);
+                                        }
+                                    } catch (dbErr) {
+                                        // DB Error shouldn't block, proceed to scrape
+                                        console.warn("History check failed:", dbErr);
+                                        sendLog(`[Target] '${username}' 계정을 직접 조회합니다.`);
+                                    }
+                                } else {
+                                    sendLog(`[Target] '${username}' 강제 새로고침: DB 확인을 건너뛰고 직접 조회합니다.`);
+                                }
                             } 
                             // TAG MODE: Discovery via Hashtag
                             else {
@@ -368,7 +438,7 @@ export async function POST(req: Request) {
                         ...user,
                         db_status: existingMap.get(user.username) || null,
                         is_registered: existingMap.has(user.username),
-                        latest_analysis_date: historyMap.get(user.username) || null,
+                        latest_analysis_date: historyMap.get(user.username) || user.latest_analysis_date || null,
                         is_target_range: user.followers_count >= 5000 && user.followers_count <= 100000
                     }));
 
@@ -388,7 +458,11 @@ export async function POST(req: Request) {
                 console.error("Route Handler Error:", error);
                 sendError(error.message || "Internal Server Error");
             } finally {
-                controller.close();
+                try {
+                    controller.close();
+                } catch (e) {
+                    // Ignore if already closed
+                }
             }
         }
     });
