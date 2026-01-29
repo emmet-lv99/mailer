@@ -30,8 +30,17 @@ export async function GET(req: Request) {
       status: 200,
       headers,
     });
-  } catch (error) {
-    console.error("Image proxy error:", error);
+  } catch (error: any) {
+    console.warn(`[Image Proxy] Error fetching ${url}:`, error.message);
+    
+    // Handle specific network errors gracefully
+    if (error.code === 'ENOTFOUND' || error.cause?.code === 'ENOTFOUND') {
+        return new NextResponse("Image host not found (DNS Error)", { status: 404 });
+    }
+    if (error.code === 'ETIMEDOUT' || error.cause?.code === 'ETIMEDOUT') {
+        return new NextResponse("Image fetch timed out", { status: 504 });
+    }
+
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

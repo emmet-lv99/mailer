@@ -34,7 +34,14 @@ export function ProfileCard({ data }: ProfileCardProps) {
               {data.fullName}
               {data.isVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-white" />}
             </h4>
-            <p className="text-sm text-gray-500 truncate font-medium">@{data.username}</p>
+            <a 
+                href={`https://www.instagram.com/${data.username}`}
+                target="_blank"
+                rel="noopener noreferrer" 
+                className="text-sm text-gray-500 truncate font-medium hover:text-purple-600 hover:underline transition-colors block w-fit"
+            >
+                @{data.username}
+            </a>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-600">
               <Users className="w-3.5 h-3.5" />
               <span>{(data.followers || data.followersCount || 0).toLocaleString()} Followers</span>

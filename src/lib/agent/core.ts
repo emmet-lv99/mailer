@@ -1,7 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { createAgent } from "langchain";
-import { DUAL_ROLE_SYSTEM_PROMPT } from "./prompts";
-import { analyzeAccountTool } from "./tools/analyze";
+import { CONSULTANT_SYSTEM_PROMPT } from "./prompts";
 
 const apiKey = process.env.ANMOK_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
@@ -12,9 +11,9 @@ const model = new ChatGoogleGenerativeAI({
   apiKey: apiKey,
 });
 
-import { searchProfileTool } from "./tools/search";
+import { queryInfluencerDbTool } from "./tools/knowledge";
 
-const tools = [analyzeAccountTool, searchProfileTool];
+const tools = [queryInfluencerDbTool];
 
 // Helper function to create and run the agent
 export async function runHunterAgent(
@@ -26,7 +25,7 @@ export async function runHunterAgent(
     const agent = createAgent({
       model: model,
       tools,
-      systemPrompt: DUAL_ROLE_SYSTEM_PROMPT,
+      systemPrompt: CONSULTANT_SYSTEM_PROMPT,
     });
 
     // Convert chat history to format expected by agent
@@ -58,12 +57,8 @@ export async function runHunterAgent(
         }
     }
 
-    // Clean up markdown block if present
-    if (outputText.includes("```json")) {
-        outputText = outputText.replace(/```json/g, "").replace(/```/g, "").trim();
-    } else if (outputText.includes("```")) {
-        outputText = outputText.replace(/```/g, "").trim();
-    }
+    // Clean up markdown block if present (UI expects raw JSON + Text or just Text)
+    outputText = outputText.replace(/```json/g, "").replace(/```/g, "").trim();
 
     return {
         output: outputText,

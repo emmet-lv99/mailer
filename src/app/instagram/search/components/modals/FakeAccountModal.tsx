@@ -16,10 +16,14 @@ export function FakeAccountModal({ onClose, authDetails, tier }: FakeAccountModa
                 <div className="p-3 bg-orange-50 rounded-lg">
                     <h5 className="text-xs font-bold text-orange-800 mb-1">댓글 비율 부족</h5>
                     <p className="text-sm text-orange-700">
-                        현재: <span className="font-mono font-bold">{authDetails?.commentRatio.toFixed(2)}%</span>
+                        현재: <span className="font-mono font-bold">
+                            {(authDetails?.commentRatioVal !== undefined 
+                                ? authDetails.commentRatioVal * 100 
+                                : (authDetails?.commentRatio || 0)).toFixed(2)}%
+                        </span>
                     </p>
                     <p className="text-[10px] text-orange-600/70 mt-1">
-                        권장 기준 ({tier}): {authDetails?.criteria?.fakeThreshold ? `>${authDetails.criteria.fakeThreshold}%` : '데이터 없음'}
+                        권장 기준 ({tier}): {authDetails?.criteria?.fakeThreshold ? `>${authDetails.criteria.fakeThreshold}%` : '기준 미달'}
                     </p>
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed text-left">

@@ -28,7 +28,7 @@ export const INSTAGRAM_ANALYSIS_SCHEMA = {
     influencerExpert: {
       type: "OBJECT",
       properties: {
-        grade: { type: "STRING" },
+        grade: { type: "STRING", enum: ["Star", "Rising", "Potential", "Stagnant", "Declining"] },
         totalScore: { type: "NUMBER" },
         recommendation: { type: "STRING" },
         estimatedValueIn6Months: { type: "STRING" },

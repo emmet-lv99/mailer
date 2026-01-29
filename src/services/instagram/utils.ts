@@ -1,4 +1,8 @@
+import { TrendMetrics } from "@/app/instagram/types";
 import { InstagramUser } from "./types";
+
+// Define Post type from InstagramUser
+type InstagramPost = InstagramUser['recent_posts'][number];
 
 export const getLatestPostDate = (user: InstagramUser) => {
     if (!user.recent_posts || user.recent_posts.length === 0) return null;
@@ -6,7 +10,7 @@ export const getLatestPostDate = (user: InstagramUser) => {
     return new Date(sorted[0].timestamp);
 };
 
-export const getAverageUploadCycle = (posts: any[]) => {
+export const getAverageUploadCycle = (posts: InstagramPost[]) => {
     if (!posts || posts.length < 2) return null;
     const sorted = [...posts].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
@@ -79,9 +83,12 @@ export const getEngagementMetrics = (user: InstagramUser) => {
     let avgCommentsPerPost = 0;
     if (feedPosts.length > 0) {
         const totalComments = feedPosts.reduce((sum, p) => sum + (p.comments || 0), 0);
+        const totalLikes = feedPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
+        
         avgCommentsPerPost = totalComments / feedPosts.length;
-        const estimatedLikes = avgCommentsPerPost * 10;
-        feedER = ((avgCommentsPerPost + estimatedLikes) / user.followers_count) * 100;
+        const avgLikes = totalLikes / feedPosts.length;
+        
+        feedER = ((avgLikes + avgCommentsPerPost) / user.followers_count) * 100;
     }
 
     // 2. Reels Metrics
@@ -89,12 +96,14 @@ export const getEngagementMetrics = (user: InstagramUser) => {
     let avgReelsViews = 0;
     if (reelsPosts.length > 0) {
         const totalViews = reelsPosts.reduce((sum, p) => sum + (p.views || 0), 0);
+        const totalLikes = reelsPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
         const totalComments = reelsPosts.reduce((sum, p) => sum + (p.comments || 0), 0);
         
         avgReelsViews = totalViews / reelsPosts.length;
+        const avgReelsLikes = totalLikes / reelsPosts.length;
         const avgReelsComments = totalComments / reelsPosts.length;
         
-        reelsER = ((avgReelsViews + avgReelsComments) / user.followers_count) * 100;
+        reelsER = ((avgReelsLikes + avgReelsComments) / user.followers_count) * 100;
     }
 
     // 3. Combined ER
@@ -148,20 +157,18 @@ export interface AuthenticityResult {
     commentScore: number | null;
     viewScore: number | null;
     consistencyScore: number | null;
-    commentRatio: number;
-    viewRatio: number;
-    er: { feedER: number; reelsER: number };
+    commentRatioVal: number;
+    viewRatioVal: number;
     consistencyRatio: number | null;
-    criteria: any;
   };
 }
 
 export const calculateAuthenticity = (user: InstagramUser): AuthenticityResult => {
     const tier = getAccountTier(user.followers_count);
-    const criteria = AUTHENTICITY_CRITERIA[tier] || AUTHENTICITY_CRITERIA['Nano'];
+    // const criteria = AUTHENTICITY_CRITERIA[tier] || AUTHENTICITY_CRITERIA['Nano'];
     
-    const feedPosts = (user.recent_posts || []).filter((p: any) => p.productType !== 'clips');
-    const reelsPosts = (user.recent_posts || []).filter((p: any) => p.productType === 'clips');
+    const feedPosts = (user.recent_posts || []).filter((p) => p.productType !== 'clips');
+    const reelsPosts = (user.recent_posts || []).filter((p) => p.productType === 'clips');
     
     const hasFeed = feedPosts.length > 0;
     const hasReels = reelsPosts.length > 0;
@@ -237,11 +244,9 @@ export const calculateAuthenticity = (user: InstagramUser): AuthenticityResult =
             commentScore,
             viewScore,
             consistencyScore,
-            commentRatio: commentRatioVal * 100,
-            viewRatio: viewRatioVal,
-            er: { feedER, reelsER },
-            consistencyRatio,
-            criteria
+            commentRatioVal,
+            viewRatioVal,
+            consistencyRatio
         }
     };
 };
@@ -516,7 +521,7 @@ export const analyzePurchaseKeywords = (comments: string[]): number => {
   return parseFloat(((matchCount / comments.length) * 100).toFixed(2));
 };
 
-import { TrendMetrics } from "@/app/instagram/types";
+
 
 // Unified Trend Calculation (Originally from fetch-raw)
 export const calculateTrendMetrics = (posts: any[], followers: number): TrendMetrics | null => {
@@ -593,4 +598,85 @@ export const calculateTrendMetrics = (posts: any[], followers: number): TrendMet
       oldest: { er: Math.round(oldest.er * 100) / 100, avgLikes: Math.round(oldest.avgLikes), avgComments: Math.round(oldest.avgComments) }
     }
   };
+};
+
+// --- Qualification Criteria Logic ---
+
+export const evaluateQualificationCriteria = (user: InstagramUser, posts: InstagramPost[]) => {
+    // 1. Followers Check (>= 1,000)
+    const followers = user.followers_count || 0;
+    const followersPassed = followers >= 1000;
+
+    // 2. Recent Post Check (Within 7 days)
+    // Helper for safe timestamp parsing
+    const getSafeTime = (ts: string | number): number => {
+        if (!ts) return 0;
+        if (typeof ts === 'string') {
+             // Try parsing ISO/Date string
+             const parsed = new Date(ts).getTime();
+             return isNaN(parsed) ? 0 : parsed;
+        }
+        // Number: If small (seconds), convert to ms. If large (ms), keep.
+        // 10,000,000,000 is roughly year 2286, so anything less is likely seconds (if recent).
+        // 1,000,000,000 is year 2001.
+        return ts < 10000000000 ? ts * 1000 : ts;
+    };
+
+    // 2. Recent Post Check (Within 7 days)
+    let recentPostPassed = false;
+    let daysSinceLastPost = 999;
+    let recentPostValue = "게시물 없음";
+
+    if (posts.length > 0) {
+        const lastPostTs = getSafeTime(posts[0].timestamp);
+        if (lastPostTs > 0) {
+            const now = Date.now();
+            const diffMs = now - lastPostTs;
+            daysSinceLastPost = Math.floor(diffMs / (1000 * 3600 * 24));
+            recentPostPassed = daysSinceLastPost <= 7;
+            
+            if (daysSinceLastPost === 0) recentPostValue = "오늘";
+            else recentPostValue = `${daysSinceLastPost}일 전`;
+        }
+    }
+
+    // 3. Upload Frequency Check (Avg Gap <= 7 days)
+    let totalGap = 0;
+    let gapCount = 0;
+    let avgFrequency = 0;
+
+    if (posts.length >= 2) {
+         // Sort by timestamp desc
+         const sorted = [...posts].sort((a, b) => {
+            return getSafeTime(b.timestamp) - getSafeTime(a.timestamp);
+         });
+
+         for (let i = 0; i < sorted.length - 1; i++) {
+            const t1 = getSafeTime(sorted[i].timestamp);
+            const t2 = getSafeTime(sorted[i+1].timestamp);
+            
+            if (t1 > 0 && t2 > 0) {
+                const gap = (t1 - t2) / (1000 * 3600 * 24); // Days
+                totalGap += gap;
+                gapCount++;
+            }
+         }
+         avgFrequency = gapCount > 0 ? Math.round(totalGap / gapCount) : 0;
+    }
+    
+    // Strict Requirement: Upload Frequency <= 7 days.
+    // If < 2 posts, we cannot determine frequency, so it fails (consistent with active influencer requirement).
+    const frequencyPassed = posts.length >= 2 ? avgFrequency <= 7 : false;
+
+    // Composite Result
+    const isMet = followersPassed && recentPostPassed && frequencyPassed;
+
+    return {
+        isMet,
+        checks: {
+            followers: { passed: followersPassed, value: followers, threshold: 1000 },
+            recentPost: { passed: recentPostPassed, value: recentPostValue, thresholdDays: 7 },
+            frequency: { passed: frequencyPassed, value: avgFrequency, thresholdDays: 7 }
+        }
+    };
 };

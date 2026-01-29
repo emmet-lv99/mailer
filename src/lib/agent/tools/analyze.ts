@@ -9,14 +9,15 @@ const apifyClient = new ApifyClient({
 });
 
 import {
-    analyzePurchaseKeywords,
-    calculateAuthenticity,
-    calculateCampaignSuitability,
-    calculateTrendMetrics,
-    detectBotRatio,
-    getAccountGrade,
-    getEngagementMetrics,
-    isMarketSuitable
+  analyzePurchaseKeywords,
+  calculateAuthenticity,
+  calculateCampaignSuitability,
+  calculateTrendMetrics,
+  detectBotRatio,
+  evaluateQualificationCriteria,
+  getAccountGrade,
+  getEngagementMetrics,
+  isMarketSuitable
 } from "@/services/instagram/utils";
 
 import { supabaseAdmin } from "@/lib/supabase";
@@ -148,7 +149,7 @@ export const analyzeAccountTool = new DynamicStructuredTool({
         caption: item.caption,
         likesCount: item.likesCount,
         commentsCount: item.commentsCount,
-        videoPlayCount: item.videoPlayCount || item.playCount || 0,
+        videoPlayCount: item.videoPlayCount || item.playCount || item.videoViewCount || item.viewCount || 0,
         type: item.type, // 'Video', 'Image', 'Sidecar'
         timestamp: item.timestamp,
         comments: item.latestComments?.map((c: any) => c.text) || [],
@@ -326,7 +327,14 @@ export const analyzeAccountTool = new DynamicStructuredTool({
         badges: {
             isMarketSuitable: isMarketSuitable(tempUser, trendMetrics?.avgUploadFrequency ?? null),
             authenticity: calculateAuthenticity(tempUser), // Full object
-            campaign: calculateCampaignSuitability(tempUser) // Full object
+            campaign: calculateCampaignSuitability(tempUser), // Full object
+            criteria: evaluateQualificationCriteria(tempUser, posts.map(p => ({
+                ...p,
+                likes: p.likesCount,
+                comments: p.commentsCount,
+                views: p.videoPlayCount,
+                productType: p.type === 'Video' || p.videoPlayCount > 0 ? 'clips' : 'feed'
+            }) as any)) // [NEW] Qualification Criteria
         },
         trend: trendMetrics,
         contentAnalysis
@@ -365,9 +373,36 @@ export const analyzeAccountTool = new DynamicStructuredTool({
 
       return JSON.stringify(result);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("[Tool: analyze_account] Error:", error);
-      return JSON.stringify({ error: "데이터 수집에 실패했습니다. (비공개 계정이거나 일시적 오류일 수 있습니다)" });
+      
+      // Error Classification logic
+      let errorCode = "UNKNOWN_ERROR";
+      let userMessage = "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      
+      const errString = String(error);
+      
+      if (errString.includes("Page Not Found") || errString.includes("User not found")) {
+          errorCode = "ACCOUNT_NOT_FOUND";
+          userMessage = "계정을 찾을 수 없습니다. 아이디를 확인해주세요.";
+      } else if (errString.includes("Rate limit")) {
+          errorCode = "RATE_LIMIT";
+          userMessage = "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
+      } else if (errString.includes("Private account") || errString.includes("Auth check failed")) {
+          errorCode = "PRIVATE_ACCOUNT";
+          userMessage = "비공개 계정은 분석할 수 없습니다.";
+      } else if (errString.includes("Target user not found")) {
+           errorCode = "ACCOUNT_NOT_FOUND";
+           userMessage = "계정을 찾을 수 없습니다.";
+      }
+
+      return JSON.stringify({ 
+          error: {
+              code: errorCode,
+              message: userMessage,
+              originalError: errString
+          }
+      });
     }
   },
 });

@@ -29,7 +29,11 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                     </div>
                     {/* Visual Bar */}
                     {(() => {
-                        const val = authDetails.commentRatio;
+                        // Support both new (commentRatioVal * 100) and old (commentRatio) formats
+                        const val = authDetails.commentRatioVal !== undefined 
+                            ? authDetails.commentRatioVal * 100 
+                            : (authDetails.commentRatio || 0);
+                            
                         const markers = [{ v: 1.0, l: '적정' }, { v: 3.0, l: '우수' }, { v: 5.0, l: '최우수' }];
                         const maxVal = Math.max(val, 7.5);
                         const pos = Math.min(100, (val / maxVal) * 100);
@@ -79,7 +83,11 @@ export function AuthenticityModal({ onClose, authenticityScore, authDetails }: A
                         )}
                     </div>
                     {authDetails?.viewScore !== null && (() => {
-                        const val = authDetails.viewRatio;
+                        // Support both new (viewRatioVal) and old (viewRatio) formats
+                        const val = authDetails.viewRatioVal !== undefined 
+                            ? authDetails.viewRatioVal 
+                            : (authDetails.viewRatio || 0);
+                            
                         const markers = [{ v: 0.01, l: '적정' }, { v: 0.02, l: '우수' }, { v: 0.03, l: '최우수' }];
                         const maxVal = Math.max(val, 0.045);
                         const pos = Math.min(100, (val / maxVal) * 100);
