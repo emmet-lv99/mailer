@@ -9,12 +9,34 @@ export interface AnalysisResult {
   error?: string;
   analysis?: AnalysisData;
   trendMetrics?: TrendMetrics;  // 30개 게시물 기반 트렌드 분석
+  verifiedProfile?: VerifiedProfile; // Source of Truth (AI 독립적 데이터)
+}
+
+/**
+ * Hard-verified profile data (Source of Truth)
+ */
+export interface VerifiedProfile {
+  username: string;
+  followers: number;
+  profilePicUrl: string | null;
+  fullName?: string;
+  biography?: string;
+  isVerified?: boolean; // Apify 검증 성공 여부
 }
 
 /**
  * Core analysis data structure (Dual Role)
  */
 export interface AnalysisData {
+  basicStats?: {
+    username: string;
+    followers: number;
+    er: number;
+    avgLikes: number;
+    botRatio: number;
+    purchaseKeywordRatio: number;
+    profilePicUrl?: string | null;
+  };
   investmentAnalyst?: InvestmentAnalystAssessment;
   influencerExpert?: InfluencerExpertAssessment;
   comparisonSummary?: ComparisonSummary;
@@ -116,5 +138,28 @@ export interface BrutalUserPromptParams {
       likes?: number;
     }>;
   }>;
+}
+
+/**
+ * Result from Stage 1: Fetch Raw Data
+ */
+export interface RawAnalysisResult {
+    username: string;
+    success: boolean;
+    error?: string;
+    verifiedProfile?: VerifiedProfile;
+    metrics?: {
+        tier: string;
+        engagementRate: number;
+        erGrade: string;
+        authenticityScore: number;
+        isFake: boolean;
+        isActive: boolean;
+        avgUploadCycle: number | null;
+        marketSuitable: boolean;
+        campaignSuitability: any;
+    };
+    trendMetrics?: TrendMetrics | null;
+    recent_posts?: any[];
 }
 

@@ -4,15 +4,15 @@ import { BRUTAL_ANALYST_SYSTEM_PROMPT } from "@/lib/prompts/brutal-analyst";
 import { INSTAGRAM_ANALYSIS_SCHEMA } from "@/lib/schemas/analysis";
 import { supabase } from "@/lib/supabase";
 import {
-  calculateAuthenticity,
-  calculateCampaignSuitability,
-  calculateEngagementRate,
-  getAccountGrade,
-  getAccountTier,
-  getAverageUploadCycle,
-  getLatestPostDate,
-  isMarketSuitable,
-  isUserActive
+    calculateAuthenticity,
+    calculateCampaignSuitability,
+    calculateEngagementRate,
+    getAccountGrade,
+    getAccountTier,
+    getAverageUploadCycle,
+    getLatestPostDate,
+    isMarketSuitable,
+    isUserActive
 } from "@/services/instagram/utils";
 import { NextResponse } from "next/server";
 
@@ -211,10 +211,61 @@ export async function POST(req: Request) {
       }
     });
 
+    // Initialize Apify Client
+    const { ApifyClient } = await import("apify-client");
+    const client = new ApifyClient({
+        token: process.env.APIFY_API_TOKEN,
+    });
+
     // Process each user
     const analyzedResults = await Promise.all(
       users.map(async (user: any) => {
-        const followers = user.followers_count || 0;
+        let followers = user.followers_count || 0;
+        let fullName = user.full_name || '';
+        let biography = user.biography || '';
+        
+        let isVerified = false;
+
+        // [FRESH DATA FETCH]
+        // Re-fetch profile details to ensure 100% accuracy (fix for stale search data)
+        try {
+            console.log(`[Analyze] Refreshing profile data for ${user.username}...`);
+            const instaUsername = process.env.INSTAGRAM_USERNAME;
+            const instaPassword = process.env.INSTAGRAM_PASSWORD;
+            
+            const run = await client.actor("apify/instagram-scraper").call({
+                directUrls: [`https://www.instagram.com/${user.username}/`],
+                resultsType: "details",
+                resultsLimit: 1,
+                username_login: instaUsername,
+                password_login: instaPassword,
+                loginUsername: instaUsername,
+                loginPassword: instaPassword,
+            });
+            
+            const { items } = await client.dataset(run.defaultDatasetId).listItems();
+            if (items.length > 0) {
+                const freshProfile = items[0] as any;
+                if (freshProfile) {
+                    const freshFollowers = freshProfile.followersCount || freshProfile.followerCount;
+                    if (freshFollowers) {
+                        console.log(`[Analyze] Fresh data applied for ${user.username}: ${followers} -> ${freshFollowers}`);
+                        followers = freshFollowers;
+                        fullName = freshProfile.fullName || fullName;
+                        biography = freshProfile.biography || biography;
+                        isVerified = true;
+                        // Capture profile pic (Robust check)
+                        const freshProfilePic = freshProfile.hdProfilePicUrlInfo?.url || freshProfile.profilePicUrl;
+                        if (freshProfilePic) {
+                            console.log(`[Analyze] Fresh profile pic acquired for ${user.username}`);
+                            user.profile_pic_url = freshProfilePic; 
+                        }
+                    }
+                }
+            }
+        } catch (fetchError) {
+            console.warn(`[Analyze] Failed to refresh profile for ${user.username}, using provided data.`, fetchError);
+        }
 
         // Pre-calculate metrics
         const tier = getAccountTier(followers);
@@ -326,8 +377,13 @@ export async function POST(req: Request) {
           let analysis = JSON.parse(cleanedText);
           console.log("[DEBUG] Schema-Enforced Parsed Keys:", Object.keys(analysis));
           
-          // No more normalization needed! The schema guarantees the structure.
-          
+          // [SOURCE OF TRUTH ENFORCEMENT]
+          // Overwrite AI's basicStats with hard-verified metrics to prevent hallucinations
+          if (!analysis.basicStats) analysis.basicStats = {};
+          analysis.basicStats.username = user.username;
+          analysis.basicStats.followers = followers; // The fresh, verified number
+          analysis.basicStats.profilePicUrl = user.profile_pic_url || analysis.basicStats.profilePicUrl || null;
+          console.log(`[SourceOfTruth] Enforced ${followers} followers for ${user.username}`);
 
           console.log(`[Brutal Analysis Success] ${user.username}`, {
             tier: analysis.investmentAnalyst?.tier,
@@ -340,9 +396,22 @@ export async function POST(req: Request) {
              console.log(`[Analysis Structure Mismatch] Full response for ${user.username}:`, JSON.stringify(analysis, null, 2));
           }
 
+
+          
+          const verifiedProfile = {
+                username: user.username,
+                followers: followers,
+                profilePicUrl: user.profile_pic_url || null,
+                fullName: fullName,
+                biography: biography,
+                isVerified: isVerified // Flag to indicate if Apify actually worked
+            };
+          console.log(`[Analyze] Final Return for ${user.username}: Verified=${verifiedProfile.isVerified}, Followers=${verifiedProfile.followers}`);
+
           return {
             username: user.username,
             analysis,
+            verifiedProfile,
             trendMetrics: trendMetrics || undefined,
             success: true
           };

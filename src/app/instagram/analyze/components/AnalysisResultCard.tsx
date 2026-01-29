@@ -5,15 +5,15 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InstagramUser } from "@/services/instagram/types";
 import {
-  calculateAuthenticity,
-  calculateCampaignSuitability,
-  calculateEngagementRate,
-  getAccountGrade,
-  getAccountTier,
-  getAverageUploadCycle,
-  getLatestPostDate,
-  isMarketSuitable,
-  isUserActive
+    calculateAuthenticity,
+    calculateCampaignSuitability,
+    calculateEngagementRate,
+    getAccountGrade,
+    getAccountTier,
+    getAverageUploadCycle,
+    getLatestPostDate,
+    isMarketSuitable,
+    isUserActive
 } from "@/services/instagram/utils";
 import { ArrowDown, ArrowRight, ArrowUp, Check, Loader2, X } from "lucide-react";
 import { AnalysisResult, TrendMetrics } from "../../types";
@@ -176,19 +176,21 @@ export function AnalysisResultCard({
       <div className="p-6 flex flex-col sm:flex-row gap-6 border-b bg-muted/30">
         {/* Profile Info */}
         <div className="flex items-start gap-4 flex-1">
-          <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full bg-background border-2 shadow-sm overflow-hidden">
-              {originalUser?.profile_pic_url ? (
-                <img src={`/api/image-proxy?url=${encodeURIComponent(originalUser.profile_pic_url)}`} alt="" className="w-full h-full object-cover" />
+            <div className="w-20 h-20 rounded-full bg-background border-2 shadow-sm overflow-hidden flex items-center justify-center">
+              {result.verifiedProfile?.profilePicUrl || originalUser?.profile_pic_url || analysis.basicStats?.profilePicUrl ? (
+                <img 
+                  src={`/api/image-proxy?url=${encodeURIComponent((result.verifiedProfile?.profilePicUrl || originalUser?.profile_pic_url || analysis.basicStats?.profilePicUrl) as string)}`} 
+                  alt="" 
+                  className="w-full h-full object-cover" 
+                />
               ) : (
-                <span className="text-4xl flex items-center justify-center h-full w-full bg-muted text-muted-foreground">👤</span>
+                <span className="text-4xl text-muted-foreground">👤</span>
               )}
             </div>
-          </div>
           
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-xl font-bold">{originalUser?.full_name || result.username}</h3>
+              <h3 className="text-xl font-bold">{result.verifiedProfile?.username || originalUser?.full_name || result.username}</h3>
               {investment && (
                 <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
                   investment.decision.includes('금지') ? 'bg-red-100 text-red-700 border-red-200' :
@@ -207,11 +209,22 @@ export function AnalysisResultCard({
             >
               @{result.username}
             </a>
-            <div className="text-sm text-muted-foreground line-clamp-1">{originalUser?.biography}</div>
+            <div className="text-sm text-muted-foreground line-clamp-1">{result.verifiedProfile?.biography || originalUser?.biography}</div>
             
             <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
               <span className="flex items-center gap-1">
-                <span className="font-bold text-foreground">{originalUser?.followers_count === -1 ? '?' : originalUser?.followers_count.toLocaleString()}</span> 팔로워
+                <span className="font-bold text-foreground">
+                    {(result.verifiedProfile?.followers || analysis.basicStats?.followers || originalUser?.followers_count || 0).toLocaleString()}
+                </span> 팔로워
+                {result.verifiedProfile?.isVerified ? (
+                    <span className="text-blue-500 ml-1" title="실시간 검증된 데이터 (Source of Truth)">
+                        <Check className="w-3 h-3 inline" />
+                    </span>
+                ) : (
+                    <span className="text-orange-500 ml-1" title="실시간 검증 실패 (과거 데이터일 수 있음)">
+                        ⚠️
+                    </span>
+                )}
               </span>
               <span className="flex items-center gap-1">
                 <span className="font-bold text-foreground">{originalUser?.recent_posts?.length || 0}</span> 분석된 게시물

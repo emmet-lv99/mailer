@@ -1,5 +1,5 @@
 
-import { SearchResponse } from "./types";
+import { InstagramUser, SearchResponse } from "./types";
 
 export const instagramService = {
   search: async (
@@ -87,18 +87,35 @@ export const instagramService = {
     return finalResult;
   },
 
-  analyze: async (users: any[], promptType: 'INSTA' | 'INSTA_TARGET' = 'INSTA'): Promise<{ results: any[] }> => {
-    const res = await fetch("/api/instagram/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ users, promptType }),
+  /**
+   * Stage 1: Fetch Raw Verified Data
+   */
+  fetchRaw: async (users: Partial<InstagramUser>[]): Promise<{ results: any[] }> => {
+    const res = await fetch('/api/instagram/fetch-raw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users }),
     });
-
-    if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Analysis failed");
-    }
+    if (!res.ok) throw new Error('Fetch Raw failed');
     return res.json();
+  },
+
+  /**
+   * Stage 2: AI Analysis (Qualitative)
+   */
+  analyzeAI: async (rawData: any[], promptType: 'INSTA' | 'INSTA_TARGET' = 'INSTA') => {
+    const res = await fetch('/api/instagram/analyze-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rawData, promptType }),
+    });
+    if (!res.ok) throw new Error('AI Analysis failed');
+    return res.json();
+  },
+
+  analyze: async (users: Partial<InstagramUser>[], promptType: 'INSTA' | 'INSTA_TARGET' = 'INSTA') => {
+    console.warn("Using legacy monolithic analyze call. Consider migrating to fetchRaw + analyzeAI.");
+    return instagramService.fetchRaw(users).then(raw => instagramService.analyzeAI(raw.results, promptType));
   },
 
   register: async (user: any): Promise<{ success: boolean }> => {

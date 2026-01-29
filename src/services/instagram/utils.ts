@@ -472,3 +472,125 @@ export const calculateCampaignSuitability = (user: InstagramUser) => {
         }
     };
 };
+
+// --- Shared Analysis Logic (Ported from Agent/API) ---
+
+export const detectBotRatio = (comments: string[]): number => {
+  if (!comments || comments.length === 0) return 0;
+
+  const botPatterns = [
+    /^(nice|great|cool|amazing|wonderful)!*$/i,
+    /^[😍❤️🔥👍👏]+$/,
+    /follow.*back/i,
+    /check.*out.*profile/i,
+    /^.{1,3}$/ // Too short
+  ];
+
+  let botCount = 0;
+  for (const text of comments) {
+    if (botPatterns.some(pattern => pattern.test(text || ""))) {
+      botCount++;
+    }
+  }
+
+  return parseFloat(((botCount / comments.length) * 100).toFixed(2));
+};
+
+export const analyzePurchaseKeywords = (comments: string[]): number => {
+   if (!comments || comments.length === 0) return 0;
+
+   const purchaseKeywords = [
+    '어디서', '사요', '구매', '링크', '정보', '가격',
+    '얼마', '어디꺼', '사고싶', '주문', '샀어요',
+    '배송', '택배', '쿠폰', '할인'
+  ];
+
+  let matchCount = 0;
+  for (const text of comments) {
+    const lowerText = (text || "").toLowerCase();
+    if (purchaseKeywords.some(keyword => lowerText.includes(keyword))) {
+      matchCount++;
+    }
+  }
+
+  return parseFloat(((matchCount / comments.length) * 100).toFixed(2));
+};
+
+import { TrendMetrics } from "@/app/instagram/types";
+
+// Unified Trend Calculation (Originally from fetch-raw)
+export const calculateTrendMetrics = (posts: any[], followers: number): TrendMetrics | null => {
+  // Input normalization (create safe minimal post objects)
+  const normPosts = posts.map(p => ({
+      likes: p.likes || p.likesCount || 0,
+      comments: p.comments || p.commentsCount || 0,
+      timestamp: p.timestamp || p.date || new Date().toISOString()
+  }));
+
+  if (normPosts.length < 10) return null;
+
+  // 3개 구간으로 분할 (최신순 정렬 가정)
+  const recentPosts = normPosts.slice(0, Math.min(10, normPosts.length));
+  const middlePosts = normPosts.slice(10, 20);
+  const oldestPosts = normPosts.slice(20, 30);
+
+  // 구간별 ER 계산
+  const calcPeriodMetrics = (periodPosts: any[]) => {
+    if (periodPosts.length === 0) return { er: 0, avgLikes: 0, avgComments: 0 };
+    const totalLikes = periodPosts.reduce((sum, p) => sum + p.likes, 0);
+    const totalComments = periodPosts.reduce((sum, p) => sum + p.comments, 0);
+    const avgLikes = totalLikes / periodPosts.length;
+    const avgComments = totalComments / periodPosts.length;
+    const er = followers > 0 ? ((avgLikes + avgComments) / followers) * 100 : 0;
+    return { er, avgLikes, avgComments };
+  };
+
+  const recent = calcPeriodMetrics(recentPosts);
+  const middle = calcPeriodMetrics(middlePosts);
+  const oldest = calcPeriodMetrics(oldestPosts);
+
+  // ER 추세 계산 (최근 vs 중간+이전 평균)
+  const previousAvgER = middlePosts.length > 0 
+    ? (middle.er + (oldestPosts.length > 0 ? oldest.er : middle.er)) / (oldestPosts.length > 0 ? 2 : 1)
+    : 0;
+  
+  const erChangePercent = previousAvgER > 0 
+    ? ((recent.er - previousAvgER) / previousAvgER) * 100 
+    : 0;
+
+  // 추세 판정
+  let erTrend: 'rising' | 'stable' | 'declining';
+  if (erChangePercent > 15) {
+    erTrend = 'rising';
+  } else if (erChangePercent < -15) {
+    erTrend = 'declining';
+  } else {
+    erTrend = 'stable';
+  }
+
+  // 평균 업로드 주기 계산 (Get it from existing util to avoid calc duplication, but let's recalculate here for self-contained strict logic)
+  let avgUploadFrequency = 0;
+  if (normPosts.length >= 2) {
+    const timestamps = normPosts
+      .map(p => new Date(p.timestamp).getTime())
+      .filter(t => !isNaN(t))
+      .sort((a, b) => b - a); // 최신순
+    
+    if (timestamps.length >= 2) {
+      const totalDays = (timestamps[0] - timestamps[timestamps.length - 1]) / (1000 * 60 * 60 * 24);
+      avgUploadFrequency = Math.round(totalDays / (timestamps.length - 1));
+    }
+  }
+
+  return {
+    erTrend,
+    erChangePercent: Math.round(erChangePercent * 10) / 10,
+    avgUploadFrequency,
+    totalPosts: normPosts.length,
+    periodComparison: {
+      recent: { er: Math.round(recent.er * 100) / 100, avgLikes: Math.round(recent.avgLikes), avgComments: Math.round(recent.avgComments) },
+      middle: { er: Math.round(middle.er * 100) / 100, avgLikes: Math.round(middle.avgLikes), avgComments: Math.round(middle.avgComments) },
+      oldest: { er: Math.round(oldest.er * 100) / 100, avgLikes: Math.round(oldest.avgLikes), avgComments: Math.round(oldest.avgComments) }
+    }
+  };
+};

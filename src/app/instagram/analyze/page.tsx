@@ -53,12 +53,53 @@ export default function InstagramAnalyzePage() {
 
     const startAnalysis = async () => {
         setLoading(true);
+        // Clear previous results to avoid confusion? Or keep them?
+        // Let's clear to show fresh start or maybe keep old ones until new ones arrive?
+        // User probably expects a reload style.
+        setAnalysisResults([]); 
+
         try {
             const promptType = searchMode === 'target' ? 'INSTA_TARGET' : 'INSTA';
-            const response = await instagramService.analyze(targets, promptType);
-            setAnalysisResults(response.results);
-            toast.success(`${response.results.length}명 분석 완료! (${promptType === 'INSTA_TARGET' ? '타겟 분석' : '기본 분석'})`);
+            
+            // [STAGE 1] Fetch Raw Verified Data (Fast)
+            toast.info("1단계: 프로필 및 게시물 데이터 수집 중...", { duration: 2000 });
+            const rawResponse = await instagramService.fetchRaw(targets);
+            
+            // Convert Raw results to AnalysisResult format for immediate display
+            const stage1Results = rawResponse.results.map((raw: any) => ({
+                username: raw.username,
+                success: raw.success,
+                error: raw.error,
+                verifiedProfile: raw.verifiedProfile,
+                trendMetrics: raw.trendMetrics,
+                analysis: {
+                    basicStats: {
+                        username: raw.username,
+                        followers: raw.tokens?.followers || raw.verifiedProfile?.followers || 0,
+                        profilePicUrl: raw.verifiedProfile?.profilePicUrl || null,
+                        // Estimated/Calculated metrics from raw stage
+                        er: raw.metrics?.engagementRate || 0,
+                        avgLikes: 0, // Not explicitly in top level metrics, but cheap to calc if needed
+                        botRatio: 0,
+                        purchaseKeywordRatio: 0
+                    }
+                }
+            }));
+
+            setAnalysisResults(stage1Results);
+            
+            // [STAGE 2] AI Logic Analysis (Slow)
+            toast.loading("2단계: AI 정성 분석 진행 중...", { id: "ai-loading" });
+            const aiResponse = await instagramService.analyzeAI(rawResponse.results, promptType);
+            
+            // Merge AI results
+            setAnalysisResults(aiResponse.results);
+            
+            toast.dismiss("ai-loading");
+            toast.success(`${aiResponse.results.length}명 심층 분석 완료!`);
+
         } catch (error: any) {
+            toast.dismiss("ai-loading");
             toast.error(error.message);
         } finally {
             setLoading(false);

@@ -8,7 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, FileUp, History, Home, Instagram, Search, Settings, ShoppingBag, Youtube } from "lucide-react";
+import { Bot, ChevronDown, FileUp, History, Home, Instagram, Search, Settings, ShoppingBag, Youtube } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -57,6 +57,7 @@ export function GlobalNav() {
       ]
     },
     { href: "/instagram/history", label: "이력 관리", icon: History },
+    { href: "/instagram/agent", label: "헌터 에이전트", icon: Bot },
     { href: "/instagram/settings", label: "설정", icon: Settings },
   ];
 
