@@ -19,6 +19,7 @@ interface ProposalTableRowProps {
   onToggleSent: () => void;
   onToggleReaction: () => void;
   onSaveRow: (data: { instagram_id: string; followers: number }) => void;
+  no: number;
 }
 
 export function ProposalTableRow({
@@ -31,6 +32,7 @@ export function ProposalTableRow({
   onToggleSent,
   onToggleReaction,
   onSaveRow,
+  no,
 }: ProposalTableRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ 
@@ -65,6 +67,9 @@ export function ProposalTableRow({
           checked={isSelected}
           onCheckedChange={onToggleSelect}
         />
+      </TableCell>
+      <TableCell className="w-[50px] text-center text-xs text-muted-foreground font-medium">
+        {no}
       </TableCell>
       <TableCell>
         {isEditing ? (

@@ -2,12 +2,12 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { ArrowUpDown, Loader2 } from "lucide-react";
 import { Proposal, SortConfig, SortKey } from "../types";
@@ -55,6 +55,7 @@ export function ProposalTable({
               onCheckedChange={onToggleSelectAll}
             />
           </TableHead>
+          <TableHead className="w-[50px] text-center">No</TableHead>
           <TableHead className="w-[180px]">Instagram ID</TableHead>
           <TableHead className="w-[100px]">Follower</TableHead>
           <TableHead 
@@ -85,21 +86,22 @@ export function ProposalTable({
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={10} className="h-32 text-center">
+            <TableCell colSpan={11} className="h-32 text-center">
               <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
+            <TableCell colSpan={11} className="h-32 text-center text-muted-foreground">
               검색 결과가 없습니다.
             </TableCell>
           </TableRow>
         ) : (
-          data.map((item) => (
+          data.map((item, index) => (
             <ProposalTableRow 
               key={item.id}
               item={item}
+              no={data.length - index}
               isSelected={selectedIds.includes(item.id)}
               onToggleSelect={() => onToggleSelectRow(item.id)}
               onDelete={() => onDeleteRow(item.id)}
