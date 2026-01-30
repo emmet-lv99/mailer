@@ -4,22 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
+import { downloadCSV } from "@/lib/csv";
 import { instagramService } from "@/services/instagram/api";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +34,22 @@ export default function InstagramHistoryPage() {
     const [viewAnalysisUser, setViewAnalysisUser] = useState<any | null>(null);
     const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
     const [selectedUsernames, setSelectedUsernames] = useState<Set<string>>(new Set());
+
+    const handleDownloadCSV = () => {
+        const csvData = filteredUsers.map((user) => ({
+            "성명": user.full_name,
+            "아이디": user.username,
+            "팔로워": user.followers_count === -1 ? "-" : user.followers_count,
+            "점수": user.originality_score || 0,
+            "DM 발송일": user.dm_sent_date ? new Date(user.dm_sent_date).toLocaleDateString() : "-",
+            "상태": user.status || "todo",
+            "메모": user.memo || "",
+            "카테고리": user.category || "-"
+        }));
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        downloadCSV(csvData, `인스타그램_발송이력_${timestamp}.csv`);
+    };
 
     const fetchHistory = async () => {
         setLoading(true);
@@ -175,6 +192,10 @@ export default function InstagramHistoryPage() {
                             <SelectItem value="unsuitable">부적합</SelectItem>
                         </SelectContent>
                     </Select>
+                    <Button variant="outline" onClick={handleDownloadCSV} disabled={loading || filteredUsers.length === 0}>
+                        <Download className="h-4 w-4 mr-2" />
+                        CSV 다운로드
+                    </Button>
                     <Button variant="outline" onClick={fetchHistory}>
                         새로고침
                     </Button>

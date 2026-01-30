@@ -1,37 +1,38 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { downloadCSV } from "@/lib/csv";
 import { historyService } from "@/services/history/api";
 import { HistoryItem } from "@/services/history/types";
-import { Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Download, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -45,6 +46,23 @@ export default function HistoryPage() {
   
   // Delete Modal State
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+
+  const handleDownloadCSV = () => {
+    const csvData = filteredHistory.map((item, idx) => ({
+      "No": history.length - idx,
+      "채널명": item.channel_name,
+      "채널 ID": item.channel_id,
+      "이메일": item.email,
+      "제목": item.subject,
+      "발송일": item.sent_at ? new Date(item.sent_at).toLocaleDateString() : "-",
+      "상태": item.status.toUpperCase(),
+      "답변여부": item.has_replied ? "O" : "X",
+      "비고": item.note || ""
+    }));
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    downloadCSV(csvData, `유튜브_발송이력_${timestamp}.csv`);
+  };
 
   // Reset selection when filters change
   useEffect(() => {
@@ -196,6 +214,10 @@ export default function HistoryPage() {
                    </Button>
                 </>
             )}
+            <Button variant="outline" onClick={handleDownloadCSV} disabled={loading || filteredHistory.length === 0}>
+               <Download className="h-4 w-4 mr-2" />
+               CSV 다운로드
+            </Button>
             <Button variant="outline" onClick={fetchHistory} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               새로고침
