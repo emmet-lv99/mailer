@@ -14,7 +14,10 @@ export const proposalService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error("Failed to create proposal");
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to create proposal");
+    }
     const result = await res.json();
     return result.result;
   },

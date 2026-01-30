@@ -67,8 +67,10 @@ export default function InstagramProposalPage() {
       const newProposal = await proposalService.create(data);
       setProposals(prev => [newProposal, ...prev]);
       setIsAddDialogOpen(false);
-    } catch (error) {
+      toast.success("제안이 추가되었습니다.");
+    } catch (error: any) {
       console.error("Failed to add proposal:", error);
+      toast.error(error.message);
     }
   };
 

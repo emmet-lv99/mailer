@@ -21,6 +21,20 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { instagram_id, followers, content, memo } = body;
 
+    // Check for duplicate
+    const { data: existing } = await supabase
+      .from("instagram_proposals")
+      .select("id")
+      .eq("instagram_id", instagram_id)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "이미 존재하는 ID 입니다" },
+        { status: 409 }
+      );
+    }
+
     const { data, error } = await supabase
       .from("instagram_proposals")
       .insert([
