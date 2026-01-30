@@ -7,6 +7,7 @@ import { proposalService } from "@/services/instagram/proposal";
 import { ArrowLeft, Download, Plus, RefreshCw, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ProposalDialogs } from "./components/ProposalDialogs";
 import { ProposalFilters } from "./components/ProposalFilters";
 import { ProposalTable } from "./components/ProposalTable";
