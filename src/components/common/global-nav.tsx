@@ -3,10 +3,10 @@
 
 import { UserAuth } from "@/components/common/user-auth";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Bot, ChevronDown, FileUp, History, Home, Instagram, Search, Settings, ShoppingBag, Youtube } from "lucide-react";
 import Link from "next/link";
@@ -81,28 +81,26 @@ export function GlobalNav() {
                     setActiveApp("youtube");
                     router.push("/youtube");
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                className={`flex items-center justify-center p-2 rounded-md transition-all ${
                     activeApp === "youtube" 
                     ? "bg-background shadow-sm text-foreground" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
              >
                 <Youtube className="h-4 w-4 text-red-600" />
-                YouTube
              </button>
              <button
                 onClick={() => {
                     setActiveApp("instagram");
                     router.push("/instagram");
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                className={`flex items-center justify-center p-2 rounded-md transition-all ${
                     activeApp === "instagram" 
                     ? "bg-background shadow-sm text-foreground" 
                     : "text-muted-foreground hover:text-foreground"
                 }`}
              >
                 <Instagram className="h-4 w-4 text-pink-600" />
-                Instagram
              </button>
           </div>
 
