@@ -1,8 +1,11 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { YouTubeChannel } from "@/services/youtube/types";
-import { CheckSquare, Square, Youtube } from "lucide-react";
+import { Youtube } from "lucide-react";
 import { toast } from "sonner";
 
 interface YouTubeChannelRowProps {
@@ -13,6 +16,7 @@ interface YouTubeChannelRowProps {
   filterType: string;
   onToggleSelect: (id: string) => void;
   onEmailChange: (id: string, email: string) => void;
+  isSaved: boolean;
 }
 
 export function YouTubeChannelRow({
@@ -22,7 +26,8 @@ export function YouTubeChannelRow({
   email,
   filterType,
   onToggleSelect,
-  onEmailChange
+  onEmailChange,
+  isSaved
 }: YouTubeChannelRowProps) {
   const isInHistory = !!status;
 
@@ -32,82 +37,90 @@ export function YouTubeChannelRow({
   };
 
   return (
-    <tr 
-      className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${isSelected ? "bg-muted/50" : ""} ${isInHistory ? "opacity-60 bg-gray-50/50" : ""}`}
+    <TableRow
+      className={`transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted/50" : ""} ${isInHistory ? "opacity-60 bg-muted/30" : ""}`}
       onClick={() => {
          if (!isInHistory) onToggleSelect(channel.id);
          else if (filterType === "all") toast.warning("이미 이력이 있는 채널입니다.");
       }}
     >
-      <td className="p-4 align-middle">
-        <div className={`cursor-pointer ${isInHistory ? "cursor-not-allowed opacity-50" : ""}`}>
-          {isSelected ? (
-            <CheckSquare className="h-4 w-4 text-primary" />
-          ) : isInHistory ? (
-             <Square className="h-4 w-4 text-gray-300" />
-          ) : (
-            <Square className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-      </td>
-      <td className="p-4 align-middle">
-        <div className="flex items-center gap-3">
-          <img 
-            src={channel.thumbnailUrl} 
-            alt={channel.title} 
-            className="h-10 w-10 rounded-full object-cover border"
+      <TableCell className="w-[50px]">
+        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={isSelected}
+            disabled={isInHistory}
+            onCheckedChange={() => onToggleSelect(channel.id)}
+            aria-label={`${channel.title} 선택`}
           />
-          <div className="flex flex-col">
-            <span className="font-medium line-clamp-1 flex items-center gap-2">
-              {channel.title}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <div className="relative flex-shrink-0">
+            <img 
+              src={channel.thumbnailUrl} 
+              alt={channel.title} 
+              className="h-10 w-10 rounded-full object-cover border"
+            />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="font-semibold text-sm line-clamp-1">
+                {channel.title}
+              </span>
               {status === 'sent' && (
-                <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded border border-yellow-200 whitespace-nowrap">
-                  발송됨
-                </span>
+                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-yellow-50 text-yellow-700 border-yellow-200 uppercase font-bold">
+                  SENT
+                </Badge>
               )}
               {status === 'unsuitable' && (
-                <span className="text-[10px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded border border-red-200 whitespace-nowrap">
-                  부적합
-                </span>
+                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-red-50 text-red-700 border-red-200 uppercase font-bold">
+                  BAD
+                </Badge>
               )}
               {status === 'draft' && (
-                <span className="text-[10px] bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
-                  임시저장
-                </span>
+                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-gray-50 text-gray-700 border-gray-200 uppercase font-bold">
+                  DRAFT
+                </Badge>
               )}
-            </span>
-            <span className="text-xs text-muted-foreground line-clamp-1">{channel.description || "설명 없음"}</span>
+              {isSaved && (
+                <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-blue-50 text-blue-700 border-blue-200 font-bold whitespace-nowrap">
+                  임시저장
+                </Badge>
+              )}
+            </div>
+            <span className="text-[11px] text-muted-foreground line-clamp-1">{channel.description || "설명 없음"}</span>
           </div>
         </div>
-      </td>
-      <td className="p-4 align-middle" onClick={(e) => e.stopPropagation()}>
+      </TableCell>
+      <TableCell className="w-[200px]" onClick={(e) => e.stopPropagation()}>
         <Input 
           placeholder="이메일 입력" 
           value={email}
           onChange={(e) => onEmailChange(channel.id, e.target.value)}
-          className="h-8 text-xs"
+          className="h-8 text-xs bg-background/50 focus:bg-background transition-colors"
         />
-      </td>
-      <td className="p-4 align-middle font-medium">
+      </TableCell>
+      <TableCell className="font-semibold text-right tabular-nums">
         {formatNumber(channel.statistics?.subscriberCount)}
-      </td>
-      <td className="p-4 align-middle hidden md:table-cell">
+      </TableCell>
+      <TableCell className="hidden md:table-cell text-right text-muted-foreground tabular-nums">
         {formatNumber(channel.statistics?.videoCount)}
-      </td>
-      <td className="p-4 align-middle text-muted-foreground hidden md:table-cell">
+      </TableCell>
+      <TableCell className="hidden md:table-cell text-muted-foreground text-center text-[11px]">
         {new Date(channel.publishedAt).toLocaleDateString()}
-      </td>
-      <td className="p-4 align-middle text-right">
+      </TableCell>
+      <TableCell className="text-right">
         <a 
           href={`https://www.youtube.com/channel/${channel.id}`} 
           target="_blank" 
           rel="noreferrer"
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 p-0"
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8 p-0 text-red-600/70 hover:text-red-600"
           onClick={(e) => e.stopPropagation()}
         >
-          <Youtube className="h-4 w-4" />
+          <Youtube className="h-5 w-5" />
         </a>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

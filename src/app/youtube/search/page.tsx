@@ -1,27 +1,17 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { historyService } from "@/services/history/api";
 import { youtubeService } from "@/services/youtube/api";
+import { useYouTubeStore } from "@/services/youtube/store";
 import { YouTubeChannel } from "@/services/youtube/types";
-import { CheckSquare, Download, Loader2, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { YouTubeChannelRow } from "./components/YouTubeChannelRow";
+import { YouTubeFilters } from "./components/YouTubeFilters";
+import { YouTubeSearch } from "./components/YouTubeSearch";
+import { YouTubeTable } from "./components/YouTubeTable";
 
 export default function ExplorerPage() {
   const [query, setQuery] = useState("");
-  const [minSubs, setMinSubs] = useState("");
-  const [maxSubs, setMaxSubs] = useState("");
   const [loading, setLoading] = useState(false);
   const [channels, setChannels] = useState<YouTubeChannel[]>([]);
   const [selectedChannelIds, setSelectedChannelIds] = useState<Set<string>>(new Set());
@@ -29,7 +19,11 @@ export default function ExplorerPage() {
   const [sentChannelIds, setSentChannelIds] = useState<Set<string>>(new Set());
   const [channelStatuses, setChannelStatuses] = useState<Record<string, string>>({}); 
   const [filterType, setFilterType] = useState<string>("all");
+  const [minSubs, setMinSubs] = useState("");
+  const [maxSubs, setMaxSubs] = useState("");
   const [emails, setEmails] = useState<Record<string, string>>({});
+
+  const { downloadList, addToDownloadList, clearDownloadList } = useYouTubeStore();
 
   const checkSentHistory = async (candidates: YouTubeChannel[]) => {
     if (candidates.length === 0) return;
@@ -63,8 +57,6 @@ export default function ExplorerPage() {
     try {
       const data = await youtubeService.search({
         q: query,
-        minSubs,
-        maxSubs,
         pageToken
       });
       
@@ -100,7 +92,7 @@ export default function ExplorerPage() {
     if (e.key === "Enter") handleSearch();
   };
 
-  const toggleSelect = (channelId: string) => {
+  const handleToggleSelect = (channelId: string) => {
     const newSelected = new Set(selectedChannelIds);
     if (newSelected.has(channelId)) {
       newSelected.delete(channelId);
@@ -110,8 +102,8 @@ export default function ExplorerPage() {
     setSelectedChannelIds(newSelected);
   };
 
-  const toggleSelectAll = () => {
-    const visibleChannels = getFilteredChannels();
+  const handleToggleSelectAll = () => {
+    const visibleChannels = filteredChannels;
     const allSelected = visibleChannels.length > 0 && visibleChannels.every(c => selectedChannelIds.has(c.id));
 
     if (allSelected) {
@@ -166,66 +158,89 @@ export default function ExplorerPage() {
     }
   };
 
-  const downloadCsv = () => {
-    if (selectedChannelIds.size === 0) {
-      toast.error("선택된 채널이 없습니다.");
-      return;
-    }
-
+  const handleSaveToTemp = () => {
     const selectedChannels = channels.filter(c => selectedChannelIds.has(c.id));
-    
-    const headers = [
-      "Channel Name", 
-      "Email", 
-      "Subscribers", 
-      "Channel ID", 
-      "Channel URL", 
-      "Description", 
-      "Video Count"
-    ];
+    const itemsToSave = selectedChannels.map(channel => ({
+      channel,
+      email: emails[channel.id] || ""
+    }));
 
-    const rows = selectedChannels.map(c => [
-      `"${(c.title || "").replace(/"/g, '""')}"`,
-      emails[c.id] || "",
-      c.statistics?.subscriberCount || "0",
-      c.id,
-      `https://www.youtube.com/channel/${c.id}`,
-      `"${(c.description || "").replace(/"/g, '""').replace(/\n/g, ' ')}"`,
-      c.statistics?.videoCount || "0"
+    addToDownloadList(itemsToSave);
+    toast.success(`${itemsToSave.length}개 채널이 임시 저장 공간에 추가되었습니다.`);
+    setSelectedChannelIds(new Set()); // 선택 초기화
+  };
+
+  const handleDownloadCsv = () => {
+    if (downloadList.length === 0) return;
+
+    const headers = ["Channel Title", "Channel ID", "URL", "Subscribers", "Videos", "Email", "Description"];
+    const rows = downloadList.map(item => [
+      item.channel.title,
+      item.channel.id,
+      `https://www.youtube.com/channel/${item.channel.id}`,
+      item.channel.statistics?.subscriberCount || "0",
+      item.channel.statistics?.videoCount || "0",
+      item.email,
+      item.channel.description?.replace(/\n/g, " ") || ""
     ]);
 
     const csvContent = [
       headers.join(","),
-      ...rows.map(row => row.join(","))
+      ...rows.map(r => r.map(cell => `"${cell}"`).join(","))
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `youtube_channels_rich_${new Date().getTime()}.csv`);
+    link.setAttribute("download", `youtube_channels_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    toast.success("CSV 파일이 다운로드되었습니다.");
   };
 
-  const getFilteredChannels = () => {
+  const handleLoadMore = () => {
+    searchChannels(nextPageToken || undefined);
+  };
+
+  const filteredChannels = useMemo(() => {
     return channels.filter(channel => {
+      // 1. Status Filter
       const status = channelStatuses[channel.id];
+      let matchesStatus = true;
       if (filterType === "sendable") {
-        return status !== 'sent' && status !== 'unsuitable';
+        matchesStatus = status !== 'sent' && status !== 'unsuitable';
+      } else if (filterType === "sent") {
+        matchesStatus = status === 'sent';
+      } else if (filterType === "unsuitable") {
+        matchesStatus = status === 'unsuitable';
       }
-      if (filterType === "sent") {
-        return status === 'sent';
-      }
-      if (filterType === "unsuitable") {
-        return status === 'unsuitable';
-      }
-      return true;
-    });
-  };
 
-  const filteredChannels = getFilteredChannels();
+      // 2. Subscriber Filter
+      let matchesSubs = true;
+      const subs = parseInt(channel.statistics?.subscriberCount || "0");
+      const min = minSubs ? parseInt(minSubs) : null;
+      const max = maxSubs ? parseInt(maxSubs) : null;
+
+      if (min !== null && !isNaN(min) && subs < min) matchesSubs = false;
+      if (max !== null && !isNaN(max) && subs > max) matchesSubs = false;
+
+      return matchesStatus && matchesSubs;
+    });
+  }, [channels, channelStatuses, filterType, minSubs, maxSubs]);
+
+  const savedChannelIds = useMemo(() => {
+    return new Set(downloadList.map(item => item.channel.id));
+  }, [downloadList]);
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setFilterType("all");
+    setMinSubs("");
+    setMaxSubs("");
+  };
 
   return (
     <div className="container mx-auto py-8 space-y-8 max-w-6xl">
@@ -236,145 +251,45 @@ export default function ExplorerPage() {
         </p>
       </div>
 
-      <Card className="p-6">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="grid gap-2 flex-1 w-full">
-            <label className="text-sm font-medium">검색어</label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="예: 요리, 게임, 브이로그"
-                className="pl-9"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-          </div>
-          
-          <div className="grid gap-2 w-full md:w-48">
-            <label className="text-sm font-medium">최소 구독자 수</label>
-            <Input
-              type="number"
-              placeholder="0"
-              value={minSubs}
-              onChange={(e) => setMinSubs(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-
-          <div className="grid gap-2 w-full md:w-48">
-            <label className="text-sm font-medium">최대 구독자 수</label>
-            <Input
-              type="number"
-              placeholder="제한 없음"
-              value={maxSubs}
-              onChange={(e) => setMaxSubs(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-
-          <Button onClick={handleSearch} disabled={loading} className="w-full md:w-auto self-end">
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "검색"}
-          </Button>
-        </div>
-      </Card>
+      <YouTubeSearch
+        query={query}
+        setQuery={setQuery}
+        onSearch={handleSearch}
+        loading={loading}
+      />
 
       {channels.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              총 {filteredChannels.length}개 채널 검색됨
-              {filterType !== "all" && channels.length !== filteredChannels.length && (
-                  <span className="ml-1 text-xs">({channels.length - filteredChannels.length}개 필터링됨)</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Select 
-                value={filterType} 
-                onValueChange={setFilterType}
-              >
-                <SelectTrigger className="w-[180px] h-9">
-                  <SelectValue placeholder="필터 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 채널 보기</SelectItem>
-                  <SelectItem value="sendable">전송 가능 목록</SelectItem>
-                  <SelectItem value="sent">발송됨 목록</SelectItem>
-                  <SelectItem value="unsuitable">부적합 목록</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="space-y-6">
+          <YouTubeFilters
+            filterType={filterType}
+            setFilterType={setFilterType}
+            minSubs={minSubs}
+            setMinSubs={setMinSubs}
+            maxSubs={maxSubs}
+            setMaxSubs={setMaxSubs}
+            onReset={handleResetFilters}
+          />
 
-              <Button variant="outline" size="sm" onClick={toggleSelectAll}>
-                 전체 선택/해제
-              </Button>
-              <Button 
-                variant="secondary"
-                size="sm" 
-                onClick={handleMarkUnsuitable} 
-                disabled={selectedChannelIds.size === 0 || loading}
-              >
-                부적합 추가 ({selectedChannelIds.size})
-              </Button>
-              <Button size="sm" onClick={downloadCsv} disabled={selectedChannelIds.size === 0}>
-                <Download className="mr-2 h-4 w-4" />
-                CSV 다운로드 ({selectedChannelIds.size})
-              </Button>
-            </div>
-          </div>
-
-          <div className="border rounded-md">
-            <table className="w-full caption-bottom text-sm text-left">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[50px]">
-                    <div 
-                      className="cursor-pointer"
-                      onClick={toggleSelectAll}
-                    >
-                      <CheckSquare className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">채널</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[200px]">이메일</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">구독자</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">동영상</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">개설일</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-right">링크</th>
-                </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {filteredChannels.length === 0 ? (
-                    <tr>
-                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                            필터링된 결과가 없습니다.
-                        </td>
-                    </tr>
-                ) : (
-                  filteredChannels.map((channel) => (
-                    <YouTubeChannelRow
-                      key={channel.id}
-                      channel={channel}
-                      isSelected={selectedChannelIds.has(channel.id)}
-                      status={channelStatuses[channel.id]}
-                      email={emails[channel.id] || ""}
-                      filterType={filterType}
-                      onToggleSelect={toggleSelect}
-                      onEmailChange={handleEmailChange}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {nextPageToken && (
-            <div className="flex justify-center pt-4">
-              <Button variant="outline" onClick={() => searchChannels(nextPageToken)} disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "더보기"}
-              </Button>
-            </div>
-          )}
+          <YouTubeTable
+            channels={channels}
+            filteredChannels={filteredChannels}
+            selectedChannelIds={selectedChannelIds}
+            channelStatuses={channelStatuses}
+            emails={emails}
+            loading={loading}
+            filterType={filterType}
+            nextPageToken={nextPageToken}
+            savedCount={downloadList.length}
+            savedChannelIds={savedChannelIds}
+            onToggleSelect={handleToggleSelect}
+            onToggleSelectAll={handleToggleSelectAll}
+            onEmailChange={handleEmailChange}
+            onMarkUnsuitable={handleMarkUnsuitable}
+            onSaveToTemp={handleSaveToTemp}
+            onDownloadCsv={handleDownloadCsv}
+            onClearDownloadList={clearDownloadList}
+            onLoadMore={handleLoadMore}
+          />
         </div>
       )}
     </div>

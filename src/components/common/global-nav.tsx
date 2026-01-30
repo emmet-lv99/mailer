@@ -3,10 +3,10 @@
 
 import { UserAuth } from "@/components/common/user-auth";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Bot, ChevronDown, FileUp, History, Home, Instagram, Search, Settings, ShoppingBag, Youtube } from "lucide-react";
 import Link from "next/link";
@@ -58,6 +58,7 @@ export function GlobalNav() {
     },
     { href: "/instagram/history", label: "이력 관리", icon: History },
     { href: "/instagram/agent", label: "헌터 에이전트", icon: Bot },
+    { href: "/instagram/proposal", label: "공구제안", icon: ShoppingBag },
     { href: "/instagram/settings", label: "설정", icon: Settings },
   ];
 
