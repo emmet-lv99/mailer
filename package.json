@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "extract-patterns": "npx tsx scripts/extract-patterns.ts",
+    "generate-embeddings": "npx tsx scripts/generate-embeddings.ts",
+    "backfill-names": "npx tsx scripts/backfill-names.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

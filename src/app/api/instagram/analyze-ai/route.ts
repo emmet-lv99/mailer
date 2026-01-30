@@ -1,9 +1,11 @@
 
 import { RawAnalysisResult } from "@/app/instagram/types";
+import { generateEmbedding } from "@/lib/embeddings";
 import genAI from "@/lib/gemini";
 import { BRUTAL_ANALYST_SYSTEM_PROMPT } from "@/lib/prompts/brutal-analyst";
 import { INSTAGRAM_ANALYSIS_SCHEMA } from "@/lib/schemas/analysis";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { augmentPromptWithPatterns } from "@/services/instagram/pattern";
 import { buildBrutalUserPrompt } from "@/services/instagram/prompt-builder";
 import { NextResponse } from "next/server";
 
@@ -144,7 +146,10 @@ export async function POST(req: Request) {
         }
 
         try {
-          const fullPrompt = `${systemPrompt}\n\n---\n\n${userPrompt}`;
+          // [Augmentation] Inject learned patterns into system prompt
+          const enhancedSystemPrompt = await augmentPromptWithPatterns(systemPrompt);
+          
+          const fullPrompt = `${enhancedSystemPrompt}\n\n---\n\n${userPrompt}`;
           const result = await model.generateContent([fullPrompt, ...imageParts]);
           const response = await result.response;
           const text = response.text();
@@ -162,6 +167,13 @@ export async function POST(req: Request) {
           analysis.basicStats.followers = user.followers;
           analysis.basicStats.profilePicUrl = user.profilePicUrl || null;
 
+          // [Fix] Attach Profile Data for Embeddings/Context
+          analysis.profile = {
+              biography: user.biography || '',
+              fullName: user.fullName || '',
+              // We can add other persistent profile fields here if needed
+          };
+
           // [NEW] Persist to Database for Knowledge Base (RAG)
           // We use supabaseAdmin to bypass RLS and ensure the data is saved as systematic knowledge.
           if (supabaseAdmin) {
@@ -175,6 +187,25 @@ export async function POST(req: Request) {
                 .limit(1)
                 .maybeSingle();
 
+              // [NEW] Generate Embedding in Real-time for Similarity Search
+              let embedding = null;
+              try {
+                embedding = await generateEmbedding({
+                   username: user.username,
+                   followers: user.followers || 0,
+                   er: raw.metrics?.engagementRate || 0,
+                   tier: analysis.investmentAnalyst?.tier || 'D',
+                   grade: analysis.influencerExpert?.grade || 'Potential',
+                   category: analysis.category || 'general',
+                   purchase_keyword_ratio: analysis.metrics?.purchaseKeywordRatio,
+                   trend_direction: raw.trendMetrics?.erTrend,
+                   fullAnalysis: analysis // [NEW] Pass the whole qualitative object
+                });
+                console.log(`[Embedding] Generated for ${user.username}`);
+              } catch (embedError) {
+                console.warn(`[Embedding] Skipped for ${user.username}:`, embedError);
+              }
+
               const analysisData = {
                 username: user.username.toLowerCase().trim(),
                 followers: user.followers || 0,
@@ -185,6 +216,7 @@ export async function POST(req: Request) {
                 grade: analysis.influencerExpert?.grade || 'Potential', // Must match CHECK constraint
                 profile_pic_url: user.profilePicUrl || null,
                 full_analysis: analysis,
+                embedding: embedding, // Save the generated vector
                 analyzed_at: new Date().toISOString()
               };
 

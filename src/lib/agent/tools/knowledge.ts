@@ -6,13 +6,14 @@ export const queryInfluencerDbTool = new DynamicStructuredTool({
   name: "query_influencer_knowledge_base",
   description: "Searches the private database of previously analyzed influencers. Use this to respond to user questions about their analyzed data, find recommendations, or summarize specific profiles.",
   schema: z.object({
-    username: z.string().optional().describe("Specific username to look for"),
+    username: z.string().optional().describe("Specific Instagram username to look for"),
+    query: z.string().optional().describe("Search term for nicknames, full names, or usernames (e.g. '르꼬르망')"),
     minER: z.number().optional().describe("Minimum Engagement Rate to filter"),
     tier: z.enum(["S", "A", "B", "C", "D"]).optional().describe("Specific Tier level"),
-    keywords: z.string().optional().describe("Keywords to search for in biography or analysis"),
+    keywords: z.string().optional().describe("Keywords to search for in biography or analysis results"),
     limit: z.number().default(5).describe("Maximum number of results to return"),
   }),
-  func: async ({ username, minER, tier, keywords, limit }) => {
+  func: async ({ username, query: searchTerm, minER, tier, keywords, limit }) => {
     if (!supabaseAdmin) {
       return JSON.stringify({ error: "Database not connected." });
     }
@@ -26,6 +27,13 @@ export const queryInfluencerDbTool = new DynamicStructuredTool({
       if (username) {
         query = query.eq("username", username.replace("@", "").toLowerCase().trim());
       }
+
+      if (searchTerm) {
+        // Search across username (text) AND profile.fullName (JSONB)
+        const cleanTerm = searchTerm.replace("@", "").trim();
+        query = query.or(`username.ilike.%${cleanTerm}%,full_analysis->profile->>fullName.ilike.%${cleanTerm}%`);
+      }
+
       if (minER) {
         query = query.gte("er", minER);
       }
@@ -33,8 +41,7 @@ export const queryInfluencerDbTool = new DynamicStructuredTool({
         query = query.eq("tier", tier);
       }
       if (keywords) {
-        // Simple ilike on username or bio if applicable, or we search within the full_analysis JSON
-        query = query.ilike("username", `%${keywords}%`);
+        query = query.ilike("full_analysis->comparisonSummary->recommendation", `%${keywords}%`);
       }
 
       const { data, error } = await query.limit(limit);

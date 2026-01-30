@@ -74,31 +74,10 @@ export async function POST(req: NextRequest) {
                     ]);
 
                     // D. Save Analysis History
-                    try {
-                        const firstBrace = agentResult.output.indexOf("{");
-                        const lastBrace = agentResult.output.lastIndexOf("}");
-                        if (firstBrace !== -1 && lastBrace !== -1) {
-                            const parsed = JSON.parse(agentResult.output.substring(firstBrace, lastBrace + 1));
-                            const stats = parsed.basicStats;
-                            if (stats && parsed.investmentAnalyst) {
-                                await supabaseAdmin.from('analysis_history').insert([{
-                                    username: (stats.username || '').replace('@', '').toLowerCase().trim(),
-                                    followers: stats.followers || 0,
-                                    er: stats.er || 0,
-                                    bot_ratio: stats.botRatio || 0,
-                                    purchase_keyword_ratio: stats.purchaseKeywordRatio || 0,
-                                    profile_pic_url: stats.profilePicUrl || null,
-                                    tier: parsed.investmentAnalyst.tier,
-                                    grade: parsed.influencerExpert.grade,
-                                    full_analysis: parsed,
-                                    created_by: user.id
-                                }]);
-                                console.log(`[API] Saved analysis for ${stats.username}`);
-                            }
-                        }
-                    } catch (parseError) {
-                        console.warn("[API] Parse/Save error:", parseError);
-                    }
+                    // D. Save Analysis History - REMOVED
+                    // Analysis saving is now handled exclusively by the 'analyze_account' tool
+                    // to ensure raw data (bio, etc.) is preserved correctly.
+                    // The Agent's output is a summary/JSON presentation and may lack fields.
                 }
             } else {
                  console.warn(`[API] User ${session.user.email} not allowed. History skipped.`);

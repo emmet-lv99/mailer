@@ -1,3 +1,4 @@
+import { augmentPromptWithPatterns } from "@/services/instagram/pattern";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { createAgent } from "langchain";
 import { CONSULTANT_SYSTEM_PROMPT } from "./prompts";
@@ -12,8 +13,9 @@ const model = new ChatGoogleGenerativeAI({
 });
 
 import { queryInfluencerDbTool } from "./tools/knowledge";
+import { findSimilarTool } from "./tools/similar";
 
-const tools = [queryInfluencerDbTool];
+const tools = [queryInfluencerDbTool, findSimilarTool];
 
 // Helper function to create and run the agent
 export async function runHunterAgent(
@@ -21,11 +23,14 @@ export async function runHunterAgent(
   chatHistory: any[] = []
 ) {
   try {
+    // [Augmentation] Inject learned patterns into system prompt
+    const enhancedSystemPrompt = await augmentPromptWithPatterns(CONSULTANT_SYSTEM_PROMPT);
+
     // Create Agent (LangGraph-based in 1.x)
     const agent = createAgent({
       model: model,
       tools,
-      systemPrompt: CONSULTANT_SYSTEM_PROMPT,
+      systemPrompt: enhancedSystemPrompt,
     });
 
     // Convert chat history to format expected by agent
@@ -58,7 +63,12 @@ export async function runHunterAgent(
     }
 
     // Clean up markdown block if present (UI expects raw JSON + Text or just Text)
-    outputText = outputText.replace(/```json/g, "").replace(/```/g, "").trim();
+    // Also remove unintended escapes (e.g., \_ -> _) that Gemini sometimes adds for Markdown safety
+    outputText = outputText
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .replace(/\\_/g, "_")
+        .trim();
 
     return {
         output: outputText,

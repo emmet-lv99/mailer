@@ -16,6 +16,7 @@ import {
 import { Instagram } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AnalysisHistoryModal } from "./AnalysisHistoryModal";
+import { SimilarInfluencersModal } from "./SimilarInfluencersModal";
 import { AuthenticityModal } from "./modals/AuthenticityModal";
 import { CampaignSuitabilityModal } from "./modals/CampaignSuitabilityModal";
 import { FakeAccountModal } from "./modals/FakeAccountModal";
@@ -63,6 +64,7 @@ export function InstagramUserCard({
     const [showFakeModal, setShowFakeModal] = useState(false);
     const [showCampaignModal, setShowCampaignModal] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [showSimilarModal, setShowSimilarModal] = useState(false);
 
     // Auto-open history modal if result is from DB
     useEffect(() => {
@@ -212,16 +214,22 @@ export function InstagramUserCard({
                         <div className="grid grid-cols-2 gap-2 mt-1">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); setShowHistoryModal(true); }}
-                                className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-xs hover:bg-primary/90 transition-colors font-medium"
+                                className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-xs hover:bg-primary/90 transition-colors font-medium col-span-2"
                             >
-                                보기
+                                분석 결과 보기
+                            </button>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setShowSimilarModal(true); }}
+                                className="px-2 py-1.5 bg-purple-50 text-purple-700 rounded text-xs hover:bg-purple-100 transition-colors border border-purple-200 font-medium"
+                            >
+                                유사 계정
                             </button>
                             {onRefresh && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onRefresh(user.username); }}
-                                    className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded text-xs hover:bg-secondary/80 transition-colors border"
+                                    className="px-2 py-1.5 bg-secondary text-secondary-foreground rounded text-xs hover:bg-secondary/80 transition-colors border"
                                 >
-                                    최신 정보 불러오기
+                                    정보 갱신
                                 </button>
                             )}
                         </div>
@@ -357,6 +365,13 @@ export function InstagramUserCard({
                         setShowHistoryModal(false);
                         onRefresh?.(user.username);
                     }}
+                />
+            )}
+            {showSimilarModal && (
+                <SimilarInfluencersModal 
+                    open={showSimilarModal}
+                    onOpenChange={setShowSimilarModal}
+                    username={user.username}
                 />
             )}
         </div>
