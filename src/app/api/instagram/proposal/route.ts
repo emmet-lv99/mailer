@@ -1,5 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
+import { authOptions } from "../../auth/[...nextauth]/route";
 
 export async function GET() {
   try {
@@ -19,7 +21,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { instagram_id, followers, content, memo } = body;
+    const { instagram_id, followers, content, memo, evaluation } = body;
 
     // Check for duplicate
     const { data: existing } = await supabase
@@ -35,6 +37,9 @@ export async function POST(req: Request) {
       );
     }
 
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email;
+
     const { data, error } = await supabase
       .from("instagram_proposals")
       .insert([
@@ -43,8 +48,10 @@ export async function POST(req: Request) {
           followers: followers || 0, 
           content: content || "", 
           memo: memo || "",
+          evaluation: evaluation || "fit",
           reaction: "pending",
-          is_sent: false
+          is_sent: false,
+          created_by: userEmail
         }
       ])
       .select()
@@ -64,6 +71,14 @@ export async function PATCH(req: Request) {
     const { id, ...updates } = body;
 
     if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
+
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email;
+
+    // If updating is_sent, also update sent_by
+    if (updates.hasOwnProperty('is_sent')) {
+      (updates as any).sent_by = userEmail;
+    }
 
     const { data, error } = await supabase
       .from("instagram_proposals")

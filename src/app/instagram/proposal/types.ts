@@ -10,6 +10,9 @@ export interface Proposal {
   reaction: Reaction;
   content: string;
   memo: string;
+  evaluation: "fit" | "unsuit";
+  created_by?: string;
+  sent_by?: string;
 }
 
 export type SortKey = "created_at" | "sent_at";

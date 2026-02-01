@@ -138,6 +138,20 @@ export default function InstagramProposalPage() {
     }
   };
 
+  const handleToggleEvaluation = async (id: number) => {
+    const item = proposals.find(p => p.id === id);
+    if (!item) return;
+
+    const nextEvaluation = item.evaluation === 'fit' ? 'unsuit' : 'fit';
+
+    try {
+      const updated = await proposalService.update(id, { evaluation: nextEvaluation });
+      setProposals(prev => prev.map(p => (p.id === id ? updated : p)));
+    } catch (error) {
+      console.error("Failed to toggle evaluation:", error);
+    }
+  };
+
   const toggleFilter = (filter: string) => {
     setFilters(prev => 
       prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
@@ -274,6 +288,7 @@ export default function InstagramProposalPage() {
           onMemoChange={handleMemoChange}
           onToggleSent={handleToggleSent}
           onToggleReaction={handleToggleReaction}
+          onToggleEvaluation={handleToggleEvaluation}
           onSaveRow={handleSaveRow}
         />
       </Card>

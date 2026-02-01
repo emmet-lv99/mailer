@@ -1,21 +1,21 @@
 "use client";
 
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,31 +77,33 @@ export function ProposalDialogs({
           <DialogHeader>
             <DialogTitle>새 제안 추가</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <span className="text-right text-sm font-medium">Instagram ID</span>
-              <Input
-                placeholder="아이디 입력"
-                className="col-span-3"
-                value={newProposalData.instagram_id}
-                onChange={(e) => setNewProposalData({ ...newProposalData, instagram_id: e.target.value })}
-              />
+          <form onSubmit={(e) => { e.preventDefault(); handleAdd(); }}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right text-sm font-medium">Instagram ID</span>
+                <Input
+                  placeholder="아이디 입력"
+                  className="col-span-3"
+                  value={newProposalData.instagram_id}
+                  onChange={(e) => setNewProposalData({ ...newProposalData, instagram_id: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right text-sm font-medium">Follower</span>
+                <Input
+                  type="number"
+                  placeholder="팔로워 수"
+                  className="col-span-3"
+                  value={newProposalData.followers}
+                  onChange={(e) => setNewProposalData({ ...newProposalData, followers: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <span className="text-right text-sm font-medium">Follower</span>
-              <Input
-                type="number"
-                placeholder="팔로워 수"
-                className="col-span-3"
-                value={newProposalData.followers}
-                onChange={(e) => setNewProposalData({ ...newProposalData, followers: e.target.value })}
-              />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button type="button" variant="outline" onClick={() => onAddOpenChange(false)}>취소</Button>
+              <Button type="submit" disabled={!newProposalData.instagram_id.trim()}>추가하기</Button>
             </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => onAddOpenChange(false)}>취소</Button>
-            <Button onClick={handleAdd} disabled={!newProposalData.instagram_id.trim()}>추가하기</Button>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 

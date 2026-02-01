@@ -26,6 +26,7 @@ interface ProposalTableProps {
   onMemoChange: (id: number, memo: string) => void;
   onToggleSent: (id: number) => void;
   onToggleReaction: (id: number) => void;
+  onToggleEvaluation: (id: number) => void;
   onSaveRow: (id: number, data: { instagram_id: string; followers: number }) => void;
 }
 
@@ -42,6 +43,7 @@ export function ProposalTable({
   onMemoChange,
   onToggleSent,
   onToggleReaction,
+  onToggleEvaluation,
   onSaveRow,
 }: ProposalTableProps) {
   return (
@@ -58,6 +60,7 @@ export function ProposalTable({
           <TableHead className="w-[50px] text-center">No</TableHead>
           <TableHead className="w-[180px]">Instagram ID</TableHead>
           <TableHead className="w-[100px]">Follower</TableHead>
+          <TableHead className="w-[100px] text-center">Evaluation</TableHead>
           <TableHead 
             className="w-[120px] cursor-pointer hover:bg-accent/50 transition-colors"
             onClick={() => onSort('created_at')}
@@ -86,13 +89,13 @@ export function ProposalTable({
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={11} className="h-32 text-center">
+            <TableCell colSpan={12} className="h-32 text-center">
               <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={11} className="h-32 text-center text-muted-foreground">
+            <TableCell colSpan={12} className="h-32 text-center text-muted-foreground">
               검색 결과가 없습니다.
             </TableCell>
           </TableRow>
@@ -109,6 +112,7 @@ export function ProposalTable({
               onUpdateMemo={(memo) => onMemoChange(item.id, memo)}
               onToggleSent={() => onToggleSent(item.id)}
               onToggleReaction={() => onToggleReaction(item.id)}
+              onToggleEvaluation={() => onToggleEvaluation(item.id)}
               onSaveRow={(editData) => onSaveRow(item.id, editData)}
             />
           ))

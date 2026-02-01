@@ -18,6 +18,7 @@ interface ProposalTableRowProps {
   onUpdateMemo: (memo: string) => void;
   onToggleSent: () => void;
   onToggleReaction: () => void;
+  onToggleEvaluation: () => void;
   onSaveRow: (data: { instagram_id: string; followers: number }) => void;
   no: number;
 }
@@ -31,6 +32,7 @@ export function ProposalTableRow({
   onUpdateMemo,
   onToggleSent,
   onToggleReaction,
+  onToggleEvaluation,
   onSaveRow,
   no,
 }: ProposalTableRowProps) {
@@ -103,6 +105,15 @@ export function ProposalTableRow({
         ) : (
           <span className="text-sm font-medium">{item.followers.toLocaleString()}</span>
         )}
+      </TableCell>
+      <TableCell className="text-center">
+        <Badge 
+          variant={item.evaluation === 'fit' ? "outline" : "destructive"} 
+          className="text-[10px] cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={onToggleEvaluation}
+        >
+          {item.evaluation === 'fit' ? "적합" : "부적합"}
+        </Badge>
       </TableCell>
       <TableCell>
         <span className="text-xs text-muted-foreground">
