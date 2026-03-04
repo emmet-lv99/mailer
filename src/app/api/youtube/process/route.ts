@@ -229,7 +229,7 @@ export async function POST(req: Request) {
                channelName, 
                subscribers, 
                subject: "생성 실패", 
-               body: error.message,
+               body: errorMessage,
                isError: true 
           });
         }
