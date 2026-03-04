@@ -1,0 +1,18 @@
+name: CI (Build Check)
+
+on:
+  push:
+    branches: [ main ] # 메인 브랜치에 코드가 올라올 때만
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # 가상의 리눅스 컴퓨터를 빌림
+    steps:
+      - uses: actions/checkout@v4 # 내 코드를 복사해오기
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # 우리 프로젝트 노드 버전
+      - run: yarn install # 패키지 설치
+      - run: yarn lint    # 코드 스타일 검사 (에러 있으면 여기서 중단!)
+      - run: yarn build   # 빌드가 깨지는지 검사 (매우 중요!)
