@@ -106,9 +106,10 @@ export function TemplateManager() {
       toast.success("저장되었습니다.");
       fetchTemplates();
       if (!editingId) initNewTemplate(); // 저장 후 초기화? or 유지? -> 일단 생성 후엔 초기화가 깔끔
-    } catch (e: any) {
-      console.error(e);
-      toast.error(`저장 실패: ${e.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+      console.error(error);
+      toast.error(`저장 실패: ${errorMessage}`);
     }
   };
 
@@ -164,9 +165,10 @@ export function TemplateManager() {
       
       updateBlock(blockId, 'url', publicUrl);
       toast.success('이미지 업로드 성공');
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
       console.error("Catch Block Error:", error);
-      toast.error(`업로드 실패: ${error.message || JSON.stringify(error)}`); 
+      toast.error(`업로드 실패: ${errorMessage}`); 
     } 
   };
 

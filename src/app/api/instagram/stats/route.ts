@@ -82,7 +82,11 @@ export async function GET(req: Request) {
         },
         userStats
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error("[API] Stats GET Error:", error);
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

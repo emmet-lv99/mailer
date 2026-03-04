@@ -158,8 +158,9 @@ ${i+1}. [${blockType.toUpperCase()}]
 
     return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
 
-  } catch (error: any) {
-    console.error("Code Gen API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("Code Gen API Error:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

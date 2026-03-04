@@ -136,9 +136,11 @@ export async function POST(req: Request) {
       message: "Draft created successfully" 
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("[Gmail API] Critical Error:", error);
-    // Return detailed error message for debugging
-    return NextResponse.json({ error: error.message || "Failed to create draft", details: error }, { status: 500 });
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

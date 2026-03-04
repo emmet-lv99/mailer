@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { formatNumber, getProxiedUrl } from "@/services/instagram/utils";
 import { Loader2, Sparkles, Users } from "lucide-react";
@@ -48,8 +48,9 @@ export function SimilarInfluencersModal({
       }
       
       setSimilar(data.results || []);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

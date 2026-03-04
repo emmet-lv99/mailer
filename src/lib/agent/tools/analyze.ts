@@ -373,8 +373,9 @@ export const analyzeAccountTool = new DynamicStructuredTool({
 
       return JSON.stringify(result);
 
-    } catch (error: any) {
-      console.error("[Tool: analyze_account] Error:", error);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+      console.error("[Tool: analyze_account] Error:", errorMessage);
       
       // Error Classification logic
       let errorCode = "UNKNOWN_ERROR";

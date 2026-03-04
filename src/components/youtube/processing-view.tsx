@@ -91,11 +91,12 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
             setStatus("completed");
             addLog("모든 작업이 완료되었습니다!", "success");
         }
-      } catch (error: any) {
+      } catch (error) {
         if (active) {
             setStatus("error");
-            setErrorMessage(error.message);
-            addLog(`작업 중단: ${error.message}`, "error");
+            const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+            setErrorMessage(errorMessage);
+            addLog(`작업 중단: ${errorMessage}`, "error");
         }
       }
     };

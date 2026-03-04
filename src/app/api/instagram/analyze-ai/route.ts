@@ -247,12 +247,13 @@ export async function POST(req: Request) {
             success: true
           };
 
-        } catch (error: any) {
-          console.error(`AI Analysis failed for ${user.username}`, error);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+          console.error(`AI Analysis failed for ${user.username}`, errorMessage);
           return {
             username: user.username,
             success: false,
-            error: error.message
+            error: errorMessage
           };
         }
       })
@@ -260,8 +261,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ results: analyzedResults });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("AI Analysis Route Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

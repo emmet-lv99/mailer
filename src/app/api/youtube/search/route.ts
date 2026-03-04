@@ -87,10 +87,11 @@ export async function GET(req: Request) {
       nextPageToken,
       pageInfo: searchRes.data.pageInfo,
     });
-  } catch (error: any) {
-    console.error("YouTube API Error:", error);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("YouTube API Error:", errorMessage);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch data from YouTube" },
+      { error: errorMessage || "Failed to fetch data from YouTube" },
       { status: 500 }
     );
   }

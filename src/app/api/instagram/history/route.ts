@@ -34,8 +34,12 @@ export async function GET(req: Request) {
     if (error) throw error;
 
     return NextResponse.json({ results: data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error("[API] History Error:", error);
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -56,8 +60,12 @@ export async function PATCH(req: Request) {
 
         if (error) throw error;
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        console.error("[API] History PATCH Error:", error);
+
+        const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
 
@@ -75,7 +83,11 @@ export async function DELETE(req: Request) {
 
         if (error) throw error;
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        console.error("[API] History DELETE Error:", error);
+
+        const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

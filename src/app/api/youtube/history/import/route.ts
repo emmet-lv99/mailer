@@ -63,8 +63,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, count: records.length });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Import API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

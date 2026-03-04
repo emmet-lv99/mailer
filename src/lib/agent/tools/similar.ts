@@ -107,9 +107,10 @@ export const findSimilarTool = new DynamicStructuredTool({
           lookalikes: results
       });
 
-    } catch (error: any) {
-      console.error("[Tool: find_similar] Error:", error);
-      return JSON.stringify({ error: error.message });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+      console.error("[Tool: find_similar] Error:", errorMessage);
+      return JSON.stringify({ error: errorMessage });
     }
   },
 });

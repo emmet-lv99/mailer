@@ -28,8 +28,9 @@ export function HistoryImporter() {
       const data = await historyService.importHistory(file);
       toast.success(`${data.count}건의 발송 이력을 성공적으로 가져왔습니다!`);
       setFile(null);
-    } catch (error: any) {
-      toast.error(`Import 실패: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+      toast.error(`Import 실패: ${errorMessage}`);
     } finally {
       setUploading(false);
     }

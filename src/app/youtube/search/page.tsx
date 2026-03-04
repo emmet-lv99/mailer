@@ -72,9 +72,10 @@ export default function ExplorerPage() {
         checkSentHistory(data.channels);
       }
       setNextPageToken(data.nextPageToken || null);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
       console.error(error);
-      toast.error(error.message);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -150,7 +151,8 @@ export default function ExplorerPage() {
       });
 
       setSelectedChannelIds(new Set());
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
       console.error(error);
       toast.error("부적합 등록 중 오류가 발생했습니다.");
     } finally {

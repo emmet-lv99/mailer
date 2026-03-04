@@ -29,8 +29,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("Error updating history:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -53,7 +55,9 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("Error deleting history:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -73,8 +73,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result.data);
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Save Project API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

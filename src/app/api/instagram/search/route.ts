@@ -311,9 +311,9 @@ export async function POST(req: Request) {
                         // Execute without Timeout
                         await apifyTask();
 
-                    } catch (e: any) {
-                        console.error("Apify execution failed:", e);
-                         // Timeout error handling removed
+                    } catch (error) {
+                        console.error("Apify execution failed:", error);
+                        // Timeout error handling removed
                     }
                 } else {
                     sendLog("⚠️ API Token이 없습니다. 실제 수집을 건너뜁니다.");
@@ -454,9 +454,10 @@ export async function POST(req: Request) {
                     }
                 });
 
-            } catch (error: any) {
-                console.error("Route Handler Error:", error);
-                sendError(error.message || "Internal Server Error");
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+                console.error("Route Handler Error:", errorMessage);
+                sendError(errorMessage);
             } finally {
                 try {
                     controller.close();
@@ -474,8 +475,9 @@ export async function POST(req: Request) {
             'Connection': 'keep-alive',
         },
     });
-  } catch (error: any) {
-    console.error("Route Handler Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("Route Handler Error:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

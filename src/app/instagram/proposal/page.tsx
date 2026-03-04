@@ -69,9 +69,10 @@ export default function InstagramProposalPage() {
       setProposals(prev => [newProposal, ...prev]);
       setIsAddDialogOpen(false);
       toast.success("제안이 추가되었습니다.");
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
       console.error("Failed to add proposal:", error);
-      toast.error(error.message);
+      toast.error(errorMessage);
     }
   };
 

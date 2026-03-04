@@ -17,8 +17,7 @@ function MallContent() {
   // Resume logic (Mock)
   useEffect(() => {
     if (projectId) {
-      console.log("Resuming project:", projectId);
-      // TODO: Fetch project status from DB and setStep
+      // Resume project logic will be implemented here
     }
   }, [projectId]);
 

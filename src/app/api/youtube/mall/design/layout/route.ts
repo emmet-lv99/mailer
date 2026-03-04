@@ -66,8 +66,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
 
-  } catch (error: any) {
-    console.error("Layout Gen API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("Layout Gen API Error:", errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -46,7 +46,6 @@ export async function runHunterAgent(
     const result = await agent.invoke({
       messages,
     });
-    console.log("[Core] Agent Result:", JSON.stringify(result, null, 2));
 
     // Verify result structure. Typically result.messages has the full history.
     // The last message is the AI response.

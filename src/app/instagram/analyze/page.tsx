@@ -98,9 +98,10 @@ export default function InstagramAnalyzePage() {
             toast.dismiss("ai-loading");
             toast.success(`${aiResponse.results.length}명 심층 분석 완료!`);
 
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
             toast.dismiss("ai-loading");
-            toast.error(error.message);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -120,8 +121,9 @@ export default function InstagramAnalyzePage() {
             await instagramService.register(user);
             updateUserStatus(username, 'todo');
             toast.success(`@${username} 등록 완료!`);
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+            toast.error(errorMessage);
         } finally {
             setRegistering(prev => {
                 const next = new Set(prev);

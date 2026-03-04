@@ -19,8 +19,10 @@ export async function POST(request: Request) {
     let channelId;
     try {
       channelId = await getChannelIdFromUrl(channelUrl);
-    } catch (e: any) {
-      return NextResponse.json({ error: e.message }, { status: 400 });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
     if (!channelId) {

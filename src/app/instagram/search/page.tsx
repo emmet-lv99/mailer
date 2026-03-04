@@ -69,8 +69,9 @@ function SearchPageContent() {
       setResults(data.results);
       setFallbackUrl(data.fallbackUrl || null);
       setSearched(true);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -97,8 +98,9 @@ function SearchPageContent() {
         setResults(data.results); // Replace results
         setFallbackUrl(data.fallbackUrl || null);
         setSearched(true);
-      } catch (error: any) {
-        toast.error(error.message);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+        toast.error(errorMessage);
         setLoading(false); // Ensure loading is false on error
       } finally {
         setLoading(false);
@@ -138,8 +140,9 @@ function SearchPageContent() {
               toast.dismiss(toastId);
               toast.error("저장된 분석 내용이 손상되었거나 없습니다.");
           }
-      } catch (e: any) {
-          toast.error("리포트 로딩 실패: " + e.message);
+      } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+          toast.error("리포트 로딩 실패: " + errorMessage);
       }
   };
 

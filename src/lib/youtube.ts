@@ -33,11 +33,11 @@ export const getChannelIdFromUrl = async (url: string): Promise<string | null> =
       console.log("YouTube Search returned no items for handle:", handle);
       throw new Error(`Channel not found for handle: ${handle}`);
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching channel ID:", error);
     // Re-throw if it's our clear error, otherwise wrap
-    if (error.message.includes("Channel not found")) throw error;
-    throw new Error(`YouTube API Error: ${error.message}`);
+    if (error instanceof Error && error.message.includes("Channel not found")) throw error;
+    throw new Error(`YouTube API Error: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 
   return null;

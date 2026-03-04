@@ -1,9 +1,19 @@
 
 const BASE_URL = "/api/youtube/process";
 
+export interface YoutubeChannel {
+  'Channel ID': string;
+  'Channel Title': string;
+  Description: string;
+  Email: string;
+  Subscribers: string;
+  URL: string;
+  Videos: string;
+}
+
 export interface ProcessPayload {
   promptContent: string;
-  channels: any[];
+  channels: YoutubeChannel[];
 }
 
 export const processorService = {

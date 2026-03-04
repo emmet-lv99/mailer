@@ -118,7 +118,7 @@ export default function InstagramHistoryPage() {
             setUsers(prev => prev.map(u => u.username === username ? { ...u, memo: newMemo } : u));
             await instagramService.updateMemo(username, newMemo);
             toast.success("메모가 저장되었습니다.");
-        } catch (error: any) {
+        } catch (error) {
             // Silent fail for memo
         }
     };

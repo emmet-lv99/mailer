@@ -459,8 +459,8 @@ RETURN ONLY THE REFINED PROMPT STRING.`;
 
     return NextResponse.json({ refinedPrompt, archetypeKey });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Prompt Refinement API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }

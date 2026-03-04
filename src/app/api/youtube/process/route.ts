@@ -221,8 +221,9 @@ export async function POST(req: Request) {
              throw new Error("Generation returned empty content");
           }
 
-        } catch (error: any) {
-          send("log", { message: `❌ 실패 (${channelName}): ${error.message}` });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+          send("log", { message: `❌ 실패 (${channelName}): ${errorMessage}` });
           // Send error result so client knows it failed but continues
           send("result", { 
                channelName, 

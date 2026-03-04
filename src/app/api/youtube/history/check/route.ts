@@ -32,7 +32,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ sentChannelIds, channelStatusMap });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error("History check error:", error);
+
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
