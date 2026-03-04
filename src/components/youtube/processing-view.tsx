@@ -59,7 +59,6 @@ export function ProcessingView({ promptContent, channels, onBack }: ProcessingVi
         
         const reader = await processorService.start({ promptContent, channels });
         const decoder = new TextDecoder();
-
         while (active) {
           const { done, value } = await reader.read();
           if (done) break;

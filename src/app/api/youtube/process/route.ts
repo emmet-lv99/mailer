@@ -55,9 +55,10 @@ export async function POST(req: Request) {
 
       for (const channel of channels) {
         processed++;
-        let channelName = channel.channelName || channel.채널명 || channel.channelId || "Unknown";
-        let subscribers = channel.subscribers || channel.구독자수 || "0";
-        
+        let channelName = channel.channelName || channel['Channel Name'] || channel.채널명 || channel['채널명'] || channel.channelId || channel['Channel ID'] || "Unknown";
+        let subscribers = channel.subscribers || channel['Subscribers'] || channel.구독자수 || channel['구독자수'] || "0";
+        let channelId = channel.channelId || channel['Channel ID'] || "";
+        let description = channel.description || channel['Description'] || "";
         // Skip check is done in frontend, backend receives only target channels.
         
         send("progress", { current: processed, total, message: `[${processed}/${total}] ${channelName} 분석 중...` });
@@ -78,12 +79,11 @@ export async function POST(req: Request) {
              send("log", { message: "⚠️ YouTube API Key가 설정되지 않았습니다. 채널 정보를 가져올 수 없습니다.", type: "warning" });
           }
 
-          if (youtubeKey && channel.channelId) {
+          if (youtubeKey && channelId) {
              try {
                 // 1. Fetch Request: Get Uploads Playlist ID
-                const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id=${channel.channelId}&key=${youtubeKey}`);
+                const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id=${channelId}&key=${youtubeKey}`);
                 const ytData = await ytRes.json();
-                
                 if (ytData.items?.[0]) {
                     const snippet = ytData.items[0].snippet;
                     const statistics = ytData.items[0].statistics;
