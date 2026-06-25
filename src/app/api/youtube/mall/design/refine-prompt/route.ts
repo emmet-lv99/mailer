@@ -1,10 +1,8 @@
 import { DESIGN_ARCHETYPES } from "@/services/mall/design-archetypes";
 import { STANDARD_DESIGN_KEYWORDS } from "@/services/mall/design-keywords";
 import { FEW_SHOT_EXAMPLES, generateMainBlockPrompt, generateProductListPrompt, generateVideoPrompt, VISUAL_FIDELITY_RULES } from "@/services/mall/layout";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import genAI, { GEMINI_MODEL_NAME } from "@/lib/gemini";
 import { NextResponse } from "next/server";
-
-const genAI = new GoogleGenerativeAI(process.env.ANMOK_GEMINI_API_KEY!);
 
 /**
  * Universal E-commerce Design Prompt Generator
@@ -422,7 +420,7 @@ export async function POST(request: Request) {
     const generator = new PromptGenerator();
     const technicalContext = generator.generate(designSpec, rawBlocks, pageType, analysisResult, archetypeKey);
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL_NAME });
 
     const systemPrompt = `You are a professional Prompt Engineer for Imagen 4.
 Your task is to convert the following TECHNICAL DESIGN SPECIFICATION into a highly detailed, 

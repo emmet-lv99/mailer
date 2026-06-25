@@ -1,8 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import genAI, { GEMINI_MODEL_NAME } from "@/lib/gemini";
 import { NextResponse } from "next/server";
-
-const API_KEY = process.env.ANMOK_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(API_KEY);
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +13,7 @@ export async function POST(request: Request) {
 
     // Initialize Gemini Model
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash-exp",
+        model: GEMINI_MODEL_NAME,
         generationConfig: { responseMimeType: "application/json" }
     });
 

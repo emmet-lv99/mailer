@@ -1,4 +1,4 @@
-import genAI from "@/lib/gemini";
+import genAI, { GEMINI_MODEL_NAME } from "@/lib/gemini";
 import { BRUTAL_ANALYST_SYSTEM_PROMPT } from "@/lib/prompts/brutal-analyst";
 import { INSTAGRAM_ANALYSIS_SCHEMA } from "@/lib/schemas/analysis";
 import { supabase } from "@/lib/supabase";
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     // Initialize Gemini Model with Strict Schema
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: GEMINI_MODEL_NAME,
       generationConfig: { 
         responseMimeType: "application/json",
         responseSchema: analysisSchema as any, // Type cast to avoid strict typing issues with specific SDK versions

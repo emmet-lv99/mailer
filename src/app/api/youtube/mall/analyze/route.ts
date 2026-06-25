@@ -1,4 +1,4 @@
-import genAI, { geminiVisionModel } from "@/lib/gemini";
+import genAI, { geminiVisionModel, GEMINI_MODEL_NAME } from "@/lib/gemini";
 import { getChannelDetails, getChannelIdFromUrl, getRecentVideos, getVideoComments } from "@/lib/youtube";
 import { STANDARD_DESIGN_KEYWORDS } from "@/services/mall/design-keywords";
 import { MallProjectAnalysis } from "@/services/mall/types";
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       
       // B. Download Video Thumbnails
       Promise.all(topVideos.map(v => downloadImage(v.thumbnail))),
-
+ 
       // C. Download Channel Branding Images
       downloadImage(channelInfo.bannerExternalUrl),
       downloadImage(channelInfo.thumbnails?.high?.url || channelInfo.thumbnails?.default?.url),
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     let searchContext = "";
     try {
         const researchModel = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash", 
+            model: GEMINI_MODEL_NAME, 
             // @ts-ignore - googleSearch is supported in v2 but types might be outdated
             tools: [{ googleSearch: {} }] 
         });

@@ -2,11 +2,12 @@ import { augmentPromptWithPatterns } from "@/services/instagram/pattern";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { createAgent } from "langchain";
 import { CONSULTANT_SYSTEM_PROMPT } from "./prompts";
+import { GEMINI_MODEL_NAME } from "@/lib/gemini";
 
 const apiKey = process.env.ANMOK_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
 const model = new ChatGoogleGenerativeAI({
-  model: "gemini-2.0-flash", 
+  model: GEMINI_MODEL_NAME, 
   maxOutputTokens: 8192,
   temperature: 0.3,
   apiKey: apiKey,

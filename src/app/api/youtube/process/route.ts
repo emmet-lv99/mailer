@@ -1,5 +1,4 @@
-
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import genAI, { GEMINI_MODEL_NAME } from "@/lib/gemini";
 import { NextResponse } from "next/server";
 
 export const maxDuration = 300; // 5 minutes max for Vercel Pro, but locally infinite.
@@ -47,8 +46,7 @@ export async function POST(req: Request) {
           type: "info" 
       });
 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: GEMINI_MODEL_NAME });
 
       const total = channels.length;
       let processed = 0;

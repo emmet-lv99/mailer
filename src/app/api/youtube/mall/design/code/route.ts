@@ -1,4 +1,3 @@
-
 import {
   FOOTER_BLOCKS,
   HEADER_BLOCKS,
@@ -7,7 +6,7 @@ import {
   SECTION_HEADER_BLOCKS,
   SUB_BANNER_BLOCKS
 } from "@/services/mall/layout";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import genAI, { GEMINI_MODEL_NAME } from "@/lib/gemini";
 import { NextResponse } from "next/server";
 
 const ALL_BLOCKS = {
@@ -19,9 +18,6 @@ const ALL_BLOCKS = {
   ...SECTION_HEADER_BLOCKS
 };
 
-const API_KEY = process.env.ANMOK_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(API_KEY);
-
 export async function POST(request: Request) {
   try {
     const { 
@@ -32,7 +28,7 @@ export async function POST(request: Request) {
     } = await request.json();
 
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash-exp"
+        model: GEMINI_MODEL_NAME
     });
 
     // MODE 1: Generate Visual Narrative

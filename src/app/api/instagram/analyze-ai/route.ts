@@ -1,7 +1,7 @@
 
 import { RawAnalysisResult } from "@/app/instagram/types";
 import { generateEmbedding } from "@/lib/embeddings";
-import genAI from "@/lib/gemini";
+import genAI, { GEMINI_MODEL_NAME } from "@/lib/gemini";
 import { BRUTAL_ANALYST_SYSTEM_PROMPT } from "@/lib/prompts/brutal-analyst";
 import { INSTAGRAM_ANALYSIS_SCHEMA } from "@/lib/schemas/analysis";
 import { supabase, supabaseAdmin } from "@/lib/supabase";
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const analysisSchema = INSTAGRAM_ANALYSIS_SCHEMA;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: GEMINI_MODEL_NAME,
       generationConfig: { 
         responseMimeType: "application/json",
         responseSchema: analysisSchema as any,
